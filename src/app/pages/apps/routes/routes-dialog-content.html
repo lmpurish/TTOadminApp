@@ -1,0 +1,105 @@
+<!-- Contenedor del spinner que cubre todo el diálogo -->
+<div class="loading-overlay" *ngIf="loading">
+    <mat-spinner></mat-spinner>
+</div>
+
+<div class="d-flex align-items-center justify-content-between m-b-16 p-x-20 p-t-16">
+    <h3>{{ action }} Route</h3>
+    <button mat-icon-button mat-dialog-close class="d-flex justify-content-center">
+        <i-tabler name="x" class="icon-20 d-flex"></i-tabler>
+    </button>
+</div>
+
+<!-- Mostrar formulario si NO es acción de eliminar -->
+<mat-dialog-content *ngIf="action !== 'Delete'">
+    <form [formGroup]="userForm">
+        <!-- Date -->
+        <mat-form-field class="theme-select" appearance="outline" style="min-width: 200px;">
+            <mat-label>Select Date</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="date">
+
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+        <div class="row">
+            <div class="col-lg-6">
+                <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Payment Type</mat-label>
+                <mat-form-field appearance="outline" class="w-100">
+                    <mat-select required formControlName="paymentType" name="paymentType"
+                        placeholder="Select Payment Type">
+                        <mat-option [value]="null" disabled>Select Payment Type</mat-option>
+                        <mat-option value="perStop">
+                            Per Stop
+                        </mat-option>
+                        <mat-option value="perRoute">
+                            Per Route
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+
+            <div class="col-lg-6">
+                <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Price</mat-label>
+                <mat-form-field appearance="outline" class="w-100">
+                    <input type="number" matInput name="priceRoute" formControlName="priceRoute" placeholder="price" />
+                </mat-form-field>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Zone</mat-label>
+                <mat-form-field appearance="outline" class="w-100">
+                    <mat-select required formControlName="zoneId" name="zoneId" placeholder="Select Zone">
+
+                        <mat-option *ngFor="let zone of zones" [value]="zone.id">
+                            {{ zone.zoneCode }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+
+            <div class="col-lg-6">
+                <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Volumen</mat-label>
+                <mat-form-field appearance="outline" class="w-100">
+                    <input type="text" matInput name="volumen" formControlName="volumen" placeholder="Volumen" />
+                </mat-form-field>
+            </div>
+            <div class="col-lg-6">
+                <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Stops</mat-label>
+                <mat-form-field appearance="outline" class="w-100">
+                    <input type="text" matInput name="deliveryStops" formControlName="deliveryStops" placeholder="Stops" />
+                </mat-form-field>
+            </div>
+
+            <!-- Warehouse -->
+
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex justify-content-end mt-4">
+            <button mat-flat-button (click)="doAction()" [disabled]="!userForm.valid || loading">
+                {{ action }}
+            </button>
+            <button mat-flat-button class="m-l-8 bg-error text-white" (click)="closeDialog()" [disabled]="loading">
+                Cancel
+            </button>
+        </div>
+    </form>
+</mat-dialog-content>
+
+<!-- Sección de eliminar -->
+<mat-dialog-content *ngIf="action === 'Delete'">
+    <div class="p-x-24 m-y-8">
+        <p class="f-s-14">
+            Are you sure you want to delete <span class="f-w-600">{{ local_data.id }}</span>?
+        </p>
+    </div>
+    <div mat-dialog-actions class="p-x-24 p-b-24">
+        <button (click)="doAction()" mat-flat-button [disabled]="loading">{{ action }}</button>
+        <button mat-flat-button (click)="closeDialog()" class="m-l-8 bg-error text-white" [disabled]="loading">
+            Cancel
+        </button>
+    </div>
+</mat-dialog-content>

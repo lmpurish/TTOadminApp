@@ -1,0 +1,37 @@
+/* No dejes que .table-responsive cambie el display de mat-table */
+.table-responsive {
+  overflow: auto;                  /* scroll horizontal si hace falta */
+}
+
+.table-responsive .mat-mdc-table {
+  display: table !important;       /* fuerza layout de tabla */
+  width: 100%;
+  table-layout: fixed;             /* columnas con ancho consistente */
+  border-spacing: 0;
+}
+
+/* Alineación y anchos por columna (usa las clases generadas por mat-table) */
+.mat-column-warehouse { width: 46%; }
+.mat-column-gross,
+.mat-column-adjustments,
+.mat-column-net { width: 16%; }
+
+.mat-column-action { width: 6%; }
+
+/* Alineación a la derecha para numéricos */
+.text-right,
+.mat-column-gross .mat-mdc-cell,
+.mat-column-adjustments .mat-mdc-cell,
+.mat-column-net .mat-mdc-cell,
+.mat-column-gross .mat-mdc-header-cell,
+.mat-column-adjustments .mat-mdc-header-cell,
+.mat-column-net .mat-mdc-header-cell {
+  text-align: right;
+}
+
+/* Evita que el contenido interno flex desplace el ancho */
+.mat-mdc-cell, .mat-mdc-header-cell, .mat-mdc-footer-cell {
+  white-space: nowrap;             /* opcional: evita saltos raros */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -1,0 +1,180 @@
+<!-- LOADING -->
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+</div>
+
+<!-- CONTROLES / FILTROS -->
+<mat-card class="cardWithShadow">
+  <mat-card-content>
+    <div class="row gap-16 align-items-end">
+      <!-- Búsqueda -->
+      <div class="col-lg-3">
+        <mat-form-field appearance="outline" style="min-width: 300px; margin-left: 16px;">
+          <input matInput placeholder="Search by driver or type" (keyup)="applyFilter($any($event.target).value)" />
+          <mat-icon matSuffix>
+            <i-tabler name="search" class="icon-20 d-flex m-t-2"></i-tabler>
+          </mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Warehouse (solo admin) -->
+      <div class="col-lg-3" *ngIf="isAdmin">
+        <mat-form-field appearance="outline" style="min-width: 300px; margin-left: 16px;">
+          <mat-label>Warehouse</mat-label>
+          <mat-select [value]="selectedWarehouseId" (selectionChange)="onWarehouseChange($event.value)">
+            <mat-option [value]="null">All Warehouses</mat-option>
+            <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+              {{ warehouse.name || (warehouse.company + ' - ' + warehouse.city) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Guardar Seleccionados -->
+      <div class="col-auto">
+        <button mat-flat-button color="primary" (click)="generateDefaultRate()" [disabled]="!canGenerateDefaultRate()">
+          Generate Default Rate
+        </button>
+      </div>
+      <div class="col-auto">
+        <button mat-flat-button color="primary" (click)="saveSelected()" [disabled]="selection.isEmpty()">
+          Save selected
+        </button>
+      </div>
+
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- TABLA EDITABLE -->
+<mat-card class="cardWithShadow">
+  <mat-card-content>
+    <div class="table-responsive">
+      <table mat-table [dataSource]="dataSource" class="w-100" matSort>
+
+        <!-- Select (checkbox) -->
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef>
+            <mat-checkbox (change)="$event ? masterToggle() : null" [checked]="isAllSelected()"
+              [indeterminate]="selection.hasValue() && !isAllSelected()" [aria-label]="checkboxLabel()">
+            </mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let element">
+            <mat-checkbox (click)="$event.stopPropagation()" (change)="$event ? selection.toggle(element) : null"
+              [checked]="selection.isSelected(element)" [aria-label]="checkboxLabel(element)">
+            </mat-checkbox>
+          </td>
+        </ng-container>
+
+        <!-- Driver -->
+        <ng-container matColumnDef="driverFullName">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Driver</th>
+          <td mat-cell *matCellDef="let element">
+            {{ element.driverFullName }}
+          </td>
+        </ng-container>
+        <!-- Effective From -->
+        <ng-container matColumnDef="effectiveFrom">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>From</th>
+          <td mat-cell *matCellDef="let element">
+            {{ element.effectiveFrom ? (element.effectiveFrom | date:'MMM d, y') : '-' }}
+          </td>
+        </ng-container>
+
+        <!-- Effective To -->
+        <ng-container matColumnDef="effectiveTo">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>To</th>
+          <td mat-cell *matCellDef="let element">
+            {{ element.effectiveTo ? (element.effectiveTo | date:'MMM d, y') : '-' }}
+          </td>
+        </ng-container>
+
+        <!-- Type (Select) -->
+        <ng-container matColumnDef="rateType">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Type</th>
+          <td mat-cell *matCellDef="let element" [formGroup]="getRowForm(element)">
+            <mat-form-field appearance="outline" class="cell-field">
+              <mat-select formControlName="rateType" [disabled]="!selection.isSelected(element)">
+                <mat-option *ngFor="let t of RATE_TYPES" [value]="t">{{ t }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </td>
+        </ng-container>
+
+        <!-- Base -->
+        <ng-container matColumnDef="baseAmount">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Base</th>
+          <td mat-cell *matCellDef="let element" [formGroup]="getRowForm(element)">
+            <mat-form-field appearance="outline" class="cell-field">
+              <input matInput type="number" step="0.01" formControlName="baseAmount"
+                [disabled]="!selection.isSelected(element)" />
+            </mat-form-field>
+          </td>
+        </ng-container>
+
+        <!-- Min/Route -->
+        <ng-container matColumnDef="minPayPerRoute">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Min/Route</th>
+          <td mat-cell *matCellDef="let element" [formGroup]="getRowForm(element)">
+            <mat-form-field appearance="outline" class="cell-field">
+              <input matInput type="number" step="0.01" formControlName="minPayPerRoute"
+                [disabled]="!selection.isSelected(element)" />
+            </mat-form-field>
+          </td>
+        </ng-container>
+
+        <!-- Penalty/Failed -->
+        <ng-container matColumnDef="failedStopPenalty">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Penalty/Failed</th>
+          <td mat-cell *matCellDef="let element" [formGroup]="getRowForm(element)">
+            <mat-form-field appearance="outline" class="cell-field">
+              <input matInput type="number" step="0.01" formControlName="failedStopPenalty"
+                [disabled]="!selection.isSelected(element)" />
+            </mat-form-field>
+          </td>
+        </ng-container>
+
+        <!-- Rescue/Stop -->
+        <ng-container matColumnDef="rescueStopRate">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Rescue/Stop</th>
+          <td mat-cell *matCellDef="let element" [formGroup]="getRowForm(element)">
+            <mat-form-field appearance="outline" class="cell-field">
+              <input matInput type="number" step="0.01" formControlName="rescueStopRate"
+                [disabled]="!selection.isSelected(element)" />
+            </mat-form-field>
+          </td>
+        </ng-container>
+
+        <!-- Action -->
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">Action</th>
+          <td mat-cell *matCellDef="let element">
+            <button mat-stroked-button color="primary" class="m-r-8" (click)="saveRowByElement(element)"
+              [disabled]="!selection.isSelected(element)">
+              Save
+            </button>
+
+            <button mat-button (click)="resetRowByElement(element)" [disabled]="!selection.isSelected(element)">
+              Reset
+            </button>
+          </td>
+        </ng-container>
+
+        <!-- Encabezados y filas -->
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <!-- Sin datos -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            No rates found.
+          </td>
+        </tr>
+      </table>
+
+      <!-- Paginador -->
+      <mat-paginator [pageSizeOptions]="[5, 10, 20, 50]" [pageSize]="15" showFirstLastButtons>
+      </mat-paginator>
+    </div>
+  </mat-card-content>
+</mat-card>

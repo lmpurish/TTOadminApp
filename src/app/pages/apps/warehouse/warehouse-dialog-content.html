@@ -1,0 +1,139 @@
+<!-- Contenedor del spinner que cubre todo el diálogo -->
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+</div>
+
+
+<div class="d-flex align-items-center justify-content-between m-b-16 p-x-20 p-t-16">
+  <h3>{{action}} Warehouse</h3>
+  <button mat-icon-button mat-dialog-close class="d-flex justify-content-center">
+    <i-tabler name="x" class="icon-20 d-flex"></i-tabler>
+  </button>
+</div>
+
+@if(action !== 'Delete') {
+<mat-dialog-content>
+  <form #userForm="ngForm">
+    <div class="row">
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Company</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select required [(ngModel)]="local_data.company" name="company" placeholder="Company">
+            <mat-option *ngFor="let c of companies" [value]="c">
+              {{ c }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Metro</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select required [(ngModel)]="local_data.metro" name="metro" placeholder="Metro"
+            [compareWith]="compareMetro">
+            <mat-option *ngFor="let m of metros" [value]="m">
+              {{ m.city }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Send Payroll</mat-label>
+        <mat-checkbox [(ngModel)]="local_data.sendPayroll" name="sendPayroll">
+          Mark as Sent
+        </mat-checkbox>
+      </div>
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Drive Rate</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <span matPrefix>$&nbsp;</span>
+
+          <input matInput type="number" required [(ngModel)]="local_data.driveRate" name="Rate" placeholder="Rate" />
+        </mat-form-field>
+      </div>
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Is Hiring</mat-label>
+        <mat-checkbox [(ngModel)]="local_data.isHiring" name="isHiring">
+          {{ local_data.isHiring ? 'Hiring' : 'Not Hiring' }}
+        </mat-checkbox>
+      </div>
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Opening hours</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput type="time" required step="900" min="05:00" max="23:00" name="openTime"
+            [(ngModel)]="openTimeStr" placeholder="HH:mm" />
+        </mat-form-field>
+      </div>
+      <div class="col-lg-12">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Address</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input type="text" matInput required [(ngModel)]="local_data.address" name="address" placeholder="Address" />
+        </mat-form-field>
+      </div>
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">City</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input type="text" matInput required [(ngModel)]="local_data.city" name="city" placeholder="City" />
+        </mat-form-field>
+      </div>
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">State</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input type="text" matInput required [(ngModel)]="local_data.state" name="state" placeholder="State" />
+        </mat-form-field>
+      </div>
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Zip Code</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input type="text" matInput required [(ngModel)]="local_data.zipCode" name="zipCode" placeholder="Zip Code" />
+        </mat-form-field>
+      </div>
+      <div class="col-lg-12">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Authorized employees</mat-label>
+
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-chip-grid #chipGrid>
+            <mat-chip-row *ngFor="let p of authorizedPersons" [removable]="true" (removed)="removePerson(p)">
+              {{ p.name }} {{ p.lastName }}
+              <button matChipRemove type="button" aria-label="Remove person"><mat-icon>cancel</mat-icon></button>
+            </mat-chip-row>
+
+            <input [formControl]="personCtrl" [matAutocomplete]="auto" [matChipInputFor]="chipGrid"
+              [matChipInputSeparatorKeyCodes]="separatorKeysCodes" [matChipInputAddOnBlur]="false"
+              placeholder="Type a name and press Enter" (matChipInputTokenEnd)="addFromFreeText($event)" />
+          </mat-chip-grid>
+
+          <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="selected($event)">
+            <mat-option *ngFor="let p of filteredPeople$ | async" [value]="p">
+              {{ p.name }} {{ p.lastName }}
+            </mat-option>
+          </mat-autocomplete>
+
+          <mat-hint>Presiona Enter o coma para seleccionar. También puedes elegir de la lista.</mat-hint>
+        </mat-form-field>
+      </div>
+
+    </div>
+    <br>
+    <button mat-flat-button (click)="doAction()" [disabled]="!userForm.valid">
+      {{action}}
+    </button>
+    <button mat-flat-button class="m-l-8 bg-error text-white" (click)="closeDialog()">
+      Cancel
+    </button>
+  </form>
+</mat-dialog-content>
+}
+
+@else {
+<div class="p-x-24 m-y-8">
+  <p class="f-s-14">
+    Sure to delete <span class="f-w-600">{{local_data.company}}</span> ?
+  </p>
+</div>
+<div mat-dialog-actions class="p-x-24 p-b-24">
+  <button (click)="doAction()" mat-flat-button>{{action}}</button>
+  <button mat-flat-button (click)="closeDialog()" class="m-l-8 bg-error text-white">
+    Cancel
+  </button>
+</div>
+}

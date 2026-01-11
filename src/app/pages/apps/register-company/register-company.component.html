@@ -1,0 +1,107 @@
+<div class="loading-overlay" *ngIf="loading">
+    <mat-spinner></mat-spinner>
+</div>
+<h4 class="Ctitle">Register Company</h4>
+<div class="output">
+    <mat-stepper #stepper>
+        <!-- ✅ Step 1: Company Info -->
+        <mat-step [stepControl]="firstFormGroup">
+            <form class="m-t-24" [formGroup]="firstFormGroup">
+                <ng-template matStepLabel>Company Info</ng-template>
+                <div class="row">
+                    <!-- Company Name -->
+                    <div class="col-lg-6">
+                        <mat-label class="f-s-14 f-w-600 d-block m-b-16">Company Name</mat-label>
+                        <mat-form-field appearance="outline" class="w-100">
+                            <input matInput formControlName="CompanyName" required />
+                        </mat-form-field>
+                    </div>
+
+                    <!-- Company Email -->
+                    <div class="col-lg-6">
+                        <mat-label class="f-s-14 f-w-600 d-block m-b-16">Company Email</mat-label>
+                        <mat-form-field appearance="outline" class="w-100">
+                            <input matInput formControlName="CompanyEmail" required type="email" />
+                        </mat-form-field>
+                    </div>
+
+                    <!-- Company Address -->
+                    <div class="col-lg-6">
+                        <mat-label class="f-s-14 f-w-600 d-block m-b-16">Address</mat-label>
+                        <mat-form-field appearance="outline" class="w-100">
+                            <input matInput formControlName="Address" required />
+                        </mat-form-field>
+                    </div>
+                    <!-- Company Phone -->
+                    <div class="col-lg-6">
+                        <mat-label class="f-s-14 f-w-600 d-block m-b-16">Phone Number</mat-label>
+                        <mat-form-field appearance="outline" class="w-100">
+                            <input matInput formControlName="PhoneNumber" required mask="(000) 000-0000"
+                                [dropSpecialCharacters]="true" />
+                        </mat-form-field>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <mat-label class="f-s-14 f-w-600 d-block m-b-16">Upload Logo</mat-label>
+                        <input type="file" (change)="onLogoSelected($event)" class="form-control" required />
+
+                        <!-- Vista previa -->
+                        <div *ngIf="logoPreview" class="mt-3">
+                            <img [src]="logoPreview" [style.max-width.px]="150" [style.max-height.px]="150"
+                                alt="Preview" />
+                        </div>
+
+                        <div *ngIf="logoError" class="text-danger mt-2">{{ logoError }}</div>
+                    </div>
+                </div>
+
+                <div class="text-right">
+                    <button mat-flat-button matStepperNext [disabled]="firstFormGroup.invalid">Next</button>
+                </div>
+            </form>
+        </mat-step>
+
+        <!-- ✅ Step 2: Stripe Payment Method -->
+        <mat-step [stepControl]="secondFormGroup">
+            <form class="m-t-24" [formGroup]="secondFormGroup">
+                <ng-template matStepLabel>Payment Method</ng-template>
+
+                <div class="row">
+                    <div class="col-12">
+                        <mat-label class="f-s-14 f-w-600 d-block m-b-16">Card Details</mat-label>
+
+                        <!-- Stripe Card Element -->
+                        <div class="card-wrapper">
+                            <ngx-stripe-card [options]="cardOptions" [elementsOptions]="elementsOptions">
+                            </ngx-stripe-card>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between m-t-16">
+                    <button mat-flat-button class="bg-error text-white" matStepperPrevious>Back</button>
+                    <button mat-flat-button color="primary" [disabled]="secondFormGroup.invalid"
+                        (click)="handleSavePayment(stepper)">
+                        Save Payment Method
+                    </button>
+                </div>
+
+            </form>
+        </mat-step>
+
+        <!-- ✅ Step 3: Finish -->
+        <mat-step>
+            <ng-template matStepLabel>Finish</ng-template>
+            <h4 class="mat-headline-6 m-t-24">Terms and Conditions</h4>
+            <p class="m-t-8 f-s-14">
+                Please review your company details and payment method before finishing registration.
+            </p>
+            <mat-checkbox [(ngModel)]="termsAccepted" color="primary">Agree with terms?</mat-checkbox>
+            <div class="d-flex justify-content-between m-t-16">
+                <button mat-flat-button class="bg-error text-white" matStepperPrevious>Back</button>
+                <button mat-flat-button color="primary" [disabled]="!termsAccepted"
+                    (click)="submitCompany()">Finish</button>
+            </div>
+        </mat-step>
+    </mat-stepper>
+</div>

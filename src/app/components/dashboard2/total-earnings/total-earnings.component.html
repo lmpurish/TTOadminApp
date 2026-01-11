@@ -1,0 +1,18 @@
+<mat-card class="cardWithShadow">
+  <mat-card-content class="p-y-30">
+    <mat-card-subtitle class="p-b-4">Total Income ({{year}})</mat-card-subtitle>
+    <h5 class="f-s-21 m-t-4 f-w-600 m-b-30">${{totalIncome}}</h5>
+
+    <!-- ---------------------------- -->
+    <!-- charts here -->
+    <!-- ---------------------------- -->
+    <div style="width: 100%;">
+      <apx-chart #chart [series]="totalEarnChart.series" [chart]="totalEarnChart.chart"
+        [plotOptions]="totalEarnChart.plotOptions" [tooltip]="totalEarnChart.tooltip" [stroke]="totalEarnChart.stroke"
+        [fill]="totalEarnChart.fill" [colors]="totalEarnChart.colors" [xaxis]="totalEarnChart.xaxis"
+        [yaxis]="totalEarnChart.yaxis" [dataLabels]="totalEarnChart.dataLabels"
+        [grid]="totalEarnChart.grid"></apx-chart>
+    </div>
+
+  </mat-card-content>
+</mat-card>

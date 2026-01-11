@@ -1,0 +1,261 @@
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+</div>
+<mat-card class="cardWithShadow">
+  <mat-card-content>
+    <div class="row  gap-16">
+      <div class="col-lg-3">
+        <mat-form-field appearance="outline" class="w-100 hide-hint">
+          <input matInput placeholder="Search Applicant" (keyup)="applyFilter($any($event.target).value)" />
+          <mat-icon matSuffix>
+            <i-tabler name="search" class="icon-20 d-flex m-t-2"></i-tabler>
+          </mat-icon>
+        </mat-form-field>
+      </div>
+      <div class="col-lg-3">
+        <ng-container *ngIf="isAdmin">
+          <mat-form-field appearance="outline" class="theme-select" style="min-width: 300px; margin-left: 16px;">
+            <mat-label>Warehouse</mat-label>
+            <mat-select [value]="selectedWarehouseId" (selectionChange)="onWarehouseChange($event.value)">
+              <mat-option [value]="null">All Warehouses</mat-option>
+              <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+                {{ warehouse.name || (warehouse.company + ' - ' + warehouse.city) }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </ng-container>
+      </div>
+      <div class="col-lg-3">
+        <mat-form-field appearance="outline" class="theme-select" style="min-width:240px; margin-left:16px;">
+          <mat-label>Status</mat-label>
+          <mat-select [value]="selectedStatus" (selectionChange)="onStatusFilterChange($event.value)">
+            <mat-option [value]="null">All Status</mat-option>
+            <mat-option *ngFor="let o of statusOptions" [value]="o.value">
+              {{ o.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<mat-card class="cardWithShadow">
+  <mat-card-content>
+    <div class="table-responsive">
+      <table mat-table [dataSource]="dataSource" class="w-100" matSort multiTemplateDataRows>
+
+        <!-- NAME -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let row" class="clickable" (click)="openDialog('recruiter',row)"
+            (keydown.enter)="openDialog('recruiter',row)" (keydown.space)="openDialog('recruiter',row)" tabindex="0"
+            role="button">
+            <div class="d-flex align-items-center gap-16">
+              <img class="rounded-circle" [src]="avatarSrc$(row)  | async" width="45" />
+              <div>
+                <h6 class="f-w-600 f-s-16 m-t-0">{{ row.name }} {{ row.lastName }}</h6>
+
+                <span class="f-s-14">{{ row.userRole }}</span>
+                <h6 class="f-s-14">updated: {{ row.updatedAt | date:'MMM/dd yyyy' }}</h6>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- EMAIL -->
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Email</th>
+          <td mat-cell *matCellDef="let row">
+            <h6 class="f-w-600 f-s-16 m-t-0">{{ row.email }}</h6>
+            <span class="f-s-14">{{ row.profile?.phoneNumber | phoneFormat }}</span>
+          </td>
+        </ng-container>
+
+        <!-- VEHICLE -->
+        <ng-container matColumnDef="vehicle">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>
+            <i-tabler name="car" class="icon-20 m-r-8 d-flex"></i-tabler> Vehicle
+          </th>
+          <td mat-cell *matCellDef="let row">
+            <h6 class="f-w-600 f-s-16 m-t-0">
+              {{ row.vehicle?.make?.length > 15 ? (row.vehicle.make | slice:0:15) + '...' : row.vehicle?.make }}
+            </h6>
+            <span class="f-s-14">{{ row.vehicle?.model }}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="metro">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>
+            City
+          </th>
+          <td mat-cell *matCellDef="let row" class="f-s-14" [class.recruiter-ok]="!!row.recruiter"
+            [style.color]="row.recruiter ? '#0f9d58' : null" [style.font-weight]="row.recruiter ? '600' : null">
+            {{ row.metro ? (row.metro.city) : '-' }}
+          </td>
+        </ng-container>
+        <!-- STATUS -->
+        <ng-container matColumnDef="isActive">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let row">
+            <mat-form-field appearance="outline" class="status-select" style="min-width:200px;">
+              <mat-label>Status</mat-label>
+              <mat-select [(ngModel)]="row.status" (selectionChange)="onStatusChange(row)"
+                [ngClass]="getStatusClass(row.status)">
+                <mat-option *ngFor="let o of statusOptions" [value]="o.value">
+                  {{ o.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="warehouseId">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Warehouse</th>
+          <td mat-cell *matCellDef="let row" class="f-s-14">
+            {{
+            getWarehouseInfo(row.warehouseId).length > 20
+            ? (getWarehouseInfo(row.warehouseId) | slice:0:20) + '...'
+            : getWarehouseInfo(row.warehouseId)
+            }}
+          </td>
+        </ng-container>
+        <!-- STAGE -->
+        <!-- STAGE -->
+        <ng-container matColumnDef="stage">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>
+            Stage
+          </th>
+          <td mat-cell *matCellDef="let row">
+            <h6 class="f-w-600 f-s-16 m-t-0">{{ row.stage }}</h6>
+          </td>
+          <!--   <td mat-cell *matCellDef="let row" class="f-s-14">
+            <mat-form-field appearance="outline" style="min-width:180px;" [ngClass]="stageClass(row.stage)">
+              <mat-label>Stage</mat-label>
+
+              <mat-select [(ngModel)]="row.stage" [ngModelOptions]="{standalone:true}"
+                (selectionChange)="onStageChange(row)" [panelClass]="'stage-panel'">
+                <mat-option *ngFor="let st of stageOptions" [value]="st.value">
+                  {{ st.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </td>-->
+        </ng-container>
+
+        <!-- RECRUITER -->
+        <ng-container matColumnDef="recruiterId">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>
+            Recruiter
+          </th>
+          <td mat-cell *matCellDef="let row" class="f-s-14" [class.recruiter-ok]="!!row.recruiter"
+            [style.color]="row.recruiter ? '#0f9d58' : null" [style.font-weight]="row.recruiter ? '600' : null">
+            {{ row.recruiter ? (row.recruiter.firstName + ' ' + row.recruiter.lastName) : '-' }}
+          </td>
+        </ng-container>
+
+        <!-- ACTION -->
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">Action</th>
+          <td mat-cell *matCellDef="let row" class="action-link">
+
+            <!-- SMS -->
+            <a *ngIf="row.isFirstLogin" (click)="openDialog('contact', row); $event.stopPropagation()"
+              class="m-r-10 cursor-pointer" title="Send Sms">
+              <i-tabler name="brand-telegram" class="icon-18"></i-tabler>
+            </a>
+
+            <!-- View Applicant -->
+            <a *ngIf="row.wasContacted && !row.isFirstLogin" (click)="openDialog('View', row); $event.stopPropagation()"
+              class="m-r-10 cursor-pointer" title="View Applicant">
+              <i-tabler name="eye-search" class="icon-18"></i-tabler>
+            </a>
+
+            <!-- Hire Process -->
+            <a (click)="openDialog('Hiring', row); $event.stopPropagation()" class="m-r-10 cursor-pointer"
+              title="Hire Process">
+              <i-tabler name="recharging" class="icon-18"></i-tabler>
+            </a>
+
+            <!-- Edit -->
+            <a (click)="openDialog('Update', row); $event.stopPropagation()" class="m-r-10 cursor-pointer"
+              title="Edit Applicant">
+              <i-tabler name="edit" class="icon-18"></i-tabler>
+            </a>
+
+            <!-- Delete -->
+            <a *ngIf="role=='Admin'" (click)="openDialog('Delete', row); $event.stopPropagation()"
+              class="m-r-10 cursor-pointer" title="Delete Applicant">
+              <i-tabler name="trash" class="icon-18"></i-tabler>
+            </a>
+
+            <!-- Expand/Collapse -->
+            <a (click)="toggleExpand(row); $event.stopPropagation()" class="cursor-pointer"
+              [title]="expandedElement === row ? 'Hide activity' : 'Show activity'">
+              <mat-icon>
+                {{ expandedElement === row ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}
+              </mat-icon>
+            </a>
+
+          </td>
+        </ng-container>
+
+        <!-- COLUMNA DE DETALLE -->
+        <ng-container matColumnDef="detailColumn">
+          <!-- Esta celda es toda la fila -->
+          <td mat-cell *matCellDef="let row" [attr.colspan]="displayedColumns.length" class="p-0">
+
+            <!-- solo mostramos el contenido si ESTA fila es la expandida -->
+            <div *ngIf="expandedElement === row" style="background:#fafafa; border-top:1px solid #eee; padding:16px;">
+
+              <h6 class="f-w-600 mb-2">Activity history for {{ row.name }}</h6>
+
+              <div *ngIf="row.activities?.length; else noActivities">
+                <table class="w-100 inner-table">
+                  <thead>
+                    <tr>
+                      <th class="f-s-13 text-muted">Date</th>
+                      <th class="f-s-13 text-muted">Type</th>
+                      <th class="f-s-13 text-muted">Message</th>
+                      <th class="f-s-13 text-muted">By</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let act of row.activities">
+                      <td class="f-s-14">{{ act.createAt | date:'short' }}</td>
+                      <td class="f-s-14">{{ act.activity }}</td>
+                      <td class="f-s-14">{{ act.message }}</td>
+                      <td class="f-s-14">
+                        {{ act.recruiterName || (row.recruiter?.firstName + ' ' + row.recruiter?.lastName) }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <ng-template #noActivities>
+                <div class="text-muted p-2 f-s-14">
+                  No activity history available
+                </div>
+              </ng-template>
+
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- HEADER ROW (encabezados) -->
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+
+        <!-- ROW NORMAL (cada applicant) -->
+        <tr mat-row *matRowDef="let row; columns: displayedColumns" class="applicant-row"
+          [ngStyle]="{ 'background-color': !row.updatedAt ? '#f0fff0' : '' }"></tr>
+
+        <!-- ROW DETALLE (pegado debajo del row normal) -->
+        <tr mat-row *matRowDef="let row; columns: ['detailColumn']" class="expanded-row-wrapper"></tr>
+
+      </table>
+
+
+      <!-- Pagination -->
+      <mat-paginator [pageSizeOptions]="[5, 10, 20, 50]" [pageSize]="15" showFirstLastButtons></mat-paginator>
+    </div>
+  </mat-card-content>
+</mat-card>

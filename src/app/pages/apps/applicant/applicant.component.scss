@@ -1,0 +1,43 @@
+.expanded-detail-row td {
+    background: #fafafa;
+    border-top: 1px solid #e0e0e0;
+    padding: 0 !important;
+}
+
+.expanded-detail-row table {
+    margin: 0;
+}
+
+.applicant-row.expanded {
+    background-color: #f8f9fa;
+}
+
+/* ==== Recruiter ==== */
+.mat-mdc-table .mat-mdc-cell.recruiter-ok,
+.mat-mdc-table td.recruiter-ok {
+    color: #0f9d58 !important;
+    font-weight: 600 !important;
+}
+
+/* verde Google-ish */
+.recruiter-none {
+    color: #9aa0a6;
+}
+
+/* gris mute */
+
+/* ==== Stage (pinta el campo y el texto del select) ==== */
+
+
+
+
+// gris
+
+/* (Opcional) colorear la opción seleccionada en el panel del dropdown */
+:host ::ng-deep .stage-panel .mdc-list-item--selected .mdc-list-item__primary-text {
+    font-weight: 700;
+}
+
+.clickable {
+    cursor: pointer !important;
+}

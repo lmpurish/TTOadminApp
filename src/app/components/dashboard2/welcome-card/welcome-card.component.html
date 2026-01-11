@@ -1,0 +1,19 @@
+<mat-card class="shadow-none bg-light-primary overflow-hidden">
+  <mat-card-content class="p-32 p-b-0">
+    <div class="row justify-content-between">
+      <div class="col-sm-6">
+        <mat-card-title>Welcome back {{userInfo.name}}!</mat-card-title>
+        <mat-card-subtitle class="f-s-14 f-w-400 m-t-16 lh-24 m-b-24" *ngIf="role !== 'Driver'">
+          "Great leaders don’t wait for opportunities, they create them. Start today with passion, purpose, and a winning mindset. Your energy sets the tone for success!" 💪🚀
+        </mat-card-subtitle>
+        
+        <mat-card-subtitle class="f-s-14 f-w-400 m-t-16 lh-24 m-b-24" *ngIf="role === 'Driver'">
+          "Drive with purpose, succeed with passion!" 🚛💨🔥
+        </mat-card-subtitle>
+      </div>
+      <div class="col-sm-5">
+        <img src="assets/images/backgrounds/welcome-bg2.png" alt="welcome" width="300" class="welcome-img" />
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

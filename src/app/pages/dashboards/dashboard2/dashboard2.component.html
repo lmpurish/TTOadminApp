@@ -1,0 +1,49 @@
+<div class="row">
+  <div class="col-lg-7">
+    <app-welcome-card></app-welcome-card>
+  </div>
+  <ng-container *ngIf="role != 'Driver' && role != 'Assistant' && role !='Recruiter'">
+    <div class="col-lg-5">
+      <app-products></app-products>
+    </div>
+    <div class="col-lg-6">
+      <app-revenue-updates-two></app-revenue-updates-two>
+    </div>
+    <div class="col-lg-6">
+      <app-sales-overview></app-sales-overview>
+    </div>
+    <div class="col-lg-12">
+      <app-top-projects></app-top-projects>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="role == 'Assistant' || role == 'Recruiter'">
+    <div class="col-lg-5">
+      <app-products></app-products>
+    </div>
+    <div class="col-lg-6">
+      <app-fullcalendar></app-fullcalendar>
+    </div>
+  </ng-container>
+  <ng-container *ngIf="role=='Driver'">
+    <div class="col-lg-5">
+      <div class="row">
+
+
+        <div class="col-sm-12">
+          <app-total-earnings></app-total-earnings>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <app-yearly-sales></app-yearly-sales>
+    </div>
+    <div class="col-lg-8" *ngIf="role != 'Driver'">
+      <app-top-projects></app-top-projects>
+    </div>
+    <div class="col-lg-8" *ngIf="role == 'Driver'">
+      <app-driver-routes></app-driver-routes>
+    </div>
+  </ng-container>

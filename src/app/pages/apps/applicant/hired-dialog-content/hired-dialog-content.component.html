@@ -1,0 +1,113 @@
+<!-- Contenedor del spinner que cubre todo el diálogo -->
+<div class="loading-overlay" *ngIf="loading">
+    <mat-spinner></mat-spinner>
+</div>
+
+<div class="d-flex align-items-center justify-content-between m-b-16 p-x-20 p-t-16">
+    <h3>{{ action }} Applicant</h3>
+    <button mat-icon-button mat-dialog-close class="d-flex justify-content-center" [disabled]="loading">
+        <i-tabler name="x" class="icon-20 d-flex"></i-tabler>
+    </button>
+
+</div>
+<div class="justify-content-between m-b-16 p-x-20 p-t-16">
+    <h4>
+        {{ local_data.name }} {{ local_data.lastName }}
+        <ng-container *ngIf="local_data.profile?.dob">
+            ({{ getAge(local_data.profile?.dob) }} yrs)
+        </ng-container>
+    </h4>
+    <h6> ({{ local_data.warehouse?.company }})
+        {{ local_data.warehouse?.city }}</h6>
+</div>
+
+
+<!-- Mostrar formulario si NO es acción de eliminar -->
+<mat-dialog-content *ngIf="action !== 'Delete'">
+    <form [formGroup]="activityForm" (ngSubmit)="submit()">
+
+        <div class="row">
+            <div class="col-lg-6">
+                <mat-form-field appearance="outline" style="min-width:180px;" [ngClass]="stageClass(local_data.stage)">
+                    <mat-label>Stage</mat-label>
+                    <mat-select [(ngModel)]="local_data.stage" [ngModelOptions]="{ standalone: true }"
+                        (selectionChange)="onStageChange(local_data)" [panelClass]="'stage-panel'">
+                        <mat-option *ngFor="let st of stageOptions" [value]="st.value">
+                            {{ st.label }}
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+            <div class="col-lg-6" *ngIf="isHired(local_data?.stage)">
+                <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>Initial Date</mat-label>
+                    <input matInput [matDatepicker]="initialPicker" formControlName="startDate"
+                        placeholder="Select date" />
+                    <mat-datepicker-toggle matIconSuffix [for]="initialPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #initialPicker startView="month"></mat-datepicker>
+                    <mat-error *ngIf="activityForm.get('startDate')?.hasError('required')">Required</mat-error>
+                </mat-form-field>
+            </div>
+            <div class="col-lg-6">
+                <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>Activity</mat-label>
+                    <mat-select formControlName="activity" required>
+                        <mat-option [value]="null" disabled>Select activity...</mat-option>
+                        <mat-option *ngFor="let opt of activityTypes" [value]="opt.value">
+                            {{ opt.label }}
+                        </mat-option>
+                    </mat-select>
+                    <mat-error *ngIf="activityForm.get('activity')?.hasError('required')">
+                        Required
+                    </mat-error>
+                </mat-form-field>
+            </div>
+
+            <!-- Schedule Date: solo visible si el activity lo requiere -->
+            <div class="col-lg-6" *ngIf="showScheduleDate">
+                <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>Schedule Meeting (Date)</mat-label>
+                    <input matInput [matDatepicker]="schedulePicker" placeholder="Select date"
+                        formControlName="scheduleDate" [min]="today" />
+                    <mat-datepicker-toggle matIconSuffix [for]="schedulePicker"></mat-datepicker-toggle>
+                    <mat-datepicker #schedulePicker startView="month"></mat-datepicker>
+                    <mat-error *ngIf="activityForm.get('scheduleDate')?.hasError('required')">Required</mat-error>
+                </mat-form-field>
+            </div>
+
+            <div class="col-lg-6" *ngIf="showScheduleDate">
+                <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>Schedule Time</mat-label>
+                    <input matInput type="time" formControlName="scheduleTime" step="60" placeholder="HH:mm" />
+                    <mat-error *ngIf="activityForm.get('scheduleTime')?.hasError('required')">Required</mat-error>
+                </mat-form-field>
+            </div>
+
+
+
+            <div class="col-12">
+                <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>Message: Add context, notes, next steps...</mat-label>
+                    <textarea matInput rows="3" cdkTextareaAutosize cdkAutosizeMinRows="3" cdkAutosizeMaxRows="10"
+                        formControlName="message" placeholder="Add context, notes, next steps..." maxlength="500">
+  </textarea>
+
+                    <mat-hint align="end">{{ activityForm.get('message')?.value?.length || 0 }}/500</mat-hint>
+                    <mat-error *ngIf="activityForm.get('message')?.hasError('required')">Required</mat-error>
+                    <mat-error *ngIf="activityForm.get('message')?.hasError('maxlength')">Max 500 characters</mat-error>
+                </mat-form-field>
+            </div>
+
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex justify-content-end mt-4">
+            <button mat-flat-button [disabled]="!activityForm.valid || loading">
+                Save
+            </button>
+            <button (click)="closeDialog()" mat-flat-button class="m-l-8 bg-error text-white" [disabled]="loading">
+                Cancel
+            </button>
+        </div>
+    </form>
+</mat-dialog-content>

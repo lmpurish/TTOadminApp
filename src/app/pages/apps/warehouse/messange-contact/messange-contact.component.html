@@ -1,0 +1,69 @@
+<mat-card class="cardWithShadow">
+  <mat-card-content>
+    <div class="row justify-content-between gap-16">
+      <div class="col-lg-4">
+        <mat-form-field appearance="outline" class="w-100 hide-hint">
+          <input matInput placeholder="Search Zone" (keyup)="applyFilter($any($event.target).value)" />
+          <mat-icon matSuffix>
+            <!--    <i-tabler name="search" class="icon-20 d-flex m-t-2"></i-tabler>-->
+          </mat-icon>
+        </mat-form-field>
+      </div>
+      <div class="col-lg-4 d-flex align-items-center justify-content-end">
+        <button mat-flat-button (click)="openDialog('Add', {})" color="primary">
+          Add New Message
+        </button>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<mat-card class="cardWithShadow">
+  <mat-card-content>
+    <div class="table-responsive">
+      <table mat-table [dataSource]="dataSource" class="w-100">
+        
+        <ng-container matColumnDef="subject">
+          <th mat-header-cell *matHeaderCellDef>Subject</th>
+
+          <td mat-cell *matCellDef="let element">
+            <div class="d-flex align-items-center gap-16">
+              <div>
+                <h6 class="f-w-600 f-s-16 m-t-0">{{ element.subject}}</h6>
+                @if (element.isDefault) {
+                <span class="f-s-14 bg-light-success  rounded f-w-600 p-x-6 p-y-4 f-s-12'">SmsDefault
+                </span>}
+              </div>
+            </div>
+
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="messageBody">
+          <th mat-header-cell *matHeaderCellDef>Message</th>
+          <td mat-cell *matCellDef="let element">
+           {{ element.messageBody | htmlToPlainText | slice:0:20 }}...
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="warehouseId">
+          <th mat-header-cell *matHeaderCellDef>Warehouse</th>
+          <td mat-cell *matCellDef="let element">
+            {{ getWarehouseName(element.warehouseId) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef>Action</th>
+          <td mat-cell *matCellDef="let element">
+            <a (click)="openDialog('Update', element)"><i-tabler name="edit"></i-tabler></a>
+            <a (click)="openDialog('Delete', element)"><i-tabler name="trash"></i-tabler></a>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+  </mat-card-content>
+</mat-card>

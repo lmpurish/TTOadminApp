@@ -1,0 +1,16 @@
+<h2 mat-dialog-title class="f-w-700">Your referral code belongs to {{}}</h2>
+<mat-dialog-content class="f-s-14">
+    <p>
+        Serás redirigido a <strong>{{ host }}</strong> en
+        <strong>{{ seconds }}</strong> segundos.
+    </p>
+    <p class="m-0">
+        Si no ocurre automáticamente, puedes hacer clic en:
+        <a [href]="url">{{ url }}</a>
+    </p>
+</mat-dialog-content>
+
+<mat-dialog-actions >
+    <button mat-stroked-button color="primary" (click)="goNow()">Ir ahora</button>
+    <button mat-button (click)="cancel()">Cancelar</button>
+</mat-dialog-actions>

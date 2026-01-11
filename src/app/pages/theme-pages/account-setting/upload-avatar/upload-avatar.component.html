@@ -1,0 +1,29 @@
+<mat-card class="cardWithShadow">
+    <mat-card-content class="p-y-24">
+        <mat-card-title>Change Profile</mat-card-title>
+        <mat-card-subtitle class="f-s-14">Change your profile picture from here</mat-card-subtitle>
+
+        <div class="text-center m-t-24">
+            <img [src]="avatarUrl || '/assets/images/profile/user-1.jpg'" width="120" class="rounded-circle" />
+
+            <!-- Input oculto -->
+            <input type="file" hidden #fileInput (change)="onFileSelected($event)"
+                accept="image/png, image/jpeg, image/gif" />
+
+            <div class="m-t-24">
+                <button mat-flat-button color="success" class="m-r-8" (click)="fileInput.click()">
+                    Select
+                </button>
+                <button mat-stroked-button color="warn" (click)="resetAvatar()">Reset</button>
+            </div>
+
+            <span class="f-s-14 m-t-24 d-block">Allowed JPG, GIF or PNG. Max size of 800K</span>
+            <div class="m-t-16 text-end">
+                <button mat-flat-button color="primary" type="button" (click)="submit()"
+                    [disabled]="loading || form.invalid">
+                    {{ loading ? 'Updating...' : 'Submit' }}
+                </button>
+            </div>
+        </div>
+    </mat-card-content>
+</mat-card>

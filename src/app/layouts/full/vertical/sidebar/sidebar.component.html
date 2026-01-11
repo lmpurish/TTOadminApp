@@ -1,0 +1,17 @@
+<div class="d-flex align-items-center justify-content-between">
+  <!-- Branding -->
+  <div class="branding">
+    <app-branding></app-branding>
+  </div>
+
+  <!-- Botón para cerrar el menú (solo si showToggle es true) -->
+  <ng-container *ngIf="showToggle">
+    <a
+      href="javascript:void(0)"
+      (click)="toggleMobileNav.emit()"
+      class="d-flex justify-content-center icon-40 align-items-center f-s-14"
+    >
+      <i-tabler name="x" class="icon-20 d-flex"></i-tabler>
+    </a>
+  </ng-container>
+</div>

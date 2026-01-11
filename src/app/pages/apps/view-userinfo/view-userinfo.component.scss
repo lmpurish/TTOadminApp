@@ -1,0 +1,16 @@
+.tabs-with-action {
+  position: relative;
+}
+
+/* Botón flotando en el borde derecho del header de tabs */
+.tabs-with-action .tabs-action {
+  position: absolute;
+  top: 6px;   /* ajusta fino según tu UI */
+  right: 8px; /* ajusta fino según tu UI */
+  z-index: 2;
+}
+
+/* Deja espacio para que no pise el último tab */
+::ng-deep .tabs-with-action .mat-mdc-tab-header {
+  padding-right: 44px; /* ancho aproximado del botón */
+}

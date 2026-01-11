@@ -1,0 +1,42 @@
+<h2 mat-dialog-title>Import Result</h2>
+
+<div mat-dialog-content *ngIf="result as r">
+  <p><b>Message:</b> {{ r.message ?? '-' }}</p>
+  <p><b>Warehouse:</b> {{ r.warehouseId ?? '-' }}</p>
+
+  <p>
+    <b>Date range:</b>
+    {{ r.dateRange?.minDate ?? '-' }} → {{ r.dateRange?.maxDate ?? '-' }}
+  </p>
+
+  <mat-divider class="m-y-12"></mat-divider>
+
+  <div class="row">
+    <div class="col"><b>Rows read:</b> {{ r.rowsRead ?? 0 }}</div>
+    <div class="col"><b>Routes updated:</b> {{ r.routesUpdated ?? 0 }}</div>
+    <div class="col"><b>Routes created:</b> {{ r.routesCreated ?? 0 }}</div>
+  </div>
+
+  <mat-divider class="m-y-12"></mat-divider>
+
+  <h3>Driver not found ({{ r.driverNotFound?.length ?? 0 }})</h3>
+  <div *ngIf="(r.driverNotFound?.length ?? 0) === 0">-</div>
+
+  <table class="w-100" *ngIf="(r.driverNotFound?.length ?? 0) > 0">
+    <tr>
+      <th>Date</th><th>Route</th><th>Driver</th>
+    </tr>
+    <tr *ngFor="let d of r.driverNotFound">
+      <td>{{ d.date ?? '-' }}</td>
+      <td>{{ d.routeCode ?? '-' }}</td>
+      <td>{{ d.driverName ?? '-' }}</td>
+    </tr>
+  </table>
+
+  <h3 class="m-t-16">Driver ambiguous ({{ r.driverAmbiguous?.length ?? 0 }})</h3>
+  <div *ngIf="(r.driverAmbiguous?.length ?? 0) === 0">-</div>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cerrar</button>
+</div>

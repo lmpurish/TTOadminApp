@@ -1,0 +1,37 @@
+<h2 mat-dialog-title class="m-0">PayRun #{{ data.run?.id }} · Driver {{ data.run?.driverId }}</h2>
+
+<mat-dialog-content>
+  <div class="grid gap-2">
+    <div><b>Gross:</b> {{ data.run?.grossAmount | currency }}</div>
+    <div><b>Adjustments:</b> {{ data.run?.adjustments | currency }}</div>
+    <div><b>Net:</b> {{ data.run?.netAmount | currency }}</div>
+    <div><b>Status:</b> {{ data.run?.status }}</div>
+  </div>
+
+  <div class="m-t-12">
+    <table class="mat-elevation-z1 w-100">
+      <thead>
+        <tr>
+          <th>Section</th>
+          <th>Description</th>
+          <th class="text-right">Qty</th>
+          <th class="text-right">Rate</th>
+          <th class="text-right">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let l of lines">
+          <td>{{ l.sourceType }}</td>
+          <td>{{ l.description }}</td>
+          <td class="text-right">{{ l.qty }}</td>
+          <td class="text-right">{{ l.rate | currency }}</td>
+          <td class="text-right">{{ l.amount | currency }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button (click)="close()">Cerrar</button>
+</mat-dialog-actions>

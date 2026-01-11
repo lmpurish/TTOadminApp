@@ -1,0 +1,92 @@
+<mat-card class="cardWithShadow">
+    <mat-card-content>
+        <div class="header-row">
+            <div>
+                <h3 class="m-0">Payroll por Driver</h3>
+                <small class="text-muted">Periodo: {{ startDateYmd }} → {{ endDateYmd }}</small>
+            </div>
+
+            <div class="actions">
+                <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Search driver</mat-label>
+                    <input matInput [formControl]="filterCtrl" placeholder="Por ID de driver" />
+                    <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table mat-table [dataSource]="dataSource" class="w-100 fixed-table" matSort>
+
+                <colgroup>
+                    <col class="col-driver">
+                    <col class="col-number">
+                    <col class="col-number">
+                    <col class="col-number">
+                    <col class="col-action">
+                </colgroup>
+
+                <!-- DRIVER -->
+                <ng-container matColumnDef="driver">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Driver</th>
+                    <td mat-cell *matCellDef="let row">
+                        <div class="d-flex align-items-center gap-16">
+                            <img src="assets/default-user.png" width="36" class="rounded-circle" />
+                            <div>
+                                <div class="f-w-600">{{ row.driverName }}</div>
+                                <!-- Si quieres, aquí puedes interpolar nombre real del empleado -->
+                            </div>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- GROSS -->
+                <ng-container matColumnDef="gross">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-h">Gross</th>
+                    <td mat-cell *matCellDef="let row" class="num">{{ row.gross | currency }}</td>
+                </ng-container>
+
+                <!-- ADJUSTMENTS -->
+                <ng-container matColumnDef="adjustments">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-h">Adjustments</th>
+                    <td mat-cell *matCellDef="let row" class="num">{{ row.adjustments | currency }}</td>
+                </ng-container>
+
+                <!-- NET -->
+                <ng-container matColumnDef="net">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-h">Net</th>
+                    <td mat-cell *matCellDef="let row" class="num">
+                        <span [ngClass]="{'text-success': row.net >= 0, 'text-warn': row.net < 0}">
+                            {{ row.net | currency }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <!-- ACTION -->
+                <ng-container matColumnDef="action">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-h">Action</th>
+                    <td mat-cell *matCellDef="let row" class="text-center">
+                        <button mat-icon-button (click)="viewRun(row)" matTooltip="Ver detalle">
+                            <i-tabler name="eye" class="icon-18"></i-tabler>
+                        </button>
+                        <button mat-icon-button (click)="approve(row)" matTooltip="Aprobar run">
+                            <i-tabler name="check" class="icon-18"></i-tabler>
+                        </button>
+                        <button mat-icon-button (click)="exportRun(row)" matTooltip="Exportar CSV">
+                            <i-tabler name="file-download" class="icon-18"></i-tabler>
+                        </button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+            </table>
+
+            <div class="text-right f-w-600 m-t-12">
+                Total Net: {{ totalNet | currency }}
+            </div>
+
+            <mat-paginator [pageSizeOptions]="[5,10,20,50]" [pageSize]="10" showFirstLastButtons></mat-paginator>
+        </div>
+    </mat-card-content>
+</mat-card>

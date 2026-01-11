@@ -1,0 +1,12 @@
+<div style="position: relative; display: inline-block;">
+    <!-- Logo -->
+    <img [src]="companyLogo" class="align-middle m-2" alt="logo"
+        style="width: 150px; height: 150px; object-fit: contain;" />
+
+    <!-- Ícono flotante en la esquina -->
+    <label *ngIf="user?.role === 'CompanyOwner'" style="position: absolute; bottom: 5px; right: 5px; cursor: pointer;">
+        <i-tabler name="refresh" class="icon-18"></i-tabler>
+        <input type="file" (change)="onLogoSelected($event)" hidden />
+    </label>
+</div>
+

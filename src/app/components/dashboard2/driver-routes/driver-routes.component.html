@@ -1,0 +1,110 @@
+<mat-card class="cardWithShadow">
+    <mat-card-header class="d-flex">
+        <div class="m-r-auto">
+            <mat-card-title>My routes</mat-card-title>
+            <mat-card-subtitle>Performance according to my statistics</mat-card-subtitle>
+        </div>
+        <div class="d-flex align-items-center">
+            <mat-form-field appearance="outline" class="date-picker">
+                <mat-label>Select Date Range</mat-label>
+
+                <mat-date-range-input [formGroup]="dateRange" [rangePicker]="picker">
+                    <input matStartDate formControlName="start" placeholder="Start Date" />
+                    <input matEndDate formControlName="end" placeholder="End Date" />
+                </mat-date-range-input>
+
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-date-range-picker #picker (closed)="onDateChange()"></mat-date-range-picker>
+            </mat-form-field>
+        </div>
+    </mat-card-header>
+
+    <mat-card-content>
+        <div class="table-responsive">
+            <table mat-table [dataSource]="dataSource" class="w-100" matSort>
+                <ng-container matColumnDef="date">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Date</th>
+                    <td mat-cell *matCellDef="let element">
+                        {{ element.date | date: 'MMM dd yyyy' }}
+                    </td>
+                    <td mat-footer-cell *matFooterCellDef>Total</td>
+                </ng-container>
+
+                <ng-container matColumnDef="route">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Route</th>
+                    <td mat-cell *matCellDef="let element">
+                        {{ element.zone.zoneCode }}
+                    </td>
+                    <td mat-footer-cell *matFooterCellDef></td>
+                </ng-container>
+
+                <ng-container matColumnDef="TotalVolume">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Volumen</th>
+                    <td mat-cell *matCellDef="let element">
+                        <div class="d-flex align-items-center gap-16">
+                            <div>
+                                <h6 class="f-w-600 f-s-16 m-t-0">{{ element.volumen }}</h6>
+                            </div>
+                        </div>
+                    </td>
+                    <td mat-footer-cell *matFooterCellDef class="f-w-600">{{ totalVolumen }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="TotalStops">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Stops</th>
+                    <td mat-cell *matCellDef="let element" class="f-s-14">
+                        {{ element.totalStops }}
+                    </td>
+                    <td mat-footer-cell *matFooterCellDef>{{totalStops}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="TotalAttempts">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Attempts</th>
+                    <td mat-cell *matCellDef="let element" class="f-s-14">
+                        {{ element.attempts }}
+                    </td>
+                    <td mat-footer-cell *matFooterCellDef>{{totalAttempts}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="TotalCNL">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>CNL</th>
+                    <td mat-cell *matCellDef="let element" class="f-s-14">
+                        {{ element.cnl }}
+                    </td>
+                    <td mat-footer-cell *matFooterCellDef>{{totalCNL}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="DPOM">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>DPOM</th>
+                    <td mat-cell *matCellDef="let element" class="f-s-14">
+                        {{ (element.cnl * 1000000) / element.volumen | number: '1.0-0' }}
+                    </td>
+                    <td mat-footer-cell *matFooterCellDef></td>
+                </ng-container>
+
+                <ng-container matColumnDef="AverageLOSPerDay">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>LOS%</th>
+                    <td mat-cell *matCellDef="let element" class="f-s-14">
+                        {{ element.averageLOSPerDay | number: '1.2-2' }} %
+                    </td>
+                    <td mat-footer-cell *matFooterCellDef></td>
+                </ng-container>
+
+                <!-- Table Headers & Rows -->
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-footer-row *matFooterRowDef="displayedColumns" class="f-s-14 f-w-600 bg-light">
+                </tr>
+
+                <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+            
+
+            </table>
+
+            <!-- Mensaje si no hay rutas -->
+            <div *ngIf="dataSource?.data?.length === 0" class="text-center p-4">
+                <mat-icon color="warn" >info</mat-icon>
+                <p class="f-s-16 f-w-600 m-t-8">There are no routes assigned for that date range..</p>
+            </div>
+        </div>
+    </mat-card-content>
+</mat-card>

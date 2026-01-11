@@ -1,0 +1,12 @@
+{
+  "/api": {
+    "target": "https://ttologistics.online",
+    "secure": true,
+    "changeOrigin": true
+  },
+  "/storage": {
+    "target": "https://ttologistics.online",
+    "secure": true,
+    "changeOrigin": true
+  }
+}

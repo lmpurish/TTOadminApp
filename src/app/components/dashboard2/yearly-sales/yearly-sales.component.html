@@ -1,0 +1,28 @@
+<mat-card class="cardWithShadow">
+  <mat-card-header>
+    <mat-card-title>Delivery Stops</mat-card-title>
+    <mat-card-subtitle>Every month</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <!-- ---------------------------- -->
+    <!-- charts here -->
+    <!-- ---------------------------- -->
+    <apx-chart
+    #chart
+    *ngIf="yearlysaleChart?.series?.length"
+    [series]="yearlysaleChart.series"
+    [chart]="yearlysaleChart.chart!"
+    [xaxis]="yearlysaleChart.xaxis!"
+    [dataLabels]="yearlysaleChart.dataLabels!"
+    [plotOptions]="yearlysaleChart.plotOptions!"
+    [tooltip]="yearlysaleChart.tooltip!"
+    [legend]="yearlysaleChart.legend!"
+    [grid]="yearlysaleChart.grid!"
+    [yaxis]="yearlysaleChart.yaxis!"
+    [colors]="yearlysaleChart.colors!"
+  >
+  </apx-chart>
+
+   
+  </mat-card-content>
+</mat-card>

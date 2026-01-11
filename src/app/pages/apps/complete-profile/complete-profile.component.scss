@@ -1,0 +1,62 @@
+.pdf-wrap {
+  position: relative;
+  width: 100%;
+  height: 520px; // alto visible del visor
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.pdf-object {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 8px;
+}
+
+.sig-overlay {
+  position: absolute;
+  border: 2px dashed #888;
+  border-radius: 6px;
+  background: transparent;
+  touch-action: none; // mejora en móviles para dibujar
+}
+
+.sig-toolbar {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.side-panel {
+  margin-top: 16px; // si lo quieres debajo; ponlo a la derecha si usas grid
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+@media (max-width: 991.98px) {
+  iframe[title="Contract PDF"] {
+    height: 60vh;
+  }
+}
+
+@media (min-width: 992px) {
+  iframe[title="Contract PDF"] {
+    height: 75vh;
+  }
+}
+
+/* Nada debe ocultar overflow; útil si lo pones dentro de cards/cols/stepper */
+.container,
+.container-fluid,
+.row,
+.col-12,
+.col-lg-8,
+.card {
+  overflow: visible;
+}

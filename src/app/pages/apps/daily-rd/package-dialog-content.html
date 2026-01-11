@@ -1,0 +1,95 @@
+<!-- Spinner de carga -->
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+</div>
+
+<!-- Encabezado -->
+<div class="d-flex align-items-center justify-content-between m-b-16 p-x-20 p-t-16">
+  <h3>{{ action }} Incident</h3>
+  <button mat-icon-button mat-dialog-close class="d-flex justify-content-center" [disabled]="loading">
+    <i-tabler name="x" class="icon-20 d-flex"></i-tabler>
+  </button>
+</div>
+
+<!-- Formulario -->
+<mat-dialog-content class="mat-typography search-dialog" *ngIf="action !== 'Delete'">
+  <form [formGroup]="incidentForm" >
+    <mat-form-field class="theme-select" appearance="outline" style="min-width: 200px;">
+      <mat-label>Select Date</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="selectedDate">
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+    <div class="row">
+      <div class="col-lg-6">
+        <mat-form-field appearance="outline" class="w-100 m-t-16">
+          <mat-label>Warehouse</mat-label>
+          <mat-select formControlName="warehouse" required [compareWith]="compareWarehouses">
+            <mat-option *ngFor="let w of warehouses" [value]="w.id">{{ w.company + " (" + w.city + ")" }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="col-lg-6">
+        <mat-form-field appearance="outline" class="w-100 m-t-16">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option *ngFor="let status of statusOptions" [value]="status">
+              {{ status }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="col-lg-6">
+        <mat-form-field appearance="outline" class="w-100 m-t-16">
+          <mat-label>Routes</mat-label>
+          <mat-select name="Routes" required formControlName="route" [compareWith]="compareRoutes">
+            <mat-option *ngFor="let r of routes" [value]="r">
+              {{ r.identificationNumber + " - " + r.userName + " " + r.userLastName + " (" + r.zone +  ")"  }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="col-lg-6">
+        <mat-form-field appearance="outline" class="w-100 m-t-16">
+          <mat-label>Tracking number</mat-label>
+          <input matInput name="tracking" formControlName="tracking" required 
+            placeholder="Tracking" />
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-6" *ngFor="let field of ['address', 'city', 'state', 'zipCode']">
+        <mat-form-field appearance="outline" class="w-100 m-t-16">
+          <mat-label>{{ field | titlecase }}</mat-label>
+          <input matInput [formControlName]="field" placeholder="Enter {{field}}" />
+        </mat-form-field>
+      </div>
+    </div>
+
+    <mat-divider class="m-y-16"></mat-divider>
+
+    <div class="d-flex justify-content-end mt-4">
+      <button mat-flat-button (click)="doAction()" [disabled]="!incidentForm.valid || loading">
+        {{ action }}
+      </button>
+      <button mat-flat-button class="m-l-8 bg-error text-white" (click)="closeDialog()" [disabled]="loading">
+        Cancel
+      </button>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-content *ngIf="action === 'Delete'">
+  <div class="p-x-24 m-y-8">
+    <p class="f-s-14">
+      Are you sure you want to delete <span class="f-w-600">{{ local_data.tracking }}</span>?
+    </p>
+  </div>
+  <div mat-dialog-actions class="p-x-24 p-b-24">
+    <button (click)="doAction()" mat-flat-button [disabled]="loading">{{ action }}</button>
+    <button mat-flat-button (click)="closeDialog()" class="m-l-8 bg-error text-white" [disabled]="loading">
+      Cancel
+    </button>
+  </div>
+</mat-dialog-content>

@@ -1,0 +1,124 @@
+<div class="d-flex align-items-center justify-content-between m-b-16 p-x-20 p-t-16">
+  <h3>{{ action }} Zone</h3>
+  <button mat-icon-button mat-dialog-close class="d-flex justify-content-center"></button>
+</div>
+
+<!-- MODO CREATE/EDIT -->
+<mat-dialog-content *ngIf="action !== 'Delete'; else deleteTemplate">
+  <form #zoneForm="ngForm">
+    <div class="row">
+      <!-- Zone Code -->
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Zone Code</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input
+            matInput
+            type="text"
+            required
+            [(ngModel)]="local_data.zoneCode"
+            name="zoneCode"
+            placeholder="Zone Code"
+          />
+        </mat-form-field>
+      </div>
+
+      <!-- Price Stop -->
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Price Stop</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input
+            matInput
+            type="number"
+            min="0"
+            step="0.01"
+            required
+            [(ngModel)]="local_data.priceStop"
+            name="priceStop"
+            placeholder="Price per stop"
+          />
+        </mat-form-field>
+      </div>
+
+      <!-- Area -->
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Area</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input
+            matInput
+            type="text"
+            required
+            [(ngModel)]="local_data.area"
+            name="area"
+            placeholder="Area"
+          />
+        </mat-form-field>
+      </div>
+
+      <!-- Warehouse -->
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Warehouse</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select
+            [(ngModel)]="local_data.idWarehouse"
+            name="warehouseId"
+            required
+          >
+            <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+              {{ warehouse.name || (warehouse.company + ' - ' + warehouse.city) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- ZIP Codes (chips) -->
+      <div class="col-lg-12">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">ZIP Codes</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-chip-grid #chipGrid aria-label="ZIP Codes">
+            <mat-chip-row
+              *ngFor="let zip of zipCodes"
+              [removable]="true"
+              (removed)="removeZip(zip)"
+            >
+              {{ zip }}
+              <button matChipRemove type="button" aria-label="Remove zip">
+                <mat-icon>cancel</mat-icon>
+              </button>
+            </mat-chip-row>
+
+            <input
+              placeholder="Add ZIP and press Enter"
+              [matChipInputFor]="chipGrid"
+              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+              [matChipInputAddOnBlur]="addOnBlur"
+              (matChipInputTokenEnd)="addZip($event)"
+            />
+          </mat-chip-grid>
+          <mat-hint>Push Enter or coma. Ej: 77001 o 77001-1234</mat-hint>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div mat-dialog-actions class="p-t-8">
+      <button mat-flat-button color="primary" (click)="doAction()" [disabled]="!zoneForm.valid">
+        {{ action }}
+      </button>
+      <button mat-flat-button class="m-l-8 bg-error text-white" (click)="closeDialog()">
+        Cancel
+      </button>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<!-- MODO DELETE -->
+<ng-template #deleteTemplate>
+  <div class="p-x-24 m-y-8">
+    <p class="f-s-14">
+      Are you sure you want to delete <span class="f-w-600">{{ local_data.zoneCode }}</span>?
+    </p>
+  </div>
+  <div mat-dialog-actions class="p-x-24 p-b-24">
+    <button (click)="doAction()" mat-flat-button>{{ action }}</button>
+    <button mat-flat-button (click)="closeDialog()" class="m-l-8 bg-error text-white">Cancel</button>
+  </div>
+</ng-template>

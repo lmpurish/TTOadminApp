@@ -1,0 +1,144 @@
+<!-- LOADING -->
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+</div>
+
+<!-- FILTROS / CONTROLES -->
+<mat-card class="cardWithShadow">
+  <mat-card-content>
+    <div class="row gap-16 align-items-end">
+      <!-- Búsqueda -->
+      <div class="col-lg-3">
+        <mat-form-field appearance="outline" style="min-width: 300px; margin-left: 16px;">
+          <input matInput placeholder="Search Warehouse"
+            (keyup)="dataSourceWh.filter = $any($event.target).value.trim().toLowerCase()" />
+          <mat-icon matSuffix>
+            <i-tabler name="search" class="icon-20 d-flex m-t-2"></i-tabler>
+          </mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Warehouse (solo admin) -->
+      <div class="col-lg-3" *ngIf="isAdmin">
+        <mat-form-field appearance="outline" style="min-width: 300px; margin-left: 16px;">
+          <mat-label>Warehouse</mat-label>
+          <mat-select [value]="selectedWarehouseId" (selectionChange)="onWarehouseChange($event.value)">
+            <mat-option [value]="null">All Warehouses</mat-option>
+            <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+              {{ warehouse.name || (warehouse.company + ' - ' + warehouse.city) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <!-- Período: Start / End -->
+      <div class="col-lg-2">
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Período</mat-label>
+          <mat-date-range-input [rangePicker]="picker" [formGroup]="form">
+            <input matStartDate formControlName="weekStart" placeholder="Inicio">
+            <input matEndDate formControlName="weekEnd" placeholder="Fin">
+          </mat-date-range-input>
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-date-range-picker #picker></mat-date-range-picker>
+        </mat-form-field>
+
+
+      </div>
+
+      <!-- Acciones -->
+      <div class="col-lg-6 d-flex gap-8">
+        <button mat-raised-button color="primary" (click)="loadWarehousesSummary()">
+          <i-tabler name="sum" class="icon-18 m-r-6 d-flex"></i-tabler> Load by Warehouse
+        </button>
+        <button mat-stroked-button color="primary" (click)="linkDriverRate()"
+          >
+          <i-tabler name="cloud-dollar" class="icon-18 m-r-6 d-flex"></i-tabler>Employee Rate
+        </button>
+        <button mat-stroked-button color="primary" (click)="exportWarehousesCsv()"
+          [disabled]="!dataSourceWh.data.length">
+          <i-tabler name="file-export" class="icon-18 m-r-6 d-flex"></i-tabler> Export
+        </button>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- TABLA: Payroll por Warehouse -->
+<mat-card class="cardWithShadow">
+  <mat-card-content>
+    <div class="table-responsive">
+      <table mat-table [dataSource]="dataSourceWh" class="w-100" matSort #whSort="matSort">
+        <ng-container matColumnDef="warehouse">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Warehouse</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="d-flex align-items-center gap-16">
+              <div [ngSwitch]="row.warehouseCompany">
+                <img *ngSwitchCase="'OnTrac'" src="assets/images/warehouse/Ontrack-Logo.svg" width="40" alt="OnTrac" />
+                <img *ngSwitchCase="'Speedx'" src="assets/images/warehouse/SpeedX.webp" width="40" alt="Speedx" />
+                <img *ngSwitchCase="'Uni Uni'" src="assets/images/warehouse/UniUni.png" width="40" alt="Uni Uni" />
+                <!-- <img *ngSwitchDefault src="assets/images/warehouse/default.svg" width="40" alt="Default" /> -->
+              </div>
+
+              <div>
+                <h6 class="f-w-600 f-s-16 m-t-0">{{ row.warehouseName }}</h6>
+                <span class="f-s-13 text-muted">{{ row.startDate }} → {{ row.endDate }} ·
+                  Drivers: {{ row.drivers }}</span>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- GROSS -->
+        <ng-container matColumnDef="gross">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600 text-right" mat-sort-header>Gross</th>
+          <td mat-cell *matCellDef="let row" class="text-right">{{ row.gross | currency }}</td>
+        </ng-container>
+
+        <!-- ADJUSTMENTS -->
+        <ng-container matColumnDef="adjustments">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600 text-right" mat-sort-header>Adjustments</th>
+          <td mat-cell *matCellDef="let row" class="text-right">{{ row.adjustments | currency }}</td>
+        </ng-container>
+
+        <!-- NET -->
+        <ng-container matColumnDef="net">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600 text-right" mat-sort-header>Net</th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            <span [ngClass]="{'text-success': row.net >= 0, 'text-warn': row.net < 0}">
+              {{ row.net | currency }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- ACTION -->
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">Action</th>
+          <td mat-cell *matCellDef="let row" class="action-link">
+            <a (click)="viewWarehouseDrivers(row)" class="m-r-10 cursor-pointer" title="View Drivers">
+              <i-tabler name="eye" class="icon-18"></i-tabler>
+            </a>
+            <a (click)="lockWarehousePeriod(row)" class="m-r-10 cursor-pointer" title="Lock Period">
+              <i-tabler name="lock" class="icon-18"></i-tabler>
+            </a>
+          </td>
+        </ng-container>
+
+        <!-- HEADER / ROWS -->
+        <tr mat-header-row *matHeaderRowDef="displayedColumnsWh"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumnsWh"></tr>
+
+        <!-- FOOTER total -->
+        <ng-container matColumnDef="footerTotal">
+          <td mat-footer-cell *matFooterCellDef colspan="5" class="text-right f-w-600">
+            Total Net: {{ totalNetWh | currency }}
+          </td>
+        </ng-container>
+        <tr mat-footer-row *matFooterRowDef="['footerTotal']"></tr>
+      </table>
+
+      <mat-paginator #whPaginator [pageSizeOptions]="[5, 10, 20, 50]" [pageSize]="10"
+        showFirstLastButtons></mat-paginator>
+    </div>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,53 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div>
+    <label>Company ID</label>
+    <input type="number" formControlName="companyId" min="1" />
+  </div>
+
+  <div>
+    <label>Título</label>
+    <input type="text" formControlName="title" />
+  </div>
+
+  <div>
+    <label>Versión</label>
+    <input type="text" formControlName="version" />
+  </div>
+
+  <div>
+    <label>PDF</label>
+    <input type="file" accept=".pdf,application/pdf" (change)="onFileChange($event)" />
+  </div>
+
+  <div style="margin:8px 0;">
+    <button type="button" (click)="useDemoFields()">Usar campos demo (pág. 3)</button>
+  </div>
+
+  <div *ngIf="errorMsg" style="color:#b00020">{{ errorMsg }}</div>
+
+  <div *ngIf="uploading">
+    <progress [value]="progress" max="100"></progress> {{progress}}%
+  </div>
+
+  <button type="submit" [disabled]="uploading || form.invalid">Crear plantilla</button>
+
+  <!-- ✅ solo cuando ya subimos el PDF -->
+  <app-signature-calibrator *ngIf="lastResponse as r" [pdfUrl]="r.fileUrl"
+    (fieldsChange)="onFieldsFromCalibrator($event)">
+  </app-signature-calibrator>
+  <pre *ngIf="fields?.length">Campos: {{ fields | json }}</pre>
+</form>
+
+<hr />
+
+<div *ngIf="lastResponse as r">
+  <p><strong>Template creado:</strong> #{{ r.templateId }}</p>
+  <p><a [href]="r.fileUrl" target="_blank">Ver PDF base</a></p>
+
+  <button (click)="signAndStamp(r.templateId)">Firmar y estampar (demo)</button>
+
+  <div *ngIf="signedUrl">
+    <p>PDF firmado:</p>
+    <a [href]="signedUrl" target="_blank">{{ signedUrl }}</a>
+  </div>
+</div>

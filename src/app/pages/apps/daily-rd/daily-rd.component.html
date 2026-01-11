@@ -1,0 +1,175 @@
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+</div>
+<mat-card class="cardWithShadow">
+  <mat-card-content>
+    <div class="row ">
+      <div class="col-lg-4">
+        <mat-form-field appearance="outline" class="w-100 hide-hint">
+          <input matInput [(ngModel)]="textFilter" placeholder="Search Incident" (input)="applyFilter(textFilter)" />
+
+          <button *ngIf="textFilter" matSuffix mat-icon-button aria-label="Clear" (click)="clearFilter()">
+            <mat-icon>close</mat-icon>
+          </button>
+
+          <mat-icon *ngIf="!textFilter" matSuffix>
+            <i-tabler name="search" class="icon-20 d-flex m-t-2"></i-tabler>
+          </mat-icon>
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <ng-container *ngIf="isAdmin">
+          <mat-form-field appearance="outline" class="theme-select" style="min-width: 300px; margin-left: 16px;">
+            <mat-label>Warehouse</mat-label>
+            <mat-select [value]="selectedWarehouseId" (selectionChange)="onWarehouseChange($event.value)">
+              <mat-option [value]="null">All Warehouses</mat-option>
+              <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+                {{ warehouse.name || (warehouse.company + ' - ' + warehouse.city) }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </ng-container>
+      </div>
+      <div class="col-lg-4 d-flex align-items-center justify-content-end">
+        <!-- add employee -->
+        <button mat-flat-button (click)="openDialog('Add', {})" color="primary">
+          Add Incident
+        </button>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+<mat-card class="cardWithShadow">
+  <mat-card-content>
+    <div class="table-responsive">
+      <table mat-table [dataSource]="dataSource" class="w-100">
+        <ng-container matColumnDef="#">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">Date</th>
+          <td mat-cell *matCellDef="let element">
+            <div class="d-flex align-items-center gap-16">
+              <div>
+                <h6 class="f-w-600 f-s-16 m-t-0">{{ element.incidentDate | date:'MMM d, y' }}</h6>
+                <span class="f-s-14" [ngClass]="{
+                  'bg-light-error text-error rounded f-w-600 p-x-6 p-y-4 f-s-12': element.reviewStatus === 'Open',
+                  'bg-light-warning text-warning rounded f-w-600 p-x-6 p-y-4 f-s-12': element.reviewStatus === 'Pending',
+                  'bg-light-secondary text-secondary rounded f-w-600 p-x-6 p-y-4 f-s-12': element.reviewStatus === 'Approved'
+                }">
+                  {{ element.reviewStatus }}
+                </span>
+              </div>
+            </div>
+
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="tracking">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">Tracking</th>
+          <td mat-cell *matCellDef="let element">
+            <div class="d-flex align-items-center gap-16">
+              <div>
+                <h6 class="f-w-600 f-s-16 m-t-0">
+                  <ng-container *ngIf="element.status === 'CNL'; else plainText">
+                    <a [href]="'https://www.ontrac.com/tracking/?number=' + element.tracking" class="text-primary"
+                      target="_blank" rel="noopener noreferrer">
+                      {{element.tracking}}
+                    </a>
+                  </ng-container>
+                  <ng-template #plainText>
+                    {{ element.tracking }}
+                  </ng-template>
+                </h6>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="rsp">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
+            RSP
+          </th>
+          <td mat-cell *matCellDef="let element" class="f-s-14">
+            {{ element.rsp }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="driver">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
+            Driver
+          </th>
+          <td mat-cell *matCellDef="let element" class="f-s-14">
+            <ng-container *ngIf="element.route?.user; else noDriver">
+              {{ element.route.user.name }} {{ element.route.user.lastName }}
+            </ng-container>
+            <ng-template #noDriver>
+              ---
+            </ng-template>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
+            Status
+          </th>
+          <td mat-cell *matCellDef="let element" class="f-s-14">
+            {{ element.status }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="route">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
+            Route
+          </th>
+          <td mat-cell *matCellDef="let element" class="f-s-14">
+            <ng-container *ngIf="element.route?.zone?.zoneCode; else noRoute">
+              {{ element.route.zone.zoneCode }}
+            </ng-container>
+            <ng-template #noRoute>
+              ---
+            </ng-template>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="address">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
+            Address
+          </th>
+          <td mat-cell *matCellDef="let element" class="f-s-14">
+            <ng-container *ngIf="element.status === 'CNL'; else plainText">
+              <a href="https://www.google.com/maps/dir/{{element.addrLat}},{{element.addrLon}}/{{element.scanLat}},{{element.scanLon}}"
+                target="_blank">
+                {{ element.address +". " + element.city +"," + element.state}}
+              </a>
+            </ng-container>
+            <ng-template #plainText>
+              {{ element.address +". " + element.city +"," + element.state}}
+            </ng-template>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="dayElapsed">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
+            Day Elapsed
+          </th>
+          <td mat-cell *matCellDef="let element" class="f-s-14">
+            {{ element.dayElapsed }}
+          </td>
+        </ng-container>
+
+
+
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
+            Action
+          </th>
+          <td mat-cell *matCellDef="let element" class="action-link">
+            <a (click)="openDialog('Update', element)" class="m-r-10 cursor-pointer"><i-tabler name="edit"
+                class="icon-18"></i-tabler></a>
+            <a (click)="openDialog('Delete', element)" class="cursor-pointer">
+              <i-tabler name="trash" class="icon-18"></i-tabler>
+            </a>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+      <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+    </div>
+  </mat-card-content>
+</mat-card>
