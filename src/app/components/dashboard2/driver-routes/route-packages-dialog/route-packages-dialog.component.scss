@@ -1,0 +1,78 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  max-height: 75vh;
+  /* controla el alto del modal */
+  overflow: hidden;
+  /* evita scroll del dialog-content */
+  min-height: 0;
+  /* ✅ CRÍTICO */
+}
+
+.table-wrap {
+  flex: 1 1 auto;
+  /* ✅ toma el espacio restante */
+  min-height: 0;
+  /* ✅ CRÍTICO */
+  overflow: auto;
+  /* ✅ scroll aquí */
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: white;
+}
+
+.toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.count {
+  white-space: nowrap;
+}
+
+.muted {
+  opacity: .7;
+  font-size: 0.9em;
+  margin-left: 8px;
+}
+
+.subtitle {
+  margin: 0 24px 12px 24px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f5f7fa;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.chip {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+.chip.total {
+  margin-left: auto;
+  font-size: 14px;
+}
+
+.meta {
+  margin-top: 8px;
+  display: flex;
+  gap: 14px;
+  opacity: .8;
+  font-size: 12px;
+}

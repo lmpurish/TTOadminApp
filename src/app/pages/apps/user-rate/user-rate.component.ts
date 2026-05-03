@@ -82,8 +82,9 @@ export class UserRateComponent {
     'effectiveTo',
     'rateType',
     'baseAmount',
-    // 'minPayPerRoute',
-    'failedStopPenalty',
+    'extraAmount',
+    'dailyAmount',
+    // 'failedStopPenalty',
     //  'rescueStopRate',
     'action',
   ];
@@ -203,8 +204,10 @@ export class UserRateComponent {
           effectiveFrom: r.effectiveFrom,
           effectiveTo: (r as any).effectiveTo ?? undefined,
           driverFullName: r.driverFullName,
+          dailyAmount: Number(r.dailyAmount),
+          extraAmount: Number(r.extraAmount || 0)
         }));
-
+     
         this.setData(rows);
 
         // ✅ aplica filtros actuales al refrescar data
@@ -234,9 +237,13 @@ export class UserRateComponent {
         baseAmount: new FormControl<number | undefined>(it.baseAmount, {
           validators: [Validators.required, Validators.min(0)],
         }),
+        extraAmount: new FormControl<number | undefined>(it.extraAmount, {
+          validators: [Validators.required, Validators.min(0)],
+        }),
         minPayPerRoute: new FormControl<number | undefined>(it.minPayPerRoute),
         failedStopPenalty: new FormControl<number | undefined>(it.failedStopPenalty),
         rescueStopRate: new FormControl<number | undefined>(it.rescueStopRate),
+        dailyAmount: new FormControl<number | undefined>(it.dailyAmount)
       });
 
       this.rowForms.set(it.id, g);
@@ -285,8 +292,10 @@ export class UserRateComponent {
       minPayPerRoute: this.toNullableNumber(g.value.minPayPerRoute),
       failedStopPenalty: this.toNullableNumber(g.value.failedStopPenalty),
       rescueStopRate: this.toNullableNumber(g.value.rescueStopRate),
+      dailyAmount: this.toNullableNumber(g.value.dailyAmount),
+      extraAmount: this.toNullableNumber(g.value.extraAmount)
     };
-
+    console.log(payload)
     this.payrollService.updateDriverRate(payload).subscribe({
       next: () => this.settings.showSuccess?.('Saved'),
       error: (err) => this.settings.showError?.(err?.error?.message || 'Save failed'),
@@ -304,9 +313,11 @@ export class UserRateComponent {
         minPayPerRoute: this.toNullableNumber(g.value.minPayPerRoute),
         failedStopPenalty: this.toNullableNumber(g.value.failedStopPenalty),
         rescueStopRate: this.toNullableNumber(g.value.rescueStopRate),
+        dailyAmount: this.toNullableNumber(g.value.dailyAmount),
+        extraAmount: this.toNullableNumber(g.value.extraAmount)
       };
     });
-
+    console.log(payloads)
     if (payloads.length === 0) return;
 
     const next = (i: number) => {
@@ -335,6 +346,8 @@ export class UserRateComponent {
       minPayPerRoute: original.minPayPerRoute,
       failedStopPenalty: original.failedStopPenalty,
       rescueStopRate: original.rescueStopRate,
+      dailyAmount: original.dailyAmount,
+      extraAmount: original.extraAmount
     });
   }
 

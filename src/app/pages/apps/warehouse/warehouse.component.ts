@@ -48,7 +48,7 @@ export class WarehouseComponent implements AfterViewInit {
 
   searchText: string = '';
 
-  displayedColumns: string[] = ['company', 'address', 'city', 'state','manager', 'sendPayroll', 'isHiring', 'action'];
+  displayedColumns: string[] = ['company', 'address', 'city', 'state', 'manager', 'sendPayroll', 'isHiring', 'action'];
   dataSource = new MatTableDataSource<WarehouseComponent>([]);
   openTimeStr: string | null = null;
   loading: boolean = false;
@@ -59,16 +59,13 @@ export class WarehouseComponent implements AfterViewInit {
   ) { }
 
   ngOnInit(): void {
-
     this.loadWarehouses();
-
   }
 
   loadWarehouses(): void {
     this.loading = true;
     this.warehouseService.getWarehouses().subscribe({
       next: (res) => {
-
         this.dataSource.data = res;
         if (this.paginator) {
           this.dataSource.paginator = this.paginator;
@@ -91,25 +88,49 @@ export class WarehouseComponent implements AfterViewInit {
   }
 
   openDialog(action: string, warehouse: Warehouse | any): void {
-    if (action == 'Route') {
+    if (action === 'Route') {
       const dialogRef = this.dialog.open(ZoneComponent, {
         data: { action, local_data: { ...warehouse } },
         autoFocus: false,
       });
-    } else {
-      const dialogRef = this.dialog.open(AppWarehouseDialogContentComponent, {
+
+      return;
+    }
+
+    if (action === 'AddMetro' || action === 'UpdateMetro' || action === 'DeleteMetro') {
+
+      const dialogRef = this.dialog.open(AppMetroDialogContentComponent, {
         data: { action, local_data: { ...warehouse } },
         autoFocus: false,
       });
 
       dialogRef.afterClosed().subscribe((result) => {
-        if (result?.event === 'Refresh' || result?.event === 'Update' || result?.event === 'Delete') {
-          this.loadWarehouses(); // 🔄 Recargar la lista después de cualquier cambio
+        if (
+          result?.event === 'Refresh' ||
+          result?.event === 'Update' ||
+          result?.event === 'Delete'
+        ) {
+          this.loadWarehouses();
         }
       });
+
+      return;
     }
 
+    const dialogRef = this.dialog.open(AppWarehouseDialogContentComponent, {
+      data: { action, local_data: { ...warehouse } },
+      autoFocus: false,
+    });
 
+    dialogRef.afterClosed().subscribe((result) => {
+      if (
+        result?.event === 'Refresh' ||
+        result?.event === 'Update' ||
+        result?.event === 'Delete'
+      ) {
+        this.loadWarehouses();
+      }
+    });
   }
 }
 
@@ -133,7 +154,6 @@ interface DialogData {
 }
 
 @Component({
-  // tslint:disable-next-line: component-selector
   selector: 'app-dialog-content',
   imports: [
     MaterialModule,
@@ -144,20 +164,16 @@ interface DialogData {
   ],
   templateUrl: 'warehouse-dialog-content.html',
 })
-
-// tslint:disable-next-line: component-class-suffix
 export class AppWarehouseDialogContentComponent {
   action: string | any;
-  local_data: Warehouse;
+  local_data: any = {};
   loading: boolean = false;
   openTimeStr: string | null = null;
   authorizedPersons: any[] = [];
   addOnBlur = true;
-  allPeople: any[] = [
+  allPeople: any[] = [];
+  metros: any[] = [];
 
-  ];
-
-  metros: any[];
   companies: string[] = [
     'OnTrac',
     'Speedx',
@@ -170,130 +186,149 @@ export class AppWarehouseDialogContentComponent {
     startWith(''),
     map(v => {
       const q = (typeof v === 'string' ? v : `${v?.name ?? ''} ${v?.lastName ?? ''}`)
-        .toLowerCase().trim();
+        .toLowerCase()
+        .trim();
+
       return this.allPeople
         .filter(p => (`${p.name} ${p.lastName ?? ''}`).toLowerCase().includes(q))
         .filter(p => !this.authorizedPersons.some(x => x.id === p.id));
     })
   );
+
   readonly separatorKeysCodes = [ENTER, COMMA] as const;
-
-  displayFn(p?: Person): string {
-    return p ? `${p.name} ${p.lastName ?? ''}`.trim() : '';
-  }
-
-  ngOnInit(): void {
-    this.openTimeStr = toTimeString(this.local_data?.openTime);
-    this.authorizedPersons = [...(this.local_data?.authorizedPersons ?? [])];
-    this.userServices.getEmployees().subscribe(res => {
-      // Asegúrate que tu API tenga name/lastName; si viene firstName/lastName, mapea:
-      this.allPeople = res.map((r: any) => ({
-        id: r.id,
-        name: r.name ?? r.firstName ?? '',
-        lastName: r.lastName ?? r.surname ?? ''
-      }));
-      // Fuerza un recalculo de opciones si ya había texto
-      this.personCtrl.setValue(this.personCtrl.value || '');
-    });
-    this.warehouseService.getMetros(this.local_data.companyId!).subscribe(
-      res => {
-        this.metros = res || [];
-
-      }
-    )
-
-  }
-  compareMetro = (a: any, b: any) =>
-    a && b && a.id === b.id;
 
   constructor(
     public dialogRef: MatDialogRef<AppWarehouseDialogContentComponent>,
     private warehouseService: WarehouseService,
     private snackBar: MatSnackBar,
     private userServices: EmployeeService,
+    private coreServices: CoreService,
     @Optional() @Inject(MAT_DIALOG_DATA) public data: any
   ) {
     this.action = data.action;
-    this.local_data = data.local_data || {}; // Asegurar que `local_data` no sea undefined
+    this.local_data = data.local_data || {};
+  }
+
+  ngOnInit(): void {
+    // Solo cargar datos de warehouse cuando aplique
+    if (this.action === 'Add' || this.action === 'Update' || this.action === 'Delete') {
+      this.openTimeStr = toTimeString(this.local_data?.openTime);
+      this.authorizedPersons = [...(this.local_data?.authorizedPersons ?? [])];
+
+      this.userServices.getEmployees().subscribe(res => {
+        this.allPeople = res.map((r: any) => ({
+          id: r.id,
+          name: r.name ?? r.firstName ?? '',
+          lastName: r.lastName ?? r.surname ?? ''
+        }));
+        this.personCtrl.setValue(this.personCtrl.value || '');
+      });
+
+      this.warehouseService
+        .getMetros(this.coreServices.getUserInfoFromToken()?.companyId!)
+        .subscribe(res => {
+          this.metros = res || [];
+        });
+    }
+  }
+
+  compareMetro = (a: any, b: any) => a && b && a.id === b.id;
+
+  displayFn(p?: Person): string {
+    return p ? `${p.name} ${p.lastName ?? ''}`.trim() : '';
   }
 
   private filterPeople(value: string): any[] {
     const term = value.trim().toLowerCase();
     if (!term) return this.allPeople.filter(p => !this.exists(p));
+
     return this.allPeople
-      .filter(p => p.name.toLowerCase().includes(term))
-      .filter(p => !this.exists(p)); // no sugerir duplicados
+      .filter(p => (`${p.name} ${p.lastName ?? ''}`).toLowerCase().includes(term))
+      .filter(p => !this.exists(p));
   }
 
   selected(event: MatAutocompleteSelectedEvent) {
     const person = event.option.value as any;
-    if (!this.exists(person)) this.authorizedPersons.push(person);
-    this.personCtrl.setValue(''); // limpiar input
+    if (!this.exists(person)) {
+      this.authorizedPersons.push(person);
+    }
+    this.personCtrl.setValue('');
   }
 
   addFromFreeText(event: any) {
     const raw = (event.value || '').trim();
-    if (!raw) { this.personCtrl.setValue(''); return; }
 
-    // Si quieres permitir texto libre como chip temporal:
-    // busca si coincide con alguien del catálogo
-    const found = this.allPeople.find(p => p.name.toLowerCase() === raw.toLowerCase());
-    if (found && !this.exists(found)) this.authorizedPersons.push(found);
+    if (!raw) {
+      this.personCtrl.setValue('');
+      return;
+    }
+
+    const found = this.allPeople.find(
+      p => (`${p.name} ${p.lastName ?? ''}`).toLowerCase() === raw.toLowerCase()
+    );
+
+    if (found && !this.exists(found)) {
+      this.authorizedPersons.push(found);
+    }
 
     this.personCtrl.setValue('');
   }
 
   removePerson(p: any) {
     this.authorizedPersons = this.authorizedPersons.filter(x => x.id !== p.id);
-
-
   }
 
   private exists(p: any) {
     return this.authorizedPersons.some(x => x.id === p.id);
   }
-  doAction(): void {
 
+  doAction(): void {
     if (this.action === 'Add') {
       this.local_data.openTime = fromTimeString(this.openTimeStr || undefined) || undefined;
       this.local_data.authorizedPersons = this.authorizedPersons;
+      this.local_data.metroId = this.local_data.metro?.id ?? this.local_data.metroId ?? null;
+
       this.warehouseService.addWarehouse(this.local_data).subscribe({
         next: () => {
-
           this.dialogRef.close({ event: 'Refresh' });
           this.openSnackBar('Warehouse added successfully!', 'Close');
-
         },
         error: (err) => {
-          this.openSnackBar(`Error: ${err.message}`, 'Close');
+          this.openSnackBar(`Error: ${err?.error?.message || err.message}`, 'Close');
         }
       });
-    } else if (this.action === 'Update') {
+    }
+
+
+    else if (this.action === 'Update') {
       this.local_data.openTime = fromTimeString(this.openTimeStr || undefined) || undefined;
       this.local_data.authorizedPersons = this.authorizedPersons;
-      this.local_data.metroId = this.local_data.metro?.id;
-      console.log(this.local_data)
+      this.local_data.metroId = this.local_data.metro?.id ?? this.local_data.metroId ?? null;
+
       this.warehouseService.updateWarehouse(this.local_data).subscribe({
         next: () => {
           this.dialogRef.close({ event: 'Update' });
           this.openSnackBar('Warehouse updated successfully!', 'Close');
         },
         error: (err) => {
-          this.openSnackBar(`Error: ${err.message}`, 'Close');
+          this.openSnackBar(`Error: ${err?.error?.message || err.message}`, 'Close');
         }
       });
-    } else if (this.action === 'Delete') {
+    }
+
+
+    else if (this.action === 'Delete') {
       this.warehouseService.deleteWarehouse(this.local_data.id).subscribe({
         next: () => {
           this.dialogRef.close({ event: 'Delete' });
           this.openSnackBar('Warehouse deleted successfully!', 'Close');
-
         },
         error: (err) => {
-          this.openSnackBar(`Error: ${err.message}`, 'Close');
+          this.openSnackBar(`Error: ${err?.error?.message || err.message}`, 'Close');
         }
       });
     }
+
   }
 
   openSnackBar(message: string, action: string) {
@@ -310,16 +345,114 @@ export class AppWarehouseDialogContentComponent {
 
   selectFile(event: any): void {
     if (!event.target.files[0] || event.target.files[0].length === 0) {
-      return; // No file selected
+      return;
     }
 
     const mimeType = event.target.files[0].type;
     if (mimeType.match(/image\/*/) == null) {
-      return; // Not an image file
+      return;
     }
 
     const reader = new FileReader();
     reader.readAsDataURL(event.target.files[0]);
   }
 }
-interface Person { id: number; name: string; lastName?: string; }
+
+interface Person {
+  id: number;
+  name: string;
+  lastName?: string;
+}
+
+@Component({
+  selector: 'app-metro-dialog-content',
+  standalone: true,
+  imports: [
+    MaterialModule,
+    FormsModule,
+    ReactiveFormsModule,
+    CommonModule,
+    TablerIconsModule,
+  ],
+  templateUrl: 'metro-dialog.html',
+})
+export class AppMetroDialogContentComponent {
+  action: string | any;
+  local_data: any = {};
+  loading = false;
+
+  constructor(
+    public dialogRef: MatDialogRef<AppMetroDialogContentComponent>,
+    private warehouseService: WarehouseService,
+    private snackBar: MatSnackBar,
+    @Optional() @Inject(MAT_DIALOG_DATA) public data: any
+  ) {
+    this.action = data.action;
+    this.local_data = data.local_data || {};
+  }
+
+  doAction(): void {
+    this.loading = true;
+
+    if (this.action === 'AddMetro') {
+      const payload = { city: this.local_data.city };
+
+      this.warehouseService.addMetro(payload).subscribe({
+        next: () => {
+          this.loading = false;
+          this.dialogRef.close({ event: 'Refresh' });
+          this.openSnackBar('Metro added successfully!', 'Close');
+        },
+        error: (err) => {
+          this.loading = false;
+          this.openSnackBar(`Error: ${err?.error?.message || err.message}`, 'Close');
+        }
+      });
+    }
+
+    else if (this.action === 'UpdateMetro') {
+      const payload = {
+        id: this.local_data.id,
+        city: this.local_data.city
+      };
+
+      this.warehouseService.updateMetro(payload.id, payload).subscribe({
+        next: () => {
+          this.loading = false;
+          this.dialogRef.close({ event: 'Update' });
+          this.openSnackBar('Metro updated successfully!', 'Close');
+        },
+        error: (err) => {
+          this.loading = false;
+          this.openSnackBar(`Error: ${err?.error?.message || err.message}`, 'Close');
+        }
+      });
+    }
+
+    else if (this.action === 'DeleteMetro') {
+      this.warehouseService.deleteMetro(this.local_data.id).subscribe({
+        next: () => {
+          this.loading = false;
+          this.dialogRef.close({ event: 'Delete' });
+          this.openSnackBar('Metro deleted successfully!', 'Close');
+        },
+        error: (err) => {
+          this.loading = false;
+          this.openSnackBar(`Error: ${err?.error?.message || err.message}`, 'Close');
+        }
+      });
+    }
+  }
+
+  openSnackBar(message: string, action: string) {
+    this.snackBar.open(message, action, {
+      duration: 3000,
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
+    });
+  }
+
+  closeDialog(): void {
+    this.dialogRef.close({ event: 'Cancel' });
+  }
+}

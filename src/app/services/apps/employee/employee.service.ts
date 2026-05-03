@@ -1,4 +1,4 @@
-import { HttpClient,HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { Route, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -24,6 +24,15 @@ export class EmployeeService {
   constructor(private http: HttpClient, private toastr: ToastrService, private router: Router) { }
   getEmployees() {
     return this.http.get<any>(`${this.baseUrl}/User/driversByRol`);
+  }
+
+  getDriverbyWarehouse(warehouseId: number) {
+
+    const params = new HttpParams()
+      .set('warehouseId', warehouseId);
+
+    return this.http.get<any[]>(`${this.baseUrl}/User/active-by-warehouse`, { params });
+
   }
   getApplicants() {
     return this.http.get<any>(`${this.baseUrl}/User/applicantByRol/`);
@@ -53,21 +62,20 @@ export class EmployeeService {
     return this.http.post<{ avatar: string }>(`${this.baseUrl}/User/upload/avatar`, formData)
   }
 
-  contacApplicant(employee: any): Observable<any> {
-    const payload = {
-      id: Number(employee.id),
-      warehouseId: employee.warehouseId != null ? Number(employee.warehouseId) : undefined
-      // channel: 'email' | 'whatsapp' | 'both'  (si luego quieres)
-    };
-
-    // Limpia undefined para no confundir al binder
-    Object.keys(payload).forEach(k => (payload as any)[k] === undefined && delete (payload as any)[k]);
-
-    return this.http.post(`${this.baseUrl}/User/sendMessageApplicant`, payload);
+  contactApplicant(employees: any[]): Observable<any> {
+    const payload = employees.map(e => ({
+      id: Number(e.id),
+      warehouseId: e.warehouseId != null ? Number(e.warehouseId) : null
+    }));
+    console.log(employees)
+    return this.http.post(
+      `${this.baseUrl}/User/sendMessageApplicant`,
+      payload
+    );
   }
 
-  
-    getSsn(userId: number | string): Observable<SsnResponse> {
+
+  getSsn(userId: number | string): Observable<SsnResponse> {
     const url = `${this.baseUrl}/User/${userId}/ssn`;
     const headers = new HttpHeaders({ 'Accept': 'application/json' });
     return this.http.get<SsnResponse>(url, { headers });

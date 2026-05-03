@@ -1,0 +1,207 @@
+<!-- Contenedor del spinner que cubre todo el diálogo -->
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+</div>
+
+<div class="d-flex align-items-center justify-content-between m-b-16 p-x-20 p-t-16">
+  <h3>{{ data.action }} Rental Vehicle</h3>
+  <button mat-icon-button mat-dialog-close class="d-flex justify-content-center">
+    <i-tabler name="x" class="icon-20 d-flex"></i-tabler>
+  </button>
+</div>
+
+<mat-dialog-content>
+  <form [formGroup]="form">
+    <div class="row">
+
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Metro</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Metro</mat-label>
+          <mat-select formControlName="metroId">
+            <mat-option [value]="null">Select Metro</mat-option>
+            <mat-option *ngFor="let metro of metros" [value]="metro.id">
+              {{ metro.city }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Display Name</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput formControlName="displayName" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Stock Number</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput formControlName="stockNumber" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Year</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput type="number" formControlName="year" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Make</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput formControlName="make" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Model</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput formControlName="model" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Trim</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput formControlName="trim" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Color</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput formControlName="color" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Transmission</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput formControlName="transmission" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Fuel Type</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput formControlName="fuelType" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Daily Price</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <span matPrefix>$&nbsp;</span>
+          <input matInput type="number" formControlName="dailyPrice" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Weekly Price</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <span matPrefix>$&nbsp;</span>
+          <input matInput type="number" formControlName="weeklyPrice" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Deposit Amount</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <span matPrefix>$&nbsp;</span>
+          <input matInput type="number" formControlName="depositAmount" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">VIN</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput formControlName="vin" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Plate</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput formControlName="plate" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Status</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select formControlName="status">
+            <mat-option *ngFor="let s of statusOptions" [value]="s">
+              {{ s }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Facility Location</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput formControlName="facilityLocation" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Seating Capacity</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput type="number" formControlName="seatingCapacity" />
+        </mat-form-field>
+      </div>
+      <div class="col-lg-12">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Vehicle Images</mat-label>
+
+        <input type="file" multiple accept="image/*" (change)="onImagesSelected($event)" class="form-control" />
+
+        <div class="d-flex flex-wrap gap-2 m-t-12" *ngIf="imagePreviews.length">
+          <div *ngFor="let img of imagePreviews" style="width: 120px; height: 90px;">
+            <img [src]="img" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-12">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Notes</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <textarea matInput rows="3" formControlName="notes"></textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-12">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Trunk Notes</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <textarea matInput rows="2" formControlName="trunkNotes"></textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">GPS Installed</mat-label>
+        <mat-checkbox formControlName="gpsInstalled">
+          {{ form.get('gpsInstalled')?.value ? 'Yes' : 'No' }}
+        </mat-checkbox>
+      </div>
+
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Dash Cam Installed</mat-label>
+        <mat-checkbox formControlName="dashCamInstalled">
+          {{ form.get('dashCamInstalled')?.value ? 'Yes' : 'No' }}
+        </mat-checkbox>
+      </div>
+
+    </div>
+
+    <br />
+
+    <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="loading || form.invalid">
+      {{ data.action }}
+    </button>
+
+    <button mat-flat-button class="m-l-8 bg-error text-white" type="button" mat-dialog-close>
+      Cancel
+    </button>
+  </form>
+</mat-dialog-content>

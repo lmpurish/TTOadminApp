@@ -1,32 +1,140 @@
-<mat-card class="cardWithShadow">
-  <mat-card-content class="p-y-30">
-    <mat-card-title>Payment Gateways</mat-card-title>
-    <mat-card-subtitle class="f-s-14 f-w-400 p-b-16"
-      >Platform For Income</mat-card-subtitle
-    >
+<!-- LISTA SCROLLEABLE -->
+<!-- LABEL -->
+<mat-card-header class="d-flex align-items-center justify-content-between">
+  <mat-card-title>Employee punches of the day</mat-card-title>
 
-    @for(stat of stats; track stat.color) {
-    <div class="m-t-32">
-      <div class="d-flex align-items-center m-b-24">
-        <span
-          class="bg-light-{{
-            stat.color
-          }} rounded icon-40 d-flex align-items-center justify-content-center"
-        >
-          <img [src]="stat.img" alt="icon" />
+  <div class="d-flex align-items-center gap-8">
+    <button mat-stroked-button color="primary" type="button" (click)="toggleSummary()">
+      <mat-icon class="m-r-8">summarize</mat-icon>
+      Summary
+    </button>
+   <!-- <button *ngIf="isAdmin" mat-flat-button color="warn" type="button" (click)="forcePunchOut()"
+      [disabled]="forcingPunchOut || !hasActiveManagers()">
+      <mat-icon class="m-r-8">logout</mat-icon>
+      Force PunchOut
+    </button>-->
+  </div>
+</mat-card-header>
+
+<div class="managers-scroll m-t-24">
+
+  @for (m of sortedManagers; track m.managerId) {
+  <div class="m-b-16">
+    <div class="d-flex align-items-center p-12 rounded" [ngClass]="{
+            'bg-light-success': isActive(m),
+            'bg-light-error': isPunchedOut(m)
+          }">
+
+      <!-- Avatar -->
+      <span class="rounded icon-40 d-flex align-items-center justify-content-center" [ngClass]="{
+              'bg-light-success': isActive(m),
+              'bg-light-error': isPunchedOut(m),
+              'bg-light-warning': hasNoPunch(m)
+            }">
+        <img class="rounded-circle" [src]="avatarSrc$(m) | async" width="45" />
+      </span>
+
+      <!-- Texto -->
+      <div class="m-l-16 m-r-auto">
+        <h6 class="f-s-16 f-w-600">{{ m.name }}</h6>
+
+        <span class="f-s-14 d-block">
+          <strong>IN:</strong>
+          {{ m.arrivalAtUtc ? (m.arrivalAtUtc | date:'hh:mm a') : '--' }}
         </span>
 
-        <div class="m-l-16 m-r-auto">
-          <h6 class="f-s-16 f-w-600">{{ stat.title }}</h6>
-          <span class="f-s-14">{{ stat.subtitle }}</span>
+        <span class="f-s-14 d-block" *ngIf="m.departureAtUtc">
+          <strong>OUT:</strong>
+          {{ m.departureAtUtc | date:'hh:mm a' }}
+        </span>
+
+        <span class="f-s-13 text-muted d-block">
+          <ng-container *ngIf="isActive(m)">Active • counting</ng-container>
+          <ng-container *ngIf="isPunchedOut(m)">Punched out</ng-container>
+          <ng-container *ngIf="hasNoPunch(m)">No punch</ng-container>
+        </span>
+      </div>
+
+      <!-- Tiempo -->
+      <div class="d-flex flex-column align-items-end">
+
+        <!-- Icono arriba a la izquierda del contador -->
+        <div class="w-100 d-flex justify-content-start">
+          <button mat-icon-button type="button" class="map-btn" [disabled]="!hasCoords(m)" (click)="openMaps(m)">
+            <mat-icon>location_on</mat-icon>
+          </button>
         </div>
-        <span class="f-w-600 f-s-14"> +${{ stat.percent }} </span>
+        <a *ngIf="isAdmin && isActive(m)" mat-icon-button type="button" class="map-btn"
+          (click)="forcePunchOutOne(m)" [disabled]="forcingPunchOut">
+          <mat-icon>exit_to_app</mat-icon>
+      </a>
+
+        <!-- Tiempo -->
+        <span class="f-w-700 f-s-14" [ngClass]="{
+    'text-success': isActive(m),
+    'text-error': isPunchedOut(m),
+    'text-warning': hasNoPunch(m)
+  }">
+          {{ getElapsedText(m) }}
+        </span>
+
+      </div>
+
+    </div>
+  </div>
+  }
+
+</div>
+<!-- SUMMARY INLINE -->
+<div *ngIf="showSummary" class="m-t-12">
+  <mat-card class="p-12">
+    <div class="d-flex align-items-center justify-content-between">
+      <div>
+        <div class="f-w-700 f-s-16">Managers summary</div>
+        <div class="text-muted f-s-12">
+          {{ summary?.dateUtc ? (summary!.dateUtc | date:'MMM d, y') : '' }}
+          <span *ngIf="summary?.warehouseId"> • Warehouse {{ summary!.warehouseId }}</span>
+        </div>
+      </div>
+
+      <button mat-icon-button type="button" (click)="showSummary=false">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div *ngIf="loadingSummary" class="m-t-12 text-muted">
+      Loading…
+    </div>
+
+    <div *ngIf="!loadingSummary && summary" class="summary-grid m-t-12">
+      <div class="summary-item">
+        <div class="label">Total</div>
+        <div class="value">{{ summary.totalManagers }}</div>
+      </div>
+
+      <div class="summary-item">
+        <div class="label">Active</div>
+        <div class="value text-success">{{ summary.active }}</div>
+      </div>
+
+      <div class="summary-item">
+        <div class="label">Punched out</div>
+        <div class="value text-error">{{ summary.punchedOut }}</div>
+      </div>
+
+      <div class="summary-item">
+        <div class="label">No punch</div>
+        <div class="value text-warning">{{ summary.noPunch }}</div>
+      </div>
+
+      <div class="summary-item">
+        <div class="label">Total time</div>
+        <div class="value">{{ formatSeconds(summary.totalSeconds) }}</div>
       </div>
     </div>
-    }
 
-    <button mat-stroked-button color="primary" class="w-100 m-t-8">
-      View all Transctions
-    </button>
-  </mat-card-content>
-</mat-card>
+    <div *ngIf="!loadingSummary && summaryError" class="m-t-12 text-error">
+      {{ summaryError }}
+    </div>
+  </mat-card>
+</div>

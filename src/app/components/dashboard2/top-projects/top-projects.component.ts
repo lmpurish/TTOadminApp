@@ -108,9 +108,12 @@ export class AppTopProjectsComponent implements AfterViewInit {
     this.warehouseService.getWarehouses().subscribe({
       next: (res) => {
         if (Array.isArray(res) && res.length) {
-
-          // Crear un mapa con ID como clave y nombre como valor
-          this.warehousesMap = new Map(res.map(warehouse => [warehouse.id, warehouse.city]));
+          this.warehousesMap = new Map(
+            res.map(w => [
+              w.id,
+              `${w.company} ${w.metro?.city ?? w.city ?? ''}`
+            ])
+          );
         }
       },
       error: (err) => {

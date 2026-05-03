@@ -36,13 +36,19 @@
           </mat-select>
         </mat-form-field>
       </div>
-      <div class="col-lg-6">
+      <div class="col-lg-4">
         <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Send Payroll</mat-label>
         <mat-checkbox [(ngModel)]="local_data.sendPayroll" name="sendPayroll">
           Mark as Sent
         </mat-checkbox>
       </div>
-      <div class="col-lg-6">
+       <div class="col-lg-4">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Is Hiring</mat-label>
+        <mat-checkbox [(ngModel)]="local_data.isHiring" name="isHiring">
+          {{ local_data.isHiring ? 'Hiring' : 'Not Hiring' }}
+        </mat-checkbox>
+      </div>
+      <div class="col-lg-4">
         <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Drive Rate</mat-label>
         <mat-form-field appearance="outline" class="w-100">
           <span matPrefix>$&nbsp;</span>
@@ -51,11 +57,12 @@
         </mat-form-field>
       </div>
       <div class="col-lg-6">
-        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Is Hiring</mat-label>
-        <mat-checkbox [(ngModel)]="local_data.isHiring" name="isHiring">
-          {{ local_data.isHiring ? 'Hiring' : 'Not Hiring' }}
-        </mat-checkbox>
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Facility Code</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input type="text" matInput required [(ngModel)]="local_data.facilityCode" name="facilityCode" placeholder="Facility Code" />
+        </mat-form-field>
       </div>
+     
       <div class="col-lg-6">
         <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Opening hours</mat-label>
         <mat-form-field appearance="outline" class="w-100">

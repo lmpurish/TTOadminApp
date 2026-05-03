@@ -85,6 +85,10 @@ export class CoreService {
     }
   }
 
+getCompanyId(): number | null {
+  return this.getUserInfoFromToken()?.companyId ?? null;
+}
+
   isTokenExpired(token?: string): boolean {
     const t = token ?? this.getToken();
     if (!t) return true;
@@ -128,26 +132,55 @@ export class CoreService {
     localStorage.setItem(this.LS_KEY, JSON.stringify(this.options));
     if (persist) this.saveUserSettings().subscribe();
   }
-
-  getUserInfoFromToken(): { id: number; name: string; role: string, WarehouseID: number, logoUrl: string, companyId: number } | null {
+  uploadClaimsFile(formData: FormData) {
+    return this.http.post<any>(
+      `${this.baseUrl}/PayrollFines/import/details`,
+      formData,
+      {
+        observe: 'events',
+        reportProgress: true
+      }
+    );
+  }
+  getUserInfoFromToken(): {
+    id: number;
+    name: string;
+    role: string;
+    WarehouseID: number | null;
+    logoUrl: string | null;
+    companyId: number | null;
+    email?: string | null;
+  } | null {
     const token = this.getToken();
     if (!token) return null;
+
     try {
       const decoded: any = jwtDecode(token);
+
+      const warehouseId =
+        decoded.warehouseID ??
+        decoded.WarehouseID ??
+        decoded.warehouseId ??
+        null;
+
       return {
-        id: decoded.nameid,
-        name: decoded.unique_name,
-        role: decoded.role,
-        WarehouseID: decoded.WarehouseID,
-        logoUrl: decoded.CompanyLogo,
-        companyId: decoded.companyId
+        id: Number(decoded.nameid ?? decoded.sub),
+        name: decoded.unique_name ?? decoded.name ?? 'Unknown',
+        role: decoded.role ?? '',
+        WarehouseID: warehouseId != null ? Number(warehouseId) : null,
+        logoUrl: decoded.CompanyLogo ?? decoded.logoUrl ?? null,
+        companyId: decoded.companyId != null ? Number(decoded.companyId) : null,
+        email: decoded.email ?? null
       };
     } catch {
       return null;
     }
   }
+
+
+
   logout(fromExpiry: boolean = false): void {
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem('token');
     // quita también otros flags si aplica
     // localStorage.removeItem('userRole'); ...
 
@@ -297,7 +330,9 @@ export class CoreService {
     return this.http.post<ImportResultDto>(`${this.baseUrl}/Routes/upload/${warehouseId}`, formData, {
       reportProgress: true,
       observe: 'events'
-    }).pipe(catchError(this.handleError));
+    }).pipe(
+      catchError((err: HttpErrorResponse) => throwError(() => err)) // ✅ preserva err.error.message
+    );
   }
 
   uploadXmlFileOther(formData: FormData, warehouseId: number): Observable<HttpEvent<ImportResultDto>> {
@@ -327,7 +362,7 @@ export class CoreService {
   /**
    * Maneja errores HTTP
    */
-  
+
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Error desconocido';
     if (error.error instanceof ErrorEvent) {
@@ -339,4 +374,19 @@ export class CoreService {
     }
     return throwError(() => new Error(errorMessage));
   }
+
+
+  latestGrossAmountByWarehouse(): Observable<WarehouseGrossRow[]> {
+    return this.http.get<WarehouseGrossRow[]>(
+      `${this.baseUrl}/PayRoll/latestGrossAmountByWarehouse`
+    );
+  }
+}
+
+export interface WarehouseGrossRow {
+  warehouseId: number;
+  warehouse: string;
+  payPeriodId: number;
+  grossAmountTotal: number;
+  date: string;
 }

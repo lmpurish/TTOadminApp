@@ -87,7 +87,7 @@ export class AppSideLoginComponent {
       .subscribe((res?: SelectCompanyResult) => {
         if (!res) return;
 
-
+        console.log('websiteUrl:', res.company.websiteUrl);
         // 1) Si la compañía tiene careersUrl o website, redirigimos allí
         const targetUrl = `https://${res.company.websiteUrl?.trim()}/hiring`
 

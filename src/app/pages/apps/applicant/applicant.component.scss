@@ -41,3 +41,19 @@
 .clickable {
     cursor: pointer !important;
 }
+
+.bulk-action-bar {
+    position: sticky;
+    top: 64px;
+    /* ajusta según tu toolbar/header */
+    z-index: 100;
+    background: #fff;
+    padding: 12px 0;
+    margin-bottom: 8px;
+
+    display: flex;
+    justify-content: flex-end;
+
+    /* sombra suave para efecto flotante */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}

@@ -17,6 +17,11 @@ import { RegisterCompanyComponent } from './register-company/register-company.co
 import { CompanyComponent } from './company/company.component';
 import { PayrollComponent } from './payroll/payroll.component';
 import { UserRateComponent } from './user-rate/user-rate.component';
+import { PayrollConfComponent } from './payroll/payroll-conf/payroll-conf.component';
+import { LoanComponent } from './loan/loan.component';
+import { MyLoanComponent } from './loan/my-loan/my-loan.component';
+import { RentalVehiclesComponent } from './rental-vehicle/rental-vehicle.component';
+import { AppContactListComponent } from './contact-list/contact-list.component';
 
 
 export const AppsRoutes: Routes = [
@@ -33,6 +38,19 @@ export const AppsRoutes: Routes = [
           urls: [
             { title: 'Dashboard', url: '/dashboards/dashboard1' },
             { title: 'Employee' },
+          ],
+        },
+      },
+      {
+        path: 'myLoans',
+        component: MyLoanComponent, canActivate: [AuthGuard],
+
+        data: {
+          role: ['Admin', 'Manager','Driver','Assistans'],
+          title: 'Applicants',
+          urls: [
+            { title: 'Dashboard', url: '/dashboards/dashboard1' },
+            { title: 'Applicants' },
           ],
         },
       },
@@ -62,6 +80,19 @@ export const AppsRoutes: Routes = [
           ],
         },
       },
+       {
+        path: 'loan',
+        component: LoanComponent, canActivate: [AuthGuard],
+
+        data: {
+          role: ['CompanyOwner'],
+          title: 'Loans',
+          urls: [
+            { title: 'Dashboard', url: '/dashboards/dashboard1' },
+            { title: 'Loans' },
+          ],
+        },
+      },
       {
         path: 'user-rate',
         component: UserRateComponent, canActivate: [AuthGuard],
@@ -75,6 +106,22 @@ export const AppsRoutes: Routes = [
           ],
         },
       },
+      {
+        path: 'payroll-conf',
+        component: PayrollConfComponent, canActivate: [AuthGuard],
+
+        data: {
+          role: ['Admin', 'Assistant'],
+          title: 'Payroll Configuration',
+          urls: [
+            { title: 'Dashboard', url: '/dashboards/dashboard1' },
+            { title: 'Payroll', url: '/apps/payroll' },
+            { title: 'Payroll Configuration' },
+
+          ],
+        },
+      },
+      
       {
         path: 'routes',
         component: RoutesComponent, canActivate: [AuthGuard],
@@ -97,6 +144,18 @@ export const AppsRoutes: Routes = [
           urls: [
             { title: 'Dashboard', url: '/dashboards/dashboard1' },
             { title: 'Warehouses' },
+          ],
+        },
+      },
+       {
+        path: 'rentalVehicles',
+        component: RentalVehiclesComponent, canActivate: [AuthGuard, RoleGuard],
+        data: {
+          role: ['CompanyOwner', 'Admin'],
+          title: 'Rental Vehicle',
+          urls: [
+            { title: 'Dashboard', url: '/dashboards/dashboard1' },
+            { title: 'Rental Vehicle' },
           ],
         },
       },
@@ -208,6 +267,17 @@ export const AppsRoutes: Routes = [
             },
           },
         ],
+      },
+      {
+        path: 'contact-list',
+        component: AppContactListComponent,
+        data: {
+          title: 'Account Setting',
+          urls: [
+            { title: 'Dashboard', url: '/dashboards/dashboard1' },
+            { title: 'Account Setting' },
+          ],
+        },
       },
     ],
   },

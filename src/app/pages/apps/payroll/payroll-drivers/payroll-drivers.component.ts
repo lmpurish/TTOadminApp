@@ -12,6 +12,7 @@ import { ToastrService } from 'ngx-toastr';
 import { PayrollService } from 'src/app/services/payroll.service';
 import { PeriodSummaryDto, PayRunDto } from 'src/app/models/payroll.models';
 import { RunDetailDialogComponent } from './run-detail-dialog.component';
+import { PayrollAdjustmentDialogComponent } from './payroll-adjustment-dialog.component';
 
 // Helper
 function todayYmd(): string {
@@ -47,14 +48,14 @@ export class PayrollDriversComponent implements OnInit {
   filterCtrl = new FormControl<string>('', { nonNullable: true });
 
   displayedColumns = ['driver', 'gross', 'adjustments', 'net', 'action'];
-  dataSource = new MatTableDataSource<{ driverId: number; gross: number; adjustments: number; net: number }>([]);
+  dataSource = new MatTableDataSource<{ driverId: number; driverName: string; gross: number; adjustments: number; net: number, run: number, status: string }>([]);
   totalNet = 0;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
   constructor(
-   
+
     // +++ inyecta los datos del diálogo +++
     @Inject(MAT_DIALOG_DATA) public dialogData: any
   ) {
@@ -76,7 +77,11 @@ export class PayrollDriversComponent implements OnInit {
 
     this.dataSource.filterPredicate = (row, filter) => {
       const f = (filter || '').toLowerCase().trim();
-      return row.driverId.toString().includes(f);
+
+      return (
+        row.driverId.toString().includes(f) ||
+        (row.driverName || '').toLowerCase().includes(f)
+      );
     };
 
     this.filterCtrl.valueChanges.subscribe(v => {
@@ -89,20 +94,21 @@ export class PayrollDriversComponent implements OnInit {
     this.loading = true;
     this.api.getPeriodSummary(this.periodId).subscribe({
       next: (dto: PeriodSummaryDto) => {
-        console.log(dto)
         this.startDateYmd = dto.startDate;
         this.endDateYmd = dto.endDate;
         const rows = dto.drivers || [];
         this.dataSource.data = rows.map(d => ({
           driverId: d.driverId as unknown as number,
-          driverName: d.driverName as unknown as number,
+          driverName: d.driverName ?? '',
           gross: d.gross as unknown as number,
           adjustments: d.adjustments as unknown as number,
-          net: d.net as unknown as number
+          net: d.net as unknown as number,
+          run: d.run as unknown as number,
+          status: d.status ?? '',
         }));
-         console.log(this.dataSource)
+
         this.totalNet = this.dataSource.data.reduce((s, it) => s + (it.net || 0), 0);
-        console.log(this.dataSource)
+
       },
       error: () => this.toast.error('No se pudo cargar el summary por driver.'),
       complete: () => {
@@ -116,18 +122,11 @@ export class PayrollDriversComponent implements OnInit {
   }
 
   /** Ver/recargar el PayRun del driver y abrir detalle */
-  viewRun(row: { driverId: number }): void {
-    const payload = {
-      companyId: this.companyId,
-      driverId: row.driverId,
-      weekStart: this.startDateYmd,
-      weekEnd: this.endDateYmd,
-      warehouseId: this.warehouseId,
-      userId: this.userId || 0,
-      zoneId: this.zoneId ?? null
-    };
+  viewRun(row: { run: number }): void {
+
+    console.log(row)
     this.loading = true;
-    this.api.compute(payload).subscribe({
+    this.api.getRun(row.run).subscribe({
       next: (run: PayRunDto) => {
         this.loading = false;
         this.dialog.open(RunDetailDialogComponent, {
@@ -171,18 +170,10 @@ export class PayrollDriversComponent implements OnInit {
   }
 
   /** Exportar CSV del PayRun */
-  exportRun(row: { driverId: number }): void {
-    const payload = {
-      companyId: this.companyId,
-      driverId: row.driverId,
-      weekStart: this.startDateYmd,
-      weekEnd: this.endDateYmd,
-      warehouseId: this.warehouseId,
-      userId: this.userId || 0,
-      zoneId: this.zoneId ?? null
-    };
+  exportRun(row: { run: number }): void {
+
     this.loading = true;
-    this.api.compute(payload).subscribe({
+    this.api.getRun(row.run).subscribe({
       next: (run: PayRunDto) => {
         const fname = `payrun_${run.id}_${todayYmd()}`;
         this.api.exportRunCsv(run.id, fname).subscribe({
@@ -191,13 +182,90 @@ export class PayrollDriversComponent implements OnInit {
             const blob = resp.body!;
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = `${fname}.csv`; a.click();
+            a.href = url; a.download = `${fname}.pdf`; a.click();
             window.URL.revokeObjectURL(url);
           },
           error: () => { this.loading = false; this.toast.error('No se pudo exportar el CSV del run.'); }
         });
       },
       error: () => { this.loading = false; this.toast.error('No se pudo obtener el run para exportar.'); }
+    });
+  }
+
+  exportWarehouseReport(): void {
+    if (!this.warehouseId) {
+      this.toast.error('WarehouseId is missing', 'Error');
+      return;
+    }
+
+    if (!this.periodId) {
+      this.toast.error('PayPeriodId is missing', 'Error');
+      return;
+    }
+
+    const fileName = `warehouse_payroll_${this.warehouseId}_${this.startDateYmd}_${this.endDateYmd}.pdf`;
+
+    this.loading = true;
+
+    this.api.exportWarehouseSummaryPdf(this.warehouseId, this.periodId, fileName)
+      .subscribe({
+        next: (response) => {
+          this.loading = false;
+
+          const blob = response.body;
+          if (!blob) {
+            this.toast.error('Empty file received', 'Error');
+            return;
+          }
+
+          let downloadFileName = fileName;
+          const contentDisposition = response.headers.get('content-disposition');
+
+          if (contentDisposition) {
+            const match = contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^;"']+)/i);
+            if (match?.[1]) {
+              downloadFileName = decodeURIComponent(match[1].replace(/["']/g, ''));
+            }
+          }
+
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = downloadFileName;
+          a.click();
+          window.URL.revokeObjectURL(url);
+        },
+        error: (err) => {
+          this.loading = false;
+          this.toast.error(
+            err?.error?.message || 'Error exporting warehouse PDF',
+            'Error'
+          );
+        }
+      });
+  }
+  openAdjustmentDialog(row: any): void {
+    const dialogRef = this.dialog.open(PayrollAdjustmentDialogComponent, {
+      width: '500px',
+      autoFocus: false,
+      data: {
+        payRunId: row.run,
+        driverName: row.driverName
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (!result) return;
+
+      this.api.addAdjustment(result).subscribe({
+        next: () => {
+          this.toast.success('Adjustment added successfully.');
+          this.loadSummary(); // o el método que recarga la tabla
+        },
+        error: (err) => {
+          this.toast.error(err?.error?.message || 'Could not add adjustment.');
+        }
+      });
     });
   }
 }

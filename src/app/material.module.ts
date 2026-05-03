@@ -101,9 +101,9 @@ import { HtmlToPlainTextPipe } from './pipe/HtmlToPlainTextPipe ';
     NgxMaskDirective, // ✅ para que funcione en otros componentes
     NgxMaskPipe,
     TruncateWordsPipe,
-    HtmlToPlainTextPipe
+    HtmlToPlainTextPipe,
+    MatDatepickerModule,
     
-
 
   ],
   providers: [

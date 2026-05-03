@@ -1,0 +1,24 @@
+<div class="row">
+  <div class="col-lg-3 col-sm-6 col-6" *ngFor="let topcard of topcards">
+
+    <mat-card class="shadow-none text-center bg-light-{{ topcard.color }}">
+
+      <mat-card-content>
+
+        <i-tabler [name]="topcard.icon" class="icon-40 text-{{ topcard.color }}">
+        </i-tabler>
+
+        <h4 class="f-s-14 f-w-600 text-{{ topcard.color }} m-t-8">
+          {{ topcard.title }}
+        </h4>
+
+        <h6 class="f-s-21 f-w-600 text-{{ topcard.color }} m-t-8">
+          {{ topcard.subtitle }}
+        </h6>
+
+      </mat-card-content>
+
+    </mat-card>
+
+  </div>
+</div>

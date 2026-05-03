@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, ViewChild, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-
+import { PayrollErrorsDialogComponent, PayrollErrorRow } from './payroll-errors-dialog/payroll-errors-dialog.component';
 import {
   PayRunDto,
   DriverRate,
@@ -30,6 +30,11 @@ import { CoreService } from 'src/app/services/core.service';
 import { MatDialog } from '@angular/material/dialog';
 import { PayrollDriversComponent } from './payroll-drivers/payroll-drivers.component';
 import { Router, RouterLink } from '@angular/router';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 
 function toYmd(d: Date): string {
   return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
@@ -41,13 +46,21 @@ function toYmd(d: Date): string {
   selector: 'app-payroll',
   standalone: true,
   imports: [
-    MaterialModule,
+    CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    MaterialModule,
+
+    // 👇 estos 4 son los importantes para matDatepickerFilter
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+
     TablerIconsModule,
-    CommonModule,
     RolePipe,
-    StatusLabelPipe
+    StatusLabelPipe,
   ],
   templateUrl: './payroll.component.html',
   styleUrls: ['payroll.component.scss'],
@@ -58,7 +71,8 @@ export class PayrollComponent implements OnInit, AfterViewInit {
   private toast = inject(ToastrService);
   userActive: any = 0;
   loading = false;
-
+  debugResults: any[] = [];
+  payrollErrors: PayrollErrorRow[] = [];
   // Warehouses
   isAdmin = true; // ajusta a tu lógica real
   selectedWarehouseId: number | null = null;
@@ -69,6 +83,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
     // Inicializa el rango con Date (no strings)
     const wk = this.currentWeekRangeDates();
     this.form.patchValue({ weekStart: wk.start, weekEnd: wk.end });
+    this.searchExistingWarehousesSummary();
 
     // Cargar warehouses
     this.warehouseService.getWarehouses().subscribe({
@@ -109,6 +124,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
   totalNetWh = 0;
   summaryLoaded = false;
   periodId: number | null = null;
+  isCurrentPeriodSelected = false;
 
   // ======= DETALLE (último run calculado) opcional =======
   run = signal<PayRunDto | null>(null);
@@ -116,7 +132,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
   gross = computed(() => this.run()?.grossAmount ?? 0);
   net = computed(() => this.run()?.netAmount ?? 0);
 
-  constructor(private warehouseService: WarehouseService, private coreService: CoreService, private dialog: MatDialog,private router:Router) { }
+  constructor(private warehouseService: WarehouseService, private coreService: CoreService, private dialog: MatDialog, private router: Router) { }
 
   // Quick Rate (por si falta)
   showQuickRate = signal(false);
@@ -170,7 +186,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
     const companyId = this.userActive.companyId;
     const startCtrl = this.form.value.weekStart as Date | null;
     const endCtrl = this.form.value.weekEnd as Date | null;
-    const userId = this.userActive.id
+    const userId = this.userActive.id;
 
     if (!startCtrl || !endCtrl) {
       this.toast.error('Selecciona un rango de fechas.');
@@ -192,6 +208,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
     }
 
     this.loading = true;
+    this.payrollErrors = []; // reset
 
     const requests = warehousesToLoad.map((wh) => {
       const body = {
@@ -200,50 +217,112 @@ export class PayrollComponent implements OnInit, AfterViewInit {
         startDate: start,
         endDate: end,
         userId,
-        recalculateAll: false
+        recalculateAll: true
       };
 
       return this.api.computePeriod(body).pipe(
-        map((dto: PeriodSummaryDto) => ({ wh, periodId: dto.payPeriodId, dto })),
+        map((dto: any) => {
+          // ✅ Extrae periodId aunque el backend use otro nombre
+          const periodId =
+            dto?.payPeriodId ??
+            dto?.periodId ??
+            dto?.payPeriod?.id ??
+            dto?.period?.id ??
+            null;
+
+          return { wh, periodId, dto, error: null };
+        }),
         catchError((err) => {
-          const whName = wh.name || `${wh.company ?? ''} ${wh.city ?? ''}`.trim() || `Warehouse ${wh.id}`;
-          this.toast.error(`Falló ${whName}: ${err?.error?.error || 'error al computar período'}`);
-          return of(null);
+          const whName =
+            wh.name ||
+            `${wh.company ?? ''} ${wh.city ?? ''}`.trim() ||
+            `Warehouse ${wh.id}`;
+
+          const message =
+            err?.error?.error ||
+            err?.error?.message ||
+            err?.message ||
+            'Error desconocido';
+
+          // 👇 devolvemos el error como item, para mostrarlo en el modal
+          return of({
+            wh,
+            periodId: null,
+            dto: null,
+            error: {
+              status: err?.status,
+              message,
+              raw: err
+            }
+          });
         })
       );
     });
 
-
     forkJoin(requests).pipe(
-      finalize(() => this.loading = false)
+      finalize(() => (this.loading = false))
     ).subscribe({
-      next: (results) => {
-        console.log(results)
-        const okResults = (results || []).filter(
-          (r): r is { wh: any; periodId: number; dto: PeriodSummaryDto } => !!r
-        );
+      next: (results: any[]) => {
+        // ✅ Construye lista de errores para el modal
+        const failed: PayrollErrorRow[] = (results || [])
+          .filter(r => r?.error)
+          .map(r => {
+            const whName =
+              r.wh?.name ||
+              `${r.wh?.company ?? ''} ${r.wh?.city ?? ''}`.trim() ||
+              `Warehouse ${r.wh?.id}`;
 
-        const rows: WarehouseSummaryRow[] = okResults.map((r) => {
-          const gross = r.dto.drivers.reduce((s, d) => s + d.gross, 0);
-          const adjustments = r.dto.drivers.reduce((s, d) => s + d.adjustments, 0);
-          const net = r.dto.drivers.reduce((s, d) => s + d.net, 0);
+            return {
+              warehouseId: r.wh?.id,
+              warehouseName: whName,
+              status: r.error?.status,
+              message: r.error?.message ?? 'Error',
+              raw: r.error?.raw
+            } as PayrollErrorRow;
+          });
 
-          let whName = r.wh.name;
+        this.payrollErrors = failed;
+
+        // ✅ Abre modal si hay errores
+        if (failed.length) {
+          this.dialog.open(PayrollErrorsDialogComponent, {
+            data: { rows: failed },
+            width: '1000px',
+            maxWidth: '95vw',
+            height: '80vh',
+            autoFocus: false,
+            restoreFocus: false
+          });
+
+          this.toast.warning(`Fallaron ${failed.length} warehouses. Revisa el modal.`);
+        }
+
+        // ✅ OK results (solo los que tienen periodId + dto)
+        const ok = (results || []).filter(r => r && r.periodId != null && r.dto);
+
+        const rows: WarehouseSummaryRow[] = ok.map((r: any) => {
+          const drivers = r.dto?.drivers ?? [];
+
+          const gross = drivers.reduce((s: number, d: any) => s + (Number(d.gross) || 0), 0);
+          const adjustments = drivers.reduce((s: number, d: any) => s + (Number(d.adjustments) || 0), 0);
+          const net = drivers.reduce((s: number, d: any) => s + (Number(d.net) || 0), 0);
+
+          let whName = r.wh?.name;
           if (!whName) {
             const parts: string[] = [];
-            if (r.wh.company) parts.push(r.wh.company);
-            if (r.wh.city) parts.push(r.wh.city);
-            whName = parts.join(' - ') || `Warehouse ${r.wh.id}`;
+            if (r.wh?.company) parts.push(r.wh.company);
+            if (r.wh?.city) parts.push(r.wh.city);
+            whName = parts.join(' - ') || `Warehouse ${r.wh?.id}`;
           }
-
+          console.log(r.periodId)
           return {
             warehouseId: r.wh.id,
             warehouseName: whName,
             warehouseCompany: r.wh.company,
             periodId: r.periodId,
-            startDate: r.dto.startDate,
-            endDate: r.dto.endDate,
-            drivers: r.dto.drivers.length,
+            startDate: r.dto?.startDate ?? start,
+            endDate: r.dto?.endDate ?? end,
+            drivers: drivers.length,
             gross,
             adjustments,
             net
@@ -298,7 +377,9 @@ export class PayrollComponent implements OnInit, AfterViewInit {
   linkDriverRate() {
     this.router.navigate(['apps/user-rate']); // o: this.router.navigateByUrl('/user-rate');
   }
-
+  linkPayrollConf() {
+    this.router.navigate(['apps/payroll-conf']);
+  }
   exportWarehousesCsv(): void {
     const rows: WarehouseSummaryRow[] =
       this.dataSourceWh.filteredData.length ? this.dataSourceWh.filteredData : this.dataSourceWh.data;
@@ -354,6 +435,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
       error: (err: any) => {
         this.loading = false;
         if (err?.status === 400 && err?.error?.error?.toString().includes('DriverRate')) {
+          console.log(err)
           this.toast.warning('Falta DriverRate para este driver/período.');
         } else {
           this.toast.error('No se pudo calcular el driver.');
@@ -396,4 +478,265 @@ export class PayrollComponent implements OnInit, AfterViewInit {
       error: () => { this.toast.error('No se pudo crear el rate.'); }
     });
   }
+
+  startDateFilter = (d: Date | null) => {
+    if (!d) return false;
+
+    const day = this.normalize(d).getDay();
+    if (day !== 5) return false; // 5 = Friday
+
+    const start = this.normalize(d);
+    const end = this.addDays(start, 8); // Fri -> next Sat (cierre)
+    const today = this.normalize(new Date());
+
+    // 🚫 Esto deshabilita la semana actual (si el sábado todavía es futuro)
+    return end <= today;
+  };
+
+  // ✅ Fin: solo permite el sábado exacto que corresponde al viernes seleccionado
+  // y también debe ser <= hoy para que salga opaco si es de la semana actual
+  endDateFilter = (d: Date | null) => {
+    if (!d) return false;
+
+    const start = this.form.get('weekStart')?.value;
+    const today = this.normalize(new Date());
+    const dd = this.normalize(d);
+
+    // Si aún no eligieron start, al menos solo sábados que ya pasaron
+    if (!start) return dd.getDay() === 6 && dd <= today; // 6 = Saturday
+
+    const expectedEnd = this.addDays(this.normalize(start), 8);
+    return this.isSameDate(dd, expectedEnd) && dd <= today;
+  };
+  payrollDateFilter = (d: Date | null): boolean => {
+    if (!d) return false;
+
+    const date = this.normalize(d);
+    const today = this.normalize(new Date());
+
+    // Bloquea futuro
+    if (date > today) return false;
+
+    const curStart = this.currentPayrollStart(today);     // sábado de esta semana payroll
+    const curEnd = this.addDays(curStart, 6);             // viernes
+
+    // Bloquea cualquier fecha dentro del período actual (incluye sábado..viernes)
+    if (date >= curStart && date <= curEnd) return false;
+
+    // Todo lo demás (períodos pasados) permitido
+    return true;
+  };
+
+
+  // ✅ Cuando elige un viernes válido, autollenar el sábado
+  onStartDateChange() {
+    const start = this.form.get('weekStart')?.value;
+    if (!start) return;
+
+    const s = this.normalize(start);
+    if (s.getDay() !== 5) return; // solo viernes
+
+    const end = this.addDays(s, 8); // viernes -> sábado siguiente
+    this.form.patchValue({ weekEnd: end }, { emitEvent: true });
+  }
+  onAnyDatePicked() {
+    const any = this.form.value.weekStart ?? this.form.value.weekEnd;
+    if (!any) return;
+
+    const picked = this.normalize(any);
+    const start = this.payrollStartFor(picked); // sábado correspondiente al picked
+    const end = this.addDays(start, 6);         // viernes
+
+    this.form.patchValue({ weekStart: start, weekEnd: end }, { emitEvent: false });
+
+    // Marca si el rango cae en el período actual (por si quieres hint/boton disabled)
+    const today = this.normalize(new Date());
+    const curStart = this.currentPayrollStart(today);
+    const curEnd = this.addDays(curStart, 6);
+    this.isCurrentPeriodSelected = start >= curStart && start <= curEnd;
+  }
+  // Helpers
+  private normalize(d: Date) {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+  private addDays(d: Date, days: number) {
+    const x = new Date(d);
+    x.setDate(x.getDate() + days);
+    return x;
+  }
+  private isSameDate(a: Date, b: Date) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+  private payrollStartFor(d: Date): Date {
+    const day = d.getDay(); // 0=Sun ... 6=Sat
+    const diffBackToSat = (day - 6 + 7) % 7;
+    return this.addDays(d, -diffBackToSat);
+  }
+
+  // El período actual es el que contiene "today": sábado más reciente -> viernes
+  private currentPayrollStart(today: Date): Date {
+    return this.payrollStartFor(today);
+  }
+  openErrorsModal(): void {
+    if (!this.payrollErrors?.length) {
+      this.toast.info('No hay errores para mostrar.');
+      return;
+    }
+
+    this.dialog.open(PayrollErrorsDialogComponent, {
+      data: { rows: this.payrollErrors },
+      width: '1000px',
+      maxWidth: '95vw',
+      height: '80vh',
+      autoFocus: false,
+      restoreFocus: false
+    });
+  }
+
+  searchExistingWarehousesSummary(): void {
+    const companyId = this.userActive.companyId;
+    const startCtrl = this.form.value.weekStart as Date | null;
+    const endCtrl = this.form.value.weekEnd as Date | null;
+
+    if (!startCtrl || !endCtrl) {
+      return;
+    }
+
+    const start = toYmd(startCtrl);
+    const end = toYmd(endCtrl);
+
+    const warehousesToLoad =
+      this.selectedWarehouseId
+        ? this.warehouses.filter((w: { id: number }) => w.id === this.selectedWarehouseId)
+        : this.warehouses;
+
+    if (!warehousesToLoad?.length) {
+      this.dataSourceWh.data = [];
+      this.totalNetWh = 0;
+      this.summaryLoaded = false;
+      this.periodId = null;
+      return;
+    }
+
+    this.loading = true;
+    this.payrollErrors = [];
+
+    const requests = warehousesToLoad.map((wh) => {
+      return this.api.getPeriodByRange(companyId, wh.id, start, end).pipe(
+        map((dto: any) => {
+          const periodId =
+            dto?.payPeriodId ??
+            dto?.periodId ??
+            dto?.payPeriod?.id ??
+            dto?.period?.id ??
+            null;
+
+          return { wh, periodId, dto, error: null };
+        }),
+        catchError((err) => {
+          // Si no existe, no lo tratamos como error grave
+          if (err?.status === 404) {
+            return of({
+              wh,
+              periodId: null,
+              dto: null,
+              error: null
+            });
+          }
+
+          const message =
+            err?.error?.error ||
+            err?.error?.message ||
+            err?.message ||
+            'Unknown error';
+
+          return of({
+            wh,
+            periodId: null,
+            dto: null,
+            error: {
+              status: err?.status,
+              message,
+              raw: err
+            }
+          });
+        })
+      );
+    });
+
+    forkJoin(requests)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: (results: any[]) => {
+          const failed: PayrollErrorRow[] = (results || [])
+            .filter(r => r?.error)
+            .map(r => {
+              const whName =
+                r.wh?.name ||
+                `${r.wh?.company ?? ''} ${r.wh?.city ?? ''}`.trim() ||
+                `Warehouse ${r.wh?.id}`;
+
+              return {
+                warehouseId: r.wh?.id,
+                warehouseName: whName,
+                status: r.error?.status,
+                message: r.error?.message ?? 'Error',
+                raw: r.error?.raw
+              } as PayrollErrorRow;
+            });
+
+          this.payrollErrors = failed;
+
+          const ok = (results || []).filter(r => r && r.periodId != null && r.dto);
+
+          const rows: WarehouseSummaryRow[] = ok.map((r: any) => {
+            const drivers = r.dto?.drivers ?? [];
+
+            const gross = drivers.reduce((s: number, d: any) => s + (Number(d.gross) || 0), 0);
+            const adjustments = drivers.reduce((s: number, d: any) => s + (Number(d.adjustments) || 0), 0);
+            const net = drivers.reduce((s: number, d: any) => s + (Number(d.net) || 0), 0);
+
+            let whName = r.wh?.name;
+            if (!whName) {
+              const parts: string[] = [];
+              if (r.wh?.company) parts.push(r.wh.company);
+              if (r.wh?.city) parts.push(r.wh.city);
+              whName = parts.join(' - ') || `Warehouse ${r.wh?.id}`;
+            }
+
+            return {
+              warehouseId: r.wh.id,
+              warehouseName: whName,
+              warehouseCompany: r.wh.company,
+              periodId: r.periodId,
+              startDate: r.dto?.startDate ?? start,
+              endDate: r.dto?.endDate ?? end,
+              drivers: drivers.length,
+              gross,
+              adjustments,
+              net
+            };
+          });
+
+          this.dataSourceWh.data = rows;
+          this.totalNetWh = rows.reduce((s, it) => s + it.net, 0);
+          this.summaryLoaded = rows.length > 0;
+          this.periodId = rows.length === 1 ? rows[0].periodId : null;
+        },
+        error: () => {
+          this.toast.error('Could not load existing payrolls.');
+        }
+      });
+  }
+  onDateRangeChanged(): void {
+   // this.onAnyDatePicked();
+
+    const start = this.form.get('weekStart')?.value;
+    const end = this.form.get('weekEnd')?.value;
+
+    if (start && end) {
+      this.searchExistingWarehousesSummary();
+    }
+  }
+
 }

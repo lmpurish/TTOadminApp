@@ -29,5 +29,6 @@ export interface Warehouse {
   companyId?: number;
   metro?: Metro | null;
   metroId?: number | null;
-  driveRate?:number | null;
+  driveRate?: number | null;
+  facilityCode?: string;
 }

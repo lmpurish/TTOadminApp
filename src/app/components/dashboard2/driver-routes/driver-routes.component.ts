@@ -14,16 +14,39 @@ import { MatPaginator } from '@angular/material/paginator';
 import { WarehouseService } from 'src/app/services/apps/warehouse/warehouse.service';
 import { MatSort } from '@angular/material/sort';
 import { CoreService } from 'src/app/services/core.service';
+import { MatDialog } from '@angular/material/dialog';
+import { RoutePackagesDialogComponent } from './route-packages-dialog/route-packages-dialog.component';
 
-interface driverStats {
-  date: Date,
-  route: string,
-  volume: number;
-  attempts: number;
+interface PackageDto {
+  id: number;
+  tracking: string;
+  status: string;
+  incidentDate: string;
+  address: string;
+  zipCode?: string;
+  reviewStatus?: string;
+}
+
+interface DriverStatsRow {
+  date: string | Date;
+  zone: { zoneCode: string | null };
+  routeId: number;
+
+  volumen: number;
   totalStops: number;
+  attempts: number;
   cnl: number;
-  los: number;
+  averageLOSPerDay: number;
 
+  warehouseId?: number;
+  routeStatus?: string;
+
+  packages: PackageDto[]; // ✅
+  payRunLines?: any[];
+  payrollBySourceType?: Record<string, number>;
+  payrollTotal?: number;
+  payrollPositive?: number;
+  payrollNegative?: number;
 }
 
 @Component({
@@ -37,9 +60,10 @@ interface driverStats {
   templateUrl: './driver-routes.component.html',
   styleUrl: './driver-routes.component.scss'
 })
+
 export class DriverRoutesComponent {
-  dataSource = new MatTableDataSource<driverStats>([]);
-  @ViewChild(MatTable) table!: MatTable<any>;
+  dataSource = new MatTableDataSource<DriverStatsRow>([]);
+  @ViewChild(MatTable) table!: MatTable<DriverStatsRow>;
   @ViewChild(MatPaginator, { static: false }) paginator!: MatPaginator;
   displayedColumns: string[] = [
     'date',
@@ -66,7 +90,7 @@ export class DriverRoutesComponent {
   hideAttempsColumn = false;
   hideCnlColumn = false;
 
-  constructor(private http: HttpClient, private reportService: ReportService, private fb: FormBuilder, private warehouseService: WarehouseService, private userService: CoreService) {
+  constructor(private http: HttpClient, private reportService: ReportService, private fb: FormBuilder, private warehouseService: WarehouseService, private userService: CoreService, private dialog: MatDialog) {
     this.dateRange = this.fb.group({
       start: [null],
       end: [null],
@@ -77,11 +101,22 @@ export class DriverRoutesComponent {
     this.dataSource.paginator = this.paginator;
 
     // Configurar el método de ordenamiento
-    
+
 
     // 🔹 Ordenar por `ranking` por defecto (de mayor a menor)
     this.sort.active = 'Ranking';
     this.sort.direction = 'desc';
+    this.dataSource.sortingDataAccessor = (item: any, property: string) => {
+      switch (property) {
+        case 'TotalVolume': return item.volumen;
+        case 'TotalStops': return item.totalStops;
+        case 'TotalAttempts': return item.attempts;
+        case 'TotalCNL': return item.cnl;
+        case 'route': return item.zone?.zoneCode ?? '';
+        case 'AverageLOSPerDay': return item.averageLOSPerDay;
+        default: return item[property];
+      }
+    };
 
     // Forzar actualización del sort
     setTimeout(() => {
@@ -110,38 +145,62 @@ export class DriverRoutesComponent {
 
         this.reportService.getDriverStats(this.userData.id, startDate, endDate).subscribe({
 
-          next: (res) => {
-            if (Array.isArray(res)) {
-              // 🔍 Filtrar filas donde volumen, attempts y cnl sean todos 0
-              const filtered = res.filter(item =>
-                !(item.volumen === 0 && item.attempts === 0 && item.cnl === 0) &&
-                item.zone?.zoneCode != null
-              );
-
-              console.log(res)
-              this.dataSource.data = filtered;
-
-              // Asignar columnas normalmente
-              this.displayedColumns = [
-                'date',
-                'route',
-                'TotalVolume',
-                'TotalStops',
-                'TotalAttempts',
-                'TotalCNL',
-                'DPOM',
-                'AverageLOSPerDay'
-              ];
-
-              setTimeout(() => {
-                this.dataSource.sort = this.sort;
-                this.dataSource.paginator = this.paginator;
-                this.sort.sortChange.emit();
-                this.table.renderRows();
-              });
-            } else {
+          next: (res: any) => {
+            console.log(res)
+            if (!Array.isArray(res)) {
               this.dataSource.data = [];
+              return;
             }
+
+            const rows: DriverStatsRow[] = res.flatMap((day: any) => {
+              const dayDate = day?.date;
+              const routes = Array.isArray(day?.routes) ? day.routes : [];
+
+              return routes.map((r: any): DriverStatsRow => {
+                const volumen = Number(r?.volumen ?? 0);
+                const attempts = Number(r?.attempts ?? 0);
+                const cnl = Number(r?.cnl ?? 0);
+                const totalStops = Number(r?.deliveryStops ?? 0);
+
+                const losRaw = Number(r?.los ?? 0);
+                const averageLOSPerDay = losRaw <= 1 ? losRaw * 100 : losRaw;
+
+                return {
+                  date: dayDate ?? (r?.date ? String(r.date).substring(0, 10) : new Date()),
+                  zone: { zoneCode: r?.zoneCode ?? null },
+                  routeId: Number(r?.routeId ?? 0),
+
+                  volumen,
+                  attempts,
+                  cnl,
+                  totalStops,
+                  averageLOSPerDay,
+
+                  warehouseId: r?.warehouseId,
+                  routeStatus: r?.routeStatus,
+
+                  packages: Array.isArray(r?.packages) ? r.packages : [], // ✅ para el modal
+                  payRunLines: Array.isArray(day?.payRunLines) ? day.payRunLines : [],
+                  payrollBySourceType: day?.payrollBySourceType ?? {},
+                  payrollTotal: Number(day?.payrollTotal ?? 0),
+                  payrollPositive: Number(day?.payrollPositive ?? 0),
+                  payrollNegative: Number(day?.payrollNegative ?? 0),
+                };
+              });
+            });
+
+            const filtered = rows.filter(x =>
+              !(x.volumen === 0 && x.attempts === 0 && x.cnl === 0)
+            );
+
+            this.dataSource.data = filtered;
+
+            setTimeout(() => {
+              this.dataSource.sort = this.sort;
+              this.dataSource.paginator = this.paginator;
+              this.sort.sortChange.emit();
+              this.table.renderRows();
+            });
           },
           error: (err) => {
             console.log("Error en la API:", err);
@@ -188,6 +247,31 @@ export class DriverRoutesComponent {
 
     return indexInSortedData + 1; // 🔹 Índice basado en el orden real
   }
+  openPackages(row: DriverStatsRow) {
+    this.dialog.open(RoutePackagesDialogComponent, {
+      width: '1100px',
+      maxWidth: '95vw',
+      maxHeight: '85vh',
+      autoFocus: false,
+      data: {
+        routeId: row.routeId,
+        date: row.date,
+        zoneCode: row.zone?.zoneCode,
+        warehouseId: row.warehouseId,
+
+        packages: row.packages ?? [],
+
+        // ✅ payroll summary
+        payrollBySourceType: row.payrollBySourceType ?? {},
+        payrollTotal: row.payrollTotal ?? 0,
+        payrollPositive: row.payrollPositive ?? 0,
+        payrollNegative: row.payrollNegative ?? 0,
+
+        // ✅ detalle (opcional)
+        payRunLines: row.payRunLines ?? []
+      }
+    });
+  }
   onDateChange() {
     if (this.dateRange.value.start && this.dateRange.value.end) {
       this.fetchData();
@@ -200,7 +284,7 @@ export class DriverRoutesComponent {
   }
 
   get totalStops(): number {
-   
+
     return this.dataSource.data.reduce((sum, item) => sum + item.totalStops, 0);
   }
 

@@ -1,0 +1,52 @@
+<mat-card class="cardWithShadow">
+  <mat-card-header class="p-b-12">
+    <div class="d-flex w-100 align-items-center">
+      <div>
+        <mat-card-title>Vehicle Status</mat-card-title>
+        <mat-card-subtitle>Fleet availability overview</mat-card-subtitle>
+      </div>
+    </div>
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="row align-items-center">
+      <div class="col-sm-7">
+        <apx-chart
+          [series]="vehicleStatusChart.series"
+          [chart]="vehicleStatusChart.chart"
+          [labels]="vehicleStatusChart.labels"
+          [colors]="vehicleStatusChart.colors"
+          [legend]="vehicleStatusChart.legend"
+          [dataLabels]="vehicleStatusChart.dataLabels"
+          [tooltip]="vehicleStatusChart.tooltip"
+          [plotOptions]="vehicleStatusChart.plotOptions"
+          [stroke]="vehicleStatusChart.stroke"
+          [responsive]="vehicleStatusChart.responsive">
+        </apx-chart>
+      </div>
+
+      <div class="col-sm-5">
+        <div class="d-flex align-items-center m-b-24">
+          <span class="text-primary bg-light-primary rounded icon-48 d-flex align-items-center justify-content-center">
+            <i-tabler name="car" class="icon-24"></i-tabler>
+          </span>
+
+          <div class="m-l-12">
+            <h5 class="f-s-24 m-b-4">{{ totalVehicles }}</h5>
+            <span class="f-s-14">Total Vehicles</span>
+          </div>
+        </div>
+
+        <div class="status-row" *ngFor="let item of statusSummary">
+          <i-tabler name="circle-filled" class="icon-12 m-t-4" [ngClass]="item.class"></i-tabler>
+
+          <div class="m-l-12">
+            <span class="f-s-14">{{ item.label }}</span>
+            <h3 class="f-s-18 f-w-600 m-t-4">{{ item.value }}</h3>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

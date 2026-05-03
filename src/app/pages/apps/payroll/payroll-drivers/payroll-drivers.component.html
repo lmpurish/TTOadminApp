@@ -12,6 +12,11 @@
                     <input matInput [formControl]="filterCtrl" placeholder="Por ID de driver" />
                     <mat-icon matSuffix>search</mat-icon>
                 </mat-form-field>
+
+                <button mat-raised-button color="primary" (click)="exportWarehouseReport()">
+                    <i-tabler name="file-download" class="icon-18 m-r-8"></i-tabler>
+                    Export Warehouse PDF
+                </button>
             </div>
         </div>
 
@@ -69,12 +74,22 @@
                         <button mat-icon-button (click)="viewRun(row)" matTooltip="Ver detalle">
                             <i-tabler name="eye" class="icon-18"></i-tabler>
                         </button>
-                        <button mat-icon-button (click)="approve(row)" matTooltip="Aprobar run">
-                            <i-tabler name="check" class="icon-18"></i-tabler>
+                        <button mat-icon-button (click)="approve(row)" matTooltip="Aprobar run"
+                            [disabled]="row.status === 'Approved'">
+
+                            <i-tabler [name]="row.status === 'Approved' ? 'circle-check' : 'check'"
+                                [class.text-success]="row.status === 'Approved'" class="icon-18">
+                            </i-tabler>
+
                         </button>
-                        <button mat-icon-button (click)="exportRun(row)" matTooltip="Exportar CSV">
+                        <button mat-icon-button color="accent" (click)="openAdjustmentDialog(row)"
+                            matTooltip="Add adjustment">
+                            <i-tabler name="receipt-2" class="icon-18"></i-tabler>
+                        </button>
+                        <button mat-icon-button (click)="exportRun(row)" matTooltip="Exportar PDF">
                             <i-tabler name="file-download" class="icon-18"></i-tabler>
                         </button>
+
                     </td>
                 </ng-container>
 

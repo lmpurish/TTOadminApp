@@ -1,0 +1,40 @@
+.message-preview {
+  max-width: 420px;
+  max-height: 120px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.editor-wrapper {
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+}
+
+.html-editor {
+  width: 100%;
+  min-height: 300px;
+  resize: vertical;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  padding: 14px;
+  font-family: Consolas, Monaco, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  background: #ffffff;
+  outline: none;
+}
+
+.email-preview {
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+  background: #fafafa;
+  padding: 16px;
+  min-height: 240px;
+  overflow: auto;
+}

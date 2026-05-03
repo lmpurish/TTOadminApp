@@ -20,6 +20,8 @@ import { AppHorizontalHeaderComponent } from './horizontal/header/header.compone
 import { AppHorizontalSidebarComponent } from './horizontal/sidebar/sidebar.component';
 import { AppBreadcrumbComponent } from './shared/breadcrumb/breadcrumb.component';
 import { CustomizerComponent } from './shared/customizer/customizer.component';
+import { HttpClient } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 const MOBILE_VIEW = 'screen and (max-width: 768px)';
 const TABLET_VIEW = 'screen and (min-width: 769px) and (max-width: 1024px)';
@@ -42,24 +44,24 @@ interface quicklinks {
 }
 
 @Component({
-    selector: 'app-full',
-    imports: [
-        RouterModule,
-        AppNavItemComponent,
-        MaterialModule,
-        CommonModule,
-        SidebarComponent,
-        NgScrollbarModule,
-        TablerIconsModule,
-        HeaderComponent,
-        AppHorizontalHeaderComponent,
-        AppHorizontalSidebarComponent,
-        AppBreadcrumbComponent,
-        CustomizerComponent,
-    ],
-    templateUrl: './full.component.html',
-    styleUrls: [],
-    encapsulation: ViewEncapsulation.None
+  selector: 'app-full',
+  imports: [
+    RouterModule,
+    AppNavItemComponent,
+    MaterialModule,
+    CommonModule,
+    SidebarComponent,
+    NgScrollbarModule,
+    TablerIconsModule,
+    HeaderComponent,
+    AppHorizontalHeaderComponent,
+    AppHorizontalSidebarComponent,
+    AppBreadcrumbComponent,
+    CustomizerComponent,
+  ],
+  templateUrl: './full.component.html',
+  styleUrls: [],
+  encapsulation: ViewEncapsulation.None
 })
 export class FullComponent implements OnInit {
   navItems = navItems;
@@ -86,7 +88,7 @@ export class FullComponent implements OnInit {
 
   // for mobile app sidebar
   apps: apps[] = [
-   
+
     {
       id: 2,
       img: '/assets/images/svgs/icon-dd-cart.svg',
@@ -186,7 +188,9 @@ export class FullComponent implements OnInit {
     private mediaMatcher: MediaMatcher,
     private router: Router,
     private breakpointObserver: BreakpointObserver,
-    private navService: NavService
+    private navService: NavService,
+    private coreService: CoreService,
+    private http: HttpClient
   ) {
     this.htmlElement = document.querySelector('html')!;
     this.layoutChangesSubscription = this.breakpointObserver
@@ -213,7 +217,74 @@ export class FullComponent implements OnInit {
       });
   }
 
-  ngOnInit(): void {}
+  user: any;
+  hasArrived = false;
+  punching = false;
+  warehouseId!: number;
+
+  ngOnInit(): void {
+    this.user = this.coreService.getUserInfoFromToken();
+
+    if (!this.user) return;
+
+    this.warehouseId = this.user.WarehouseID;
+   
+    this.loadTodayStatus();
+  }
+  loadTodayStatus() {
+    this.http.get<any>(`${environment.apiUrl}/DriverPunch/today?warehouseId=${this.warehouseId}`)
+      .subscribe(res => {
+        this.hasArrived = res?.hasArrival && !res?.hasDeparture;
+      });
+  }
+
+  async onPunch() {
+    if (!this.user || this.punching) return;
+
+    this.punching = true;
+
+    try {
+      const pos = await this.getLocation();
+
+      const punchType = this.hasArrived ? 'Departure' : 'Arrival';
+      console.log(this.warehouseId)
+
+      await this.http.post(`${environment.apiUrl}/DriverPunch`, {
+        warehouseId: this.warehouseId,
+        punchType,
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        accuracyMeters: pos.coords.accuracy,
+        notes: "Arrived"
+      }).toPromise();
+
+      this.hasArrived = !this.hasArrived;
+
+      this.coreService.showSuccess(
+        punchType === 'Arrival'
+          ? 'Arrival registered successfully'
+          : 'Departure registered successfully'
+      );
+
+    } catch (err: any) {
+      this.coreService.showError(err?.error?.message || 'Unable to register punch');
+    } finally {
+      this.punching = false;
+    }
+  }
+  getLocation(): Promise<GeolocationPosition> {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        resolve,
+        reject,
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+      );
+    });
+  }
 
   ngOnDestroy() {
     this.layoutChangesSubscription.unsubscribe();

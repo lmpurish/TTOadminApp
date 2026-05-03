@@ -91,6 +91,7 @@ export interface PayrollSummary {
   gross: number;
   adjustments: number;
   net: number;
+  run: number;
 }
 
 export interface PeriodSummaryDto {
@@ -103,6 +104,8 @@ export interface PeriodSummaryDto {
     gross: number;
     adjustments: number;
     net: number;
+    run: number;
+    status?: string,
   }>;
   totalNet: number;
 }

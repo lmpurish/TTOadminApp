@@ -15,7 +15,7 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgScrollbarModule } from 'ngx-scrollbar';
-
+import { HttpErrorResponse } from '@angular/common/http';
 import { AppSettings } from 'src/app/config';
 import { jwtDecode } from "jwt-decode";
 import { HttpClient, HttpEvent, HttpEventType, HttpResponse } from '@angular/common/http';
@@ -134,33 +134,37 @@ export class HeaderComponent {
   private emitOptions() {
     this.optionsChange.emit(this.options);
   }
-  loadUserInfo() {
-    const token = localStorage.getItem('token'); // Obtiene el token JWT
+  loadUserInfo(): void {
+    const token = localStorage.getItem('token');
 
     if (!token) {
-      console.warn("⚠️ No hay token en localStorage");
+      console.warn('⚠️ No hay token en localStorage');
+      this.userInfo = null;
       return;
     }
 
     try {
-      //  console.log("🔍 Token JWT recibido:", token); // Verifica el contenido del token
-      const decodedToken: any = jwtDecode(token); // Decodifica el token
-      // Si el token no contiene la información correcta
-      if (!decodedToken.unique_name || !decodedToken.role || decodedToken.nameid === undefined || !decodedToken.email) {
-        console.error("❌ El token no contiene información válida del usuario");
+      const decoded: any = jwtDecode(token);
+
+      // Validación mínima (no seas tan estricto o romperás login)
+      if (!decoded) {
+        console.error('❌ Token inválido');
+        this.userInfo = null;
         return;
       }
+
       this.userInfo = {
-        name: decodedToken.unique_name || 'Unknown',
-        id: decodedToken.nameid || 'Unknown',
-        role: decodedToken.role,
-        email: decodedToken.email,
-        warehouseID: decodedToken.warehouseID,
-        avatarUrl: decodedToken.avatar_url,
+        id: Number(decoded.nameid),                 // sub / nameid
+        name: decoded.unique_name ?? decoded.name ?? 'Unknown',
+        role: decoded.role,
+        email: decoded.email,
+        warehouseId: decoded.warehouseID ?? null,   // OJO naming
+        companyId: decoded.companyId ?? null,
+        avatarUrl: decoded.avatar_url ?? null
       };
 
-    } catch (error) {
-      console.error('❌ Error decodificando el token:', error);
+    } catch (err) {
+      console.error('❌ Error decodificando token', err);
       this.userInfo = null;
     }
   }
@@ -258,6 +262,7 @@ export class AppSearchDialogComponent {
   selectedFile: File | null = null;
   isLoading = false;
   userInfo: any;
+  fileType: 'report' | 'claims' | null = null;
   constructor(private http: HttpClient, private snackBar: MatSnackBar, private core: CoreService,
     private warehouseService: WarehouseService, private dialog: MatDialog) { }
   warehouses: any[] = [];
@@ -268,8 +273,9 @@ export class AppSearchDialogComponent {
     return this.userInfo?.warehouseID ?? null;
   }
 
-  private getSelectedWarehouse(warehouseId: number) {
-    return this.warehouses?.find(w => w.id === warehouseId) ?? null;
+  private getSelectedWarehouse(warehouseId: number | string) {
+    const id = Number(warehouseId);
+    return this.warehouses?.find(w => Number(w.id) === id) ?? null;
   }
   ngOnInit(): void {
     this.loadUserInfo();
@@ -353,66 +359,144 @@ export class AppSearchDialogComponent {
 
   uploadFile(event: Event) {
     event.preventDefault();
+
     if (!this.selectedFile) return;
 
     const warehouseId = this.getWarehouseId();
     if (!warehouseId) {
-      this.snackBar.open('Seleccione un warehouse.', 'Cerrar', { duration: 4000 });
+      this.snackBar.open('Please select a warehouse.', 'Close', { duration: 4000 });
+      return;
+    }
+
+    if (!this.fileType) {
+      this.snackBar.open('Please select a file type.', 'Close', { duration: 4000 });
       return;
     }
 
     const wh = this.getSelectedWarehouse(warehouseId);
-    const company = (wh?.company ?? '').toLowerCase(); // "OnTrac" -> "ontrac"
+    const company = (wh?.company ?? '').toLowerCase();
 
     this.isLoading = true;
 
     const formData = new FormData();
     formData.append('file', this.selectedFile);
 
-    // ✅ Si es OnTrac usa un endpoint; si no, usa otro
-    const request$ =
-      company === 'ontrac'
-        ? this.core.uploadXmlFileOntrac(formData, warehouseId)
-        : this.core.uploadXmlFileOther(formData, warehouseId);
+    let request$;
+
+    if (this.fileType === 'report') {
+      request$ =
+        company === 'ontrac'
+          ? this.core.uploadXmlFileOntrac(formData, warehouseId)
+          : this.core.uploadXmlFileOther(formData, warehouseId);
+    } else {
+      request$ = this.core.uploadClaimsFile(formData);
+    }
 
     request$.subscribe({
-      next: (evt: HttpEvent<ImportResultDto>) => {
-        // Progreso
-     
-        // Respuesta final
+      next: (evt: HttpEvent<any>) => {
         if (evt instanceof HttpResponse) {
-          const res = evt.body as ImportResultDto;
+          const res = evt.body;
 
-          this.snackBar.open('File uploaded successfully.', 'Cerrar', { duration: 3000 });
           this.selectedFile = null;
+          console.log('RES:', res);
 
-          // ✅ Solo mostrar vista cuando NO es OnTrac
-          if (company !== 'ontrac' && res) {
-            this.dialog.open(ImportResultComponent, {
-              width: '900px',
-              maxWidth: '95vw',
-              data: res
-            });
+          if (this.fileType === 'claims') {
+            this.snackBar.open(
+              `Claims imported successfully. Created: ${res?.created ?? 0}, Errors: ${res?.errors ?? 0}`,
+              'Close',
+              { duration: 6000 }
+            );
+
+            if (res?.errorRows?.length) {
+              this.dialog.open(ImportResultComponent, {
+                width: '900px',
+                maxWidth: '95vw',
+                data: res
+              });
+            }
+          } else {
+            this.handleImportResponse(res, company);
+
+            if (company !== 'ontrac' && res) {
+              try {
+                this.dialog.open(ImportResultComponent, {
+                  width: '900px',
+                  maxWidth: '95vw',
+                  data: res
+                });
+              } catch (e) {
+                console.error('DIALOG ERROR:', e);
+                this.snackBar.open('Error opening results modal.', 'Close', { duration: 5000 });
+              }
+            }
           }
         }
       },
-      error: (err) => {
-        const msg = err?.error?.message ?? 'Error uploading file.';
-        this.snackBar.open(msg, 'Cerrar', { duration: 5000 });
+      error: (err: any) => {
+        console.log('ERR:', err);
+
+        const payload = err?.error ?? err;
+
+        if (this.fileType === 'claims') {
+          const msg =
+            typeof payload === 'string'
+              ? payload
+              : payload?.message || 'Error importing claims file.';
+
+          this.snackBar.open(msg, 'Close', { duration: 5000 });
+        } else {
+          this.handleImportResponse(payload, company);
+        }
+
         this.isLoading = false;
       },
       complete: () => {
         this.isLoading = false;
-      
       }
     });
   }
 
 
+  private handleImportResponse(payload: any, company: string) {
+    if (!payload) return;
 
+    const message = payload?.message ?? 'Done.';
 
+    // Soporta ambos nombres (por si hay typo en backend)
+    const notFound: string[] =
+      payload?.notFoundUsers ??
+      payload?.notFountInUsers ??
+      payload?.missingIdentificationNumbers ??
+      [];
 
-  // filtered = this.navItemsData.find((obj) => {
-  //   return obj.displayName == this.searchinput;
-  // });
+    // Muestra el mensaje
+    this.snackBar.open(message, 'Cerrar', { duration: 6000 });
+
+    // ✅ Caso OnTrac: mostrar los no encontrados
+    if (company === 'ontrac' && notFound.length > 0) {
+      // Opción A: abrir el mismo dialog pero con una data "simple"
+      this.dialog.open(ImportResultComponent, {
+        width: '900px',
+        maxWidth: '95vw',
+        data: {
+          message,
+          notFoundUsers: notFound,
+          missingCount: notFound.length,
+          warehouseId: 5
+        }
+      });
+
+      // Opción B (si NO quieres dialog): solo resumen
+      // this.snackBar.open(`Missing drivers: ${notFound.length}`, 'Cerrar', { duration: 7000 });
+    }
+
+    // (Tu comportamiento actual para NO OnTrac lo mantienes en el next)
+  }
 }
+
+
+
+// filtered = this.navItemsData.find((obj) => {
+//   return obj.displayName == this.searchinput;
+// });
+

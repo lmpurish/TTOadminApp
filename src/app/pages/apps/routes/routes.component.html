@@ -115,8 +115,7 @@
       <td mat-cell *matCellDef="let element">
         <mat-form-field appearance="outline" class="m-0 w-100">
           <mat-select [(ngModel)]="element.userId" (ngModelChange)="handleDriverChange(element, $event)"
-            [ngModelOptions]="{ standalone: true }" [compareWith]="compareIds" [disabled]="!isRowEditable(element)"
-            placeholder="Select Driver">
+            [ngModelOptions]="{ standalone: true }" [compareWith]="compareIds" placeholder="Select Driver">
 
             <mat-option [value]="null">— Unassigned —</mat-option>
 
@@ -186,9 +185,16 @@
     <!-- Table rows -->
     <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
     <tr mat-row
-      *matRowDef="let row; columns: ['select','date','routeStatus','userId','cnl','volumen','deliveryStops','zoneId','paymentType','priceRoute']">
+      *matRowDef="let row; columns: ['select','date','routeStatus','userId','cnl','volumen','deliveryStops','zoneId','paymentType','priceRoute','action']">
     </tr>
-
+    <ng-container matColumnDef="action">
+      <th mat-header-cell *matHeaderCellDef sticky>Action</th>
+      <td mat-cell *matCellDef="let row">
+        <button mat-icon-button color="primary" (click)="editRoute(row)" matTooltip="Add Route Bonus">
+          <i-tabler name="cash" class="icon-18"></i-tabler>
+        </button>
+      </td>
+    </ng-container>
   </table>
 
   <div *ngIf="dataSource.data.length === 0 && !loading" class="text-center p-4">

@@ -35,12 +35,18 @@
       <div class="col-lg-2">
         <mat-form-field appearance="outline" class="w-100">
           <mat-label>Período</mat-label>
-          <mat-date-range-input [rangePicker]="picker" [formGroup]="form">
-            <input matStartDate formControlName="weekStart" placeholder="Inicio">
-            <input matEndDate formControlName="weekEnd" placeholder="Fin">
+          <mat-date-range-input [rangePicker]="picker" [formGroup]="form" [dateFilter]="payrollDateFilter">
+            <input matStartDate formControlName="weekStart" placeholder="Inicio" (dateChange)="onDateRangeChanged()" />
+
+            <input matEndDate formControlName="weekEnd" placeholder="Fin" (dateChange)="onDateRangeChanged()" />
           </mat-date-range-input>
+
           <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-date-range-picker #picker></mat-date-range-picker>
+
+          <mat-hint *ngIf="isCurrentPeriodSelected">
+            No puedes calcular nómina hasta que termine el período (viernes).
+          </mat-hint>
         </mat-form-field>
 
 
@@ -51,9 +57,14 @@
         <button mat-raised-button color="primary" (click)="loadWarehousesSummary()">
           <i-tabler name="sum" class="icon-18 m-r-6 d-flex"></i-tabler> Load by Warehouse
         </button>
-        <button mat-stroked-button color="primary" (click)="linkDriverRate()"
-          >
+        <button mat-stroked-button color="primary" (click)="linkDriverRate()">
           <i-tabler name="cloud-dollar" class="icon-18 m-r-6 d-flex"></i-tabler>Employee Rate
+        </button>
+        <button mat-stroked-button color="primary" (click)="linkPayrollConf()">
+          <i-tabler name="settings" class="icon-18 m-r-6 d-flex"></i-tabler>Payroll Configuration
+        </button>
+        <button mat-stroked-button color="warn" *ngIf="payrollErrors?.length" (click)="openErrorsModal()">
+          Ver errores ({{ payrollErrors.length }})
         </button>
         <button mat-stroked-button color="primary" (click)="exportWarehousesCsv()"
           [disabled]="!dataSourceWh.data.length">
@@ -68,6 +79,9 @@
 <mat-card class="cardWithShadow">
   <mat-card-content>
     <div class="table-responsive">
+      <pre class="p-2" *ngIf="debugResults?.length">
+{{ debugResults | json }}
+</pre>
       <table mat-table [dataSource]="dataSourceWh" class="w-100" matSort #whSort="matSort">
         <ng-container matColumnDef="warehouse">
           <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Warehouse</th>

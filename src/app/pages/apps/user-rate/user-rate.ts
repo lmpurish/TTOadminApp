@@ -18,4 +18,6 @@ export interface UserRate {
     effectiveTo?: string;      // 'YYYY-MM-DD' | undefined
     driverFullName: string;
     warehouseId: number;
+    dailyAmount: number;
+    extraAmount: number;
 }

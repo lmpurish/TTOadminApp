@@ -1,0 +1,40 @@
+<mat-card class="cardWithShadow recent-rentals-card">
+  <mat-card-header>
+    <mat-card-title>Recent Rentals</mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="rental-item" *ngFor="let rental of rentals">
+      <img [src]="rental.image" class="vehicle-img" />
+
+      <div class="rental-info">
+        <div class="vehicle-name">
+          {{ rental.vehicle }}
+        </div>
+
+        <div class="customer-name">
+          {{ rental.customer }}
+        </div>
+      </div>
+
+      <div class="rental-side">
+        <span class="status-badge">
+          {{ rental.status }}
+        </span>
+
+        <div class="rental-date">
+          {{ rental.date }}
+        </div>
+      </div>
+    </div>
+
+    <button
+      mat-stroked-button
+      class="view-all-btn"
+      (click)="viewAllRentals()"
+    >
+      View all rentals
+      <i-tabler name="chevron-right" class="icon-18"></i-tabler>
+    </button>
+  </mat-card-content>
+</mat-card>

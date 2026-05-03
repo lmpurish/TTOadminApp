@@ -1,0 +1,191 @@
+<!-- LOADING -->
+<div class="loading-overlay" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+</div>
+
+<!-- CONTROLES / FILTROS -->
+<mat-card class="cardWithShadow">
+  <mat-card-content>
+    <div class="row gap-16 align-items-end">
+      <!-- Búsqueda -->
+      <div class="col-lg-3">
+        <mat-form-field appearance="outline" style="min-width: 300px; margin-left: 16px;">
+          <input
+            matInput
+            placeholder="Search by WarehouseId"
+            (keyup)="applyFilter($any($event.target).value)"
+          />
+          <mat-icon matSuffix>
+            <i-tabler name="search" class="icon-20 d-flex m-t-2"></i-tabler>
+          </mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Guardar Seleccionados -->
+      <div class="col-auto">
+        <button mat-flat-button color="primary" (click)="saveSelected()" [disabled]="selection.isEmpty()">
+          Save selected
+        </button>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- TABLA -->
+<mat-card class="cardWithShadow">
+  <mat-card-content>
+    <div class="table-responsive">
+      <table mat-table [dataSource]="dataSource" class="w-100" matSort>
+
+        <!-- Select -->
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef>
+            <mat-checkbox
+              (change)="$event ? masterToggle() : null"
+              [checked]="isAllSelected()"
+              [indeterminate]="selection.hasValue() && !isAllSelected()"
+              [aria-label]="checkboxLabel()"
+            ></mat-checkbox>
+          </th>
+
+          <td mat-cell *matCellDef="let element">
+            <mat-checkbox
+              (click)="$event.stopPropagation()"
+              (change)="$event ? selection.toggle(element) : null"
+              [checked]="selection.isSelected(element)"
+              [aria-label]="checkboxLabel(element)"
+            ></mat-checkbox>
+          </td>
+        </ng-container>
+
+        <!-- WarehouseId -->
+        <ng-container matColumnDef="warehouseId">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Warehouse</th>
+          <td mat-cell *matCellDef="let element">
+            {{ element.warehouseName }}
+          </td>
+        </ng-container>
+
+        <!-- EnableWeightExtra -->
+        <ng-container matColumnDef="enableWeightExtra">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Weight Extra</th>
+          <td mat-cell *matCellDef="let element">
+            <mat-slide-toggle
+              [checked]="element.enableWeightExtra"
+              [disabled]="!selection.isSelected(element)"
+              (change)="element.enableWeightExtra = $event.checked"
+            ></mat-slide-toggle>
+          </td>
+        </ng-container>
+
+        <!-- EnablePenalties -->
+        <ng-container matColumnDef="enablePenalties">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Penalties</th>
+          <td mat-cell *matCellDef="let element">
+            <mat-slide-toggle
+              [checked]="element.enablePenalties"
+              [disabled]="!selection.isSelected(element)"
+              (change)="element.enablePenalties = $event.checked"
+            ></mat-slide-toggle>
+          </td>
+        </ng-container>
+
+        <!-- EnableBonuses -->
+        <ng-container matColumnDef="enableBonuses">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Bonuses</th>
+          <td mat-cell *matCellDef="let element">
+            <mat-slide-toggle
+              [checked]="element.enableBonuses"
+              [disabled]="!selection.isSelected(element)"
+              (change)="element.enableBonuses = $event.checked"
+            ></mat-slide-toggle>
+          </td>
+        </ng-container>
+
+        <!-- DefaultPenaltyAmount -->
+        <ng-container matColumnDef="defaultPenaltyAmount">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Default Penalty</th>
+          <td mat-cell *matCellDef="let element">
+            <mat-form-field appearance="outline" class="cell-field" style="max-width: 160px;">
+              <input
+                matInput
+                type="number"
+                step="0.01"
+                [disabled]="!selection.isSelected(element) || !element.enablePenalties"
+                [value]="element.defaultPenaltyAmount ?? null"
+                (input)="element.defaultPenaltyAmount = ($any($event.target).value === '' ? null : +$any($event.target).value)"
+              />
+            </mat-form-field>
+          </td>
+        </ng-container>
+
+        <!-- PenaltyCapPerWeek -->
+        <ng-container matColumnDef="penaltyCapPerWeek">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Penalty Cap/Week</th>
+          <td mat-cell *matCellDef="let element">
+            <mat-form-field appearance="outline" class="cell-field" style="max-width: 160px;">
+              <input
+                matInput
+                type="number"
+                step="0.01"
+                [disabled]="!selection.isSelected(element) || !element.EnablePenalties"
+                [value]="element.penaltyCapPerWeek ?? null"
+                (input)="element.penaltyCapPerWeek = ($any($event.target).value === '' ? null : +$any($event.target).value)"
+              />
+            </mat-form-field>
+          </td>
+        </ng-container>
+
+        <!-- IsActive -->
+        <ng-container matColumnDef="isActive">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Active</th>
+          <td mat-cell *matCellDef="let element">
+            <mat-slide-toggle
+              [checked]="!!element.IsActive"
+              [disabled]="!selection.isSelected(element)"
+              (change)="element.IsActive = $event.checked"
+            ></mat-slide-toggle>
+          </td>
+        </ng-container>
+
+        <!-- Action -->
+        <ng-container matColumnDef="action">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">Action</th>
+          <td mat-cell *matCellDef="let element">
+            <button
+              mat-stroked-button
+              color="primary"
+              class="m-r-8"
+              (click)="saveRowByElement(element)"
+              [disabled]="!selection.isSelected(element)"
+            >
+              Save
+            </button>
+
+            <button
+              mat-button
+              (click)="resetRowByElement(element)"
+              [disabled]="!selection.isSelected(element)"
+            >
+              Reset
+            </button>
+          </td>
+        </ng-container>
+
+        <!-- Encabezados y filas -->
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+        <!-- Sin datos -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+            No payroll configs found.
+          </td>
+        </tr>
+      </table>
+
+      <!-- Paginador -->
+      <mat-paginator [pageSizeOptions]="[5, 10, 20, 50]" [pageSize]="15" showFirstLastButtons></mat-paginator>
+    </div>
+  </mat-card-content>
+</mat-card>

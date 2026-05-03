@@ -14,10 +14,11 @@ import { AppYearlySalesComponent } from '../../../components/dashboard2/yearly-s
 import { AppPaymentGatewaysComponent } from '../../../components/dashboard2/payment-gateways/payment-gateways.component';
 import { AppRecentTransactionsComponent } from '../../../components/dashboard2/recent-transactions/recent-transactions.component';
 import { AppTopProjectsComponent } from '../../../components/dashboard2/top-projects/top-projects.component';
-import { CoreService } from 'src/app/services/core.service';
+import { CoreService, WarehouseGrossRow } from 'src/app/services/core.service';
 import { CommonModule } from '@angular/common';
 import { DriverRoutesComponent } from "../../../components/dashboard2/driver-routes/driver-routes.component";
 import { AppFullcalendarComponent } from '../../apps/fullcalendar/fullcalendar.component';
+import { AppEmployeeSalaryComponent } from 'src/app/components/dashboard2/employee-salary/employee-salary.component';
 
 @Component({
   selector: 'app-dashboard2',
@@ -28,12 +29,15 @@ import { AppFullcalendarComponent } from '../../apps/fullcalendar/fullcalendar.c
     AppSalesOverviewComponent,
     AppTotalEarningsComponent,
     AppFullcalendarComponent,
+    AppPaymentGatewaysComponent,
+    AppSalesProfitComponent,
+    AppEmployeeSalaryComponent,
     /*AppSalesProfitComponent,
- AppMonthlyEarningsTwoComponent,
+    AppMonthlyEarningsTwoComponent,
    AppWeeklyStatsComponent,
  
-   AppPaymentGatewaysComponent,
-   AppRecentTransactionsComponent,*/
+   
+    AppRecentTransactionsComponent,*/
     AppYearlySalesComponent,
     AppTopProjectsComponent,
     CommonModule,
@@ -42,10 +46,16 @@ import { AppFullcalendarComponent } from '../../apps/fullcalendar/fullcalendar.c
   templateUrl: './dashboard2.component.html',
 })
 export class AppDashboard2Component {
+  grossByWarehouse: WarehouseGrossRow[] = [];
+
   constructor(private core: CoreService) { }
   role: string;
 
   ngOnInit(): void {
     this.role = this.core.getRole();
+    this.core.latestGrossAmountByWarehouse().subscribe({
+      next: (rows) => (this.grossByWarehouse = rows ?? []),
+      error: (err) => console.error('latestGrossAmountByWarehouse failed', err),
+    });
   }
 }

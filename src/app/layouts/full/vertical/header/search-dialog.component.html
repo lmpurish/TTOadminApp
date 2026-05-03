@@ -1,7 +1,7 @@
 <div class="p-24 p-b-0">
   <div class="row">
     <div class="col-10">
-      <h4 class="f-s-18 f-w-600 m-b-16">Upload Report</h4>
+      <h4 class="f-s-18 f-w-600 m-b-16">Upload Files</h4>
     </div>
     <div class="col-2 d-flex justify-content-end">
       <button mat-icon-button mat-dialog-close class="d-flex justify-content-center">
@@ -15,18 +15,8 @@
 
 <mat-dialog-content class="mat-typography search-dialog">
   <form (submit)="uploadFile($event)">
-    <div class="file-upload-container">
-      <input type="file" id="fileInput" (change)="onFileSelected($event)"
-        accept=".xml,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        hidden>
 
-      <label for="fileInput" class="file-label" [ngClass]="{ 'disabled': isLoading }">
-        <mat-icon>cloud_upload</mat-icon>
-        <span *ngIf="!selectedFile">Select File</span>
-        <span *ngIf="selectedFile">{{ selectedFile.name }}</span>
-      </label>
-    </div>
-
+    <!-- SELECT WAREHOUSE -->
     <mat-form-field *ngIf="isAdmin" appearance="outline" class="theme-select"
       style="min-width: 300px; margin-left: 16px; margin-bottom: 16px;">
       <mat-label>Warehouse</mat-label>
@@ -38,16 +28,44 @@
       </mat-select>
     </mat-form-field>
 
+    <!-- SELECT TYPE -->
+    <mat-form-field appearance="outline" class="theme-select"
+      style="min-width: 300px; margin-left: 16px; margin-bottom: 16px;" *ngIf="selectedWarehouseId">
+      <mat-label>File Type</mat-label>
+      <mat-select [(ngModel)]="fileType" name="fileType" (selectionChange)="selectedFile = null">
+        <mat-option value="report">Report</mat-option>
+        <mat-option value="claims">Claims</mat-option>
+      </mat-select>
+    </mat-form-field>
 
+    <!-- FILE SELECT -->
+    <div class="file-upload-container">
+      <input type="file" id="fileInput" (change)="onFileSelected($event)" [accept]="fileType === 'claims'
+      ? '.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      : '.xml,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'"
+        hidden>
+
+      <label for="fileInput" class="file-label" [ngClass]="{ 'disabled': isLoading || !fileType }">
+        <mat-icon>cloud_upload</mat-icon>
+
+        <span *ngIf="!selectedFile">Select File</span>
+        <span *ngIf="selectedFile">{{ selectedFile.name }}</span>
+      </label>
+    </div>
 
     <mat-divider></mat-divider>
 
     <div class="upload-actions">
       <button mat-button mat-dialog-close>Cancel</button>
-      <button mat-raised-button color="primary" type="submit" [disabled]="!selectedFile || isLoading">
+
+      <button mat-raised-button color="primary" type="submit" [disabled]="!selectedFile || isLoading || !fileType">
+
         <mat-progress-spinner *ngIf="isLoading" mode="indeterminate" diameter="20"></mat-progress-spinner>
+
         <span *ngIf="!isLoading">Upload File</span>
+
       </button>
     </div>
+
   </form>
 </mat-dialog-content>

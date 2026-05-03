@@ -8,65 +8,83 @@ export const navItems: any[] = [
     displayName: 'Analytical',
     iconName: 'aperture',
     route: '/dashboards/dashboard2',
-    allowedRoles: ['CompanyOwner','Admin','Manager','Driver','Assistant','Recruiter']
+    allowedRoles: ['CompanyOwner', 'Admin', 'Manager', 'Driver', 'Assistant', 'Recruiter']
   },
   {
     displayName: 'Driver Ranking',
     iconName: 'trekking',
     route: '/dashboards/dashboard1',
-    allowedRoles: ['CompanyOwner','Admin','Manager','Driver']
+    allowedRoles: ['CompanyOwner', 'Admin', 'Manager', 'Driver']
+  },
+  {
+    displayName: 'My Loans',
+    iconName: 'money-bill-trend-up',
+    route: '/apps/myLoans',
+    allowedRoles: ['CompanyOwner', 'Admin', 'Manager', 'Driver']
   },
 
   {
     navCap: 'Apps',
-    allowedRoles: ['CompanyOwner','Admin','Manager','Assistant','Recruiter']
+    allowedRoles: ['CompanyOwner', 'Admin', 'Manager', 'Assistant', 'Recruiter']
   },
   {
     displayName: 'Employee',
     iconName: 'users-group',
     route: 'apps/employee',
-    allowedRoles: ['CompanyOwner','Admin','Manager','Assistant']
+    allowedRoles: ['CompanyOwner', 'Admin', 'Manager', 'Assistant']
   },
   {
     displayName: 'Applicant',
     iconName: 'user-question',
     route: 'apps/applicant',
-    allowedRoles: ['CompanyOwner','Admin','Manager','Assistant','Recruiter']
+    allowedRoles: ['CompanyOwner', 'Admin', 'Manager', 'Assistant', 'Recruiter']
   },
-   {
+  {
     displayName: 'Payroll',
     iconName: 'map-dollar',
     route: 'apps/payroll',
-    allowedRoles: ['CompanyOwner','Admin','Assistant']
+    allowedRoles: ['CompanyOwner', 'Admin', 'Assistant']
+  },
+  {
+    displayName: 'Loans',
+    iconName: 'map-dollar',
+    route: 'apps/loan',
+    allowedRoles: ['CompanyOwner']
   },
   {
     displayName: 'Routes',
     iconName: 'route',
     route: 'apps/routes',
-    allowedRoles: ['CompanyOwner','Admin','Manager']
+    allowedRoles: ['CompanyOwner', 'Admin', 'Manager']
   },
   {
     displayName: 'Warehouse',
     iconName: 'building-cottage',
     route: 'apps/warehouse',
-    allowedRoles: ['CompanyOwner','Admin']
+    allowedRoles: ['CompanyOwner', 'Admin']
   },
-   {
+  {
     displayName: 'Company',
     iconName: 'building-cottage',
     route: 'apps/company',
     allowedRoles: ['CompanyOwner']
-   },
+  },
+  {
+    displayName: 'Rental Vehicle',
+    iconName: 'car',
+    route: 'apps/rentalVehicles',
+    allowedRoles: ['CompanyOwner','Admin']
+  },
   {
     displayName: 'Daily Delivered Control',
     iconName: 'truck-delivery',
     route: 'apps/dailyRd',
-    allowedRoles: ['CompanyOwner','Admin','Manager']
-    
+    allowedRoles: ['CompanyOwner', 'Admin', 'Manager']
+
   }
 
-  
- 
+
+
   /* {
     displayName: 'Chat',
     iconName: 'message-2',

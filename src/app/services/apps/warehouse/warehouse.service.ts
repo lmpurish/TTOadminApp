@@ -28,12 +28,12 @@ export class WarehouseService {
     return this.http.post<Warehouse>(`${this.baseUrl}/Warehouses`, warehouse);
   }
 
-  getMetros(companyId: number){
+  getMetros(companyId: number) {
     return this.http.get<any>(`${this.baseUrl}/Warehouses/metros/${companyId}`)
   }
 
   updateWarehouse(warehouse: Warehouse): Observable<Warehouse> {
-  
+
     return this.http.put<Warehouse>(`${this.baseUrl}/Warehouses/${warehouse.id}`, warehouse);
   }
 
@@ -71,9 +71,19 @@ export class WarehouseService {
   }
 
   deleteMessageContact(id: number): Observable<void> {
-     return this.http.delete<void>(`${this.baseUrl}/WarehouseMessageTemplates/${id}`);
+    return this.http.delete<void>(`${this.baseUrl}/WarehouseMessageTemplates/${id}`);
   }
 
+  addMetro(data: any): Observable<any> {
+    return this.http.post(`${this.baseUrl}/Warehouses/metros/add`, data);
+  }
 
+  updateMetro(id: number, data: any): Observable<any> {
+    return this.http.put(`${this.baseUrl}/Warehouses/metros/${id}`, data);
+  }
+
+  deleteMetro(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/Warehouses/Metro/${id}`);
+  }
 }
 

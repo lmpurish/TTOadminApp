@@ -1,6 +1,6 @@
 // src/app/services/payroll.service.ts
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
@@ -13,6 +13,7 @@ import {
   PayPeriod,
 } from 'src/app/models/payroll.models';
 import { RateType, UserRate } from '../pages/apps/user-rate/user-rate';
+import { PayrollConf } from '../pages/apps/payroll/payroll-conf/payrollConf';
 export type UpdateDriverRatePayload = {
   id: number;
   driverId: number;
@@ -34,20 +35,23 @@ export class PayrollService {
     return this.http.post<PayRunDto>(`${this.base}/compute`, body);
   }
   approveRun(id: number): Observable<void> {
-    return this.http.post<void>(`${this.base}/runs/${id}/approve`, {});
+    return this.http.post<void>(`${this.base}/${id}/approve`, {});
   }
   getRun(id: number): Observable<PayRunDto> {
     return this.http.get<PayRunDto>(`${this.base}/runs/${id}`);
   }
   exportRunCsv(id: number, filename?: string) {
     const params = filename ? new HttpParams().set('filename', filename) : undefined;
-    return this.http.get(`${this.base}/runs/${id}/export`, {
+    console.log(`${this.base}/payruns/${id}/export/pdf`)
+    return this.http.get(`${this.base}/payruns/${id}/export/pdf`, {
       responseType: 'blob',
       observe: 'response',
       params
     });
   }
-
+  getPayConf(): Observable<PayrollConf[]> {
+    return this.http.get<PayrollConf[]>(`${environment.apiUrl}/PayrollConfigs/`);
+  }
   // Periodos
   createPeriod(body: CreatePeriodRequest): Observable<PayPeriod> {
     return this.http.post<PayPeriod>(`${this.base}/periods`, body);
@@ -64,7 +68,6 @@ export class PayrollService {
     startDate: string;
     endDate: string;
     userId: number;
-    zoneId?: number | null;
     recalculateAll?: boolean;
   }) {
     return this.http.post<PeriodSummaryDto>(`${this.base}/periods/compute`, body);
@@ -119,4 +122,56 @@ export class PayrollService {
     const url = `${this.base}/generate-missing?warehouseId=${warehouseId}`;
     return this.http.post<any>(url, {}); // body vacío
   }
+
+  exportWarehouseSummaryPdf(
+    warehouseId: number,
+    payPeriodId: number,
+    filename?: string
+  ): Observable<HttpResponse<Blob>> {
+    let params = new HttpParams();
+
+    if (filename) {
+      params = params.set('filename', filename);
+    }
+
+    return this.http.get(
+      `${this.base}/warehouses/${warehouseId}/payperiods/${payPeriodId}/payruns/export/pdf/summary-details`,
+      {
+        params,
+        responseType: 'blob',
+        observe: 'response'
+      }
+    );
+  }
+  getPeriodByRange(
+    companyId: number,
+    warehouseId: number | null,
+    startDate: string,
+    endDate: string
+  ) {
+    let url = `${this.base}/periods/by-range?companyId=${companyId}&startDate=${startDate}&endDate=${endDate}`;
+
+    if (warehouseId != null && warehouseId !== 0) {
+      url += `&warehouseId=${warehouseId}`;
+    }
+
+    return this.http.get<PeriodSummaryDto>(url);
+  }
+
+  addAdjustment(payload: {
+    payRunId: number;
+    type?: string;
+    reason: string;
+    amount: number;
+  }) {
+    return this.http.post<any>(
+      `${this.base}/runs/${payload.payRunId}/adjustments`,
+      payload
+    );
+  }
+
+  deleteAdjustment(adjustmentId: number) {
+    return this.http.delete<any>(`${this.base}/adjustments/${adjustmentId}`);
+  }
+
 }

@@ -38,6 +38,6 @@ export class ReportService {
     return this.http.get<any>(`${this.baseUrl}/Report/driverIncome/${id}`);
   }
   getDriverStats(id: number, startDate: string, endDate: string) {
-    return this.http.get<any>(`${this.baseUrl}/Report/driverStats/${id}/${startDate}/${endDate}`);
+    return this.http.get<any>(`${this.baseUrl}/User/${id}/daily-summary?from=${startDate}&to=${endDate}`);
   }
 }

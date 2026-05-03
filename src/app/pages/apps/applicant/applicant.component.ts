@@ -61,6 +61,7 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
   @ViewChild(MatSort) sort!: MatSort;
   searchText = '';
   displayedColumns: string[] = [
+    'select',
     'name',
 
     'email',
@@ -85,11 +86,13 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
   // Opciones de status (sin Contracted/Hired)
   statusOptions: { value: StatusKey; label: string }[] = [
     { value: 'Applicant', label: 'Applicant' },
-    { value: 'AwaitingResponse', label: 'Awaiting Response' },
-    { value: 'PreOnboarding', label: 'Pre-Onboarding' },
+    { value: 'AwaitingResponse', label: 'Job Offer Send' },
+    { value: 'PreOnboarding', label: 'Onboarding' },
   ];
   notDetailRow = (row: any) => row?.isDetailRow !== true;
   isExpansionDetailRow = (row: any) => row?.isDetailRow === true;
+
+
   detailColumn: string[] = ['detail'];
   constructor(
     public dialog: MatDialog,
@@ -101,7 +104,40 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
     private recruiterService: RecruiterService
   ) { }
   role: any;
+  selectedIds = new Set<number>();
 
+  // Ajusta esto al nombre real de tu PK (id, userId, applicantId, etc.)
+  getRowId(row: any): number {
+    const id = row?.id; // ajusta si es applicantId
+    return Number(id);
+  }
+
+  isSelected(row: any): boolean {
+    return this.selectedIds.has(this.getRowId(row));
+  }
+
+  toggleRow(row: any, checked: boolean): void {
+    const id = this.getRowId(row);
+
+    // ✅ regla: no seleccionar si no tiene warehouse
+    if (checked && !(Number(row?.warehouseId) > 0)) {
+      this.toastr.info('This applicant has no warehouse assigned.', 'Skipped');
+      this.selectedIds.delete(id);
+      return;
+    }
+
+    if (checked) this.selectedIds.add(id);
+    else this.selectedIds.delete(id);
+  }
+  getCurrentPageRows(): any[] {
+    const rendered = (this.dataSource as any)?._renderData?.value as any[] | undefined;
+    const rows = Array.isArray(rendered)
+      ? rendered
+      : (this.dataSource?.filteredData ?? this.dataSource?.data ?? []);
+
+    // filtra solo rows “normales”
+    return rows.filter(r => r && r.isDetailRow !== true);
+  }
   ngOnInit(): void {
     this.loadApplicants();
     this.loadWarehouses();
@@ -192,7 +228,38 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
     this.sort.sortChange.emit({ active: this.sort.active, direction: this.sort.direction });
 
   }
+  isAllSelectedOnPage(): boolean {
+    const pageRows = this.getCurrentPageRows().filter(r => Number(r?.warehouseId) > 0);
+    return pageRows.length > 0 && pageRows.every(r => this.selectedIds.has(this.getRowId(r)));
+  }
 
+  isIndeterminateOnPage(): boolean {
+    const pageRows = this.getCurrentPageRows().filter(r => Number(r?.warehouseId) > 0);
+    const selectedCount = pageRows.filter(r => this.selectedIds.has(this.getRowId(r))).length;
+    return selectedCount > 0 && selectedCount < pageRows.length;
+  }
+  toggleSelectAllOnPage(checked: boolean) {
+    const pageRows = this.getCurrentPageRows();
+    pageRows.forEach((r: any) => {
+      const id = this.getRowId(r);
+
+      if (checked) {
+        if (Number(r?.warehouseId) > 0) this.selectedIds.add(id);
+      } else {
+        this.selectedIds.delete(id);
+      }
+    });
+  }
+  clearSelection(): void {
+    this.selectedIds.clear();
+  }
+  selectAllFiltered(): void {
+    const rows = (this.dataSource.filteredData ?? []).filter(r => r?.isDetailRow !== true);
+    rows.forEach(r => {
+      const id = this.getRowId(r);
+      if (Number.isFinite(id)) this.selectedIds.add(id);
+    });
+  }
 
   stageClass(stage?: string): string {
     switch ((stage || '').toLowerCase()) {
@@ -334,6 +401,57 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
     this.applyCombinedFilter();
   }
 
+  bulkAction(): void {
+    // 1) obtener rows seleccionados
+    const selectedRows = (this.dataSource?.data ?? [])
+      .filter((r: any) => this.selectedIds.has(Number(r.id)));
+
+    if (selectedRows.length === 0) return;
+
+    // 2) separar los que NO tienen warehouse (skipped local)
+    const withWarehouse = selectedRows.filter(r => Number(r.warehouseId) > 0);
+    const missingWarehouse = selectedRows.filter(r => !(Number(r.warehouseId) > 0));
+
+    if (withWarehouse.length === 0) {
+      this.toastr.info('No selected applicants have a warehouse assigned.', 'Nothing to send');
+      return;
+    }
+
+    // 3) llamar API batch
+    this.loading = true;
+    this.employeeService.contactApplicant(withWarehouse).subscribe({
+      next: (res) => {
+        const sent = res?.sent ?? 0;
+        const skippedApi = res?.skipped ?? 0;   // si backend también puede saltar por otra razón
+        const failed = res?.failed ?? 0;
+
+        const skippedLocal = missingWarehouse.length;
+        const totalSkipped = skippedLocal + skippedApi;
+
+        if (sent > 0) {
+          this.toastr.success(
+            `Sent: ${sent}${totalSkipped ? ` | Skipped: ${totalSkipped}` : ''}${failed ? ` | Failed: ${failed}` : ''}`,
+            'Done'
+          );
+        } else {
+          this.toastr.info(
+            `No messages sent.${totalSkipped ? ` Skipped: ${totalSkipped}` : ''}${failed ? ` Failed: ${failed}` : ''}`,
+            'Done'
+          );
+        }
+
+        // opcional: limpiar selección
+        this.selectedIds.clear();
+
+        this.loading = false;
+        this.loadApplicants();
+      },
+      error: (err) => {
+        this.loading = false;
+        this.toastr.error(err?.error?.message || 'Error sending messages', 'Error');
+      }
+    });
+  }
 
 
   openDialog(action: string, employee: Employee | any): void {
@@ -371,15 +489,30 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
 
     else if (action === 'contact') {
       this.loading = true;
-      this.employeeService.contacApplicant(employee).subscribe({
+
+      // aquí SIEMPRE es lista
+      this.employeeService.contactApplicant([employee]).subscribe({
         next: (res) => {
-          this.toastr.success(res.message, 'Success');
+          const sent = res?.sent ?? 0;
+          const skipped = res?.skipped ?? 0;
+
+          if (sent > 0) {
+            this.toastr.success(
+              `Messages sent: ${sent}${skipped ? `, skipped: ${skipped}` : ''}`,
+              'Success'
+            );
+          }
+
           this.loading = false;
           this.loadApplicants();
         },
-        error: () => { this.loading = false; }
+        error: () => {
+          this.loading = false;
+          this.toastr.error('Error contacting applicants', 'Error');
+        }
       });
-    } else {
+    }
+    else {
       const dialogRef = this.dialog.open(AppEmployeeDialogContentComponent, {
         data: { action, local_data: { ...employee } },
         autoFocus: false,

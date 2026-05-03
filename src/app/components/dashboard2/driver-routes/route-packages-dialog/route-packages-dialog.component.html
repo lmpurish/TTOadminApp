@@ -1,0 +1,88 @@
+<h2 mat-dialog-title>
+  Packages —
+  {{ data.zoneCode || ('Route #' + data.routeId) }}
+  <span class="muted">
+    ({{ data.date | date:'MMM dd yyyy' }})
+  </span>
+</h2>
+<div class="subtitle" *ngIf="data.payrollBySourceType">
+  <div class="chips">
+    <span class="chip" *ngFor="let k of payrollKeys()">
+      {{ k }}:
+      <strong>{{ data.payrollBySourceType?.[k] | currency:'USD':'symbol':'1.2-2' }}</strong>
+    </span>
+
+    <span class="chip total">
+      Total:
+      <strong>{{ data.payrollTotal | currency:'USD':'symbol':'1.2-2' }}</strong>
+    </span>
+  </div>
+
+  <div class="meta">
+    <span *ngIf="data.payrollPositive != null">+ {{ data.payrollPositive | currency:'USD':'symbol':'1.2-2' }}</span>
+    <span *ngIf="data.payrollNegative != null">- {{ data.payrollNegative | currency:'USD':'symbol':'1.2-2' }}</span>
+    <span *ngIf="(data.payRunLines?.length ?? 0) > 0">
+      Lines: {{ data.payRunLines?.length }}
+    </span>
+  </div>
+</div>
+<mat-dialog-content class="content">
+  <div class="toolbar">
+    <mat-form-field appearance="outline" class="w-100">
+      <mat-label>Search package</mat-label>
+      <input matInput (keyup)="applyFilter($any($event.target).value)" placeholder="Tracking, address, status..." />
+    </mat-form-field>
+
+    <div class="count">
+      Total: <strong>{{ dataSource.data.length }}</strong>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table mat-table [dataSource]="dataSource" matSort class="w-100">
+      <ng-container matColumnDef="tracking">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Tracking</th>
+        <td mat-cell *matCellDef="let p"><strong>{{ p.tracking }}</strong></td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+        <td mat-cell *matCellDef="let p">{{ p.status }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="zipCode">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Zip</th>
+        <td mat-cell *matCellDef="let p">{{ p.zipCode || '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="reviewStatus">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Review</th>
+        <td mat-cell *matCellDef="let p">{{ p.reviewStatus || '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="incidentDate">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Incident</th>
+        <td mat-cell *matCellDef="let p">{{ p.incidentDate | date:'MMM dd yyyy' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="address">
+        <th mat-header-cell *matHeaderCellDef>Address</th>
+        <td mat-cell *matCellDef="let p">{{ p.address }}</td>
+      </ng-container>
+       <ng-container matColumnDef="weight">
+        <th mat-header-cell *matHeaderCellDef>Weight</th>
+        <td mat-cell *matCellDef="let p">Lb {{ p.weight }}</td>
+      </ng-container>
+
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+
+    <mat-paginator [pageSize]="25" [pageSizeOptions]="[10,25,50,100]"></mat-paginator>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button (click)="close()">Close</button>
+</mat-dialog-actions>

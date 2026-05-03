@@ -1,0 +1,118 @@
+<div class="loading-overlay" *ngIf="loading">
+    <mat-spinner></mat-spinner>
+</div>
+<mat-card class="cardWithShadow">
+    <mat-card-content>
+        <div class="row justify-content-between gap-16">
+
+            <!-- Search -->
+            <div class="col-lg-3">
+                <mat-form-field appearance="outline" class="w-100 hide-hint">
+                    <input matInput placeholder="Search Loan" (keyup)="applyFilter($any($event.target).value)" />
+                    <mat-icon matSuffix>
+                        <i-tabler name="search" class="icon-20 d-flex m-t-2"></i-tabler>
+                    </mat-icon>
+                </mat-form-field>
+            </div>
+
+            <!-- DriverId -->
+            <div class="col-lg-3">
+                <mat-form-field appearance="outline" class="w-100 hide-hint">
+                    <mat-label>Employee</mat-label>
+                    <input matInput type="number" [ngModel]="driverIdFilter"
+                        (ngModelChange)="onDriverIdChange($event)" />
+                </mat-form-field>
+            </div>
+
+            <!-- Status -->
+            <div class="col-lg-3">
+                <mat-form-field appearance="outline" class="theme-select w-100" style="min-width: 240px;">
+                    <mat-label>Status</mat-label>
+                    <mat-select [(value)]="statusFilter" (selectionChange)="onStatusChange($event.value)">
+                        <mat-option value="all">All</mat-option>
+                        <mat-option value="Draft">Draft</mat-option>
+                        <mat-option value="Active">Active</mat-option>
+                        <mat-option value="Paused">Paused</mat-option>
+                        <mat-option value="Completed">Completed</mat-option>
+                        <mat-option value="Cancelled">Cancelled</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <div class="col-lg-2 d-flex align-items-end">
+                <button mat-flat-button color="primary" class="w-100" (click)="loadLoans()" [disabled]="loading">
+                    Refresh
+                </button>
+            </div>
+
+        </div>
+    </mat-card-content>
+</mat-card>
+
+<mat-card class="cardWithShadow">
+    <mat-card-content>
+        <div class="table-responsive">
+            <table mat-table [dataSource]="dataSource" class="w-100" matSort>
+
+                <ng-container matColumnDef="id">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Loan#</th>
+                    <td mat-cell *matCellDef="let row">{{ row.id }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="driver">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Employee</th>
+                    <td mat-cell *matCellDef="let row">{{ row.driver }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="principal">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Principal</th>
+                    <td mat-cell *matCellDef="let row">{{ row.principal | number:'1.2-2' }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="balance">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Balance</th>
+                    <td mat-cell *matCellDef="let row">{{ row.balance | number:'1.2-2' }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Status</th>
+                    <td mat-cell *matCellDef="let row">
+                        <strong>{{ row.status }}</strong>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="createdAt">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Created</th>
+                    <td mat-cell *matCellDef="let row">{{ row.createdAt | date:'short' }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="action">
+                    <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">Action</th>
+                    <td mat-cell *matCellDef="let row" class="action-link">
+                        <a class="m-r-10 cursor-pointer" (click)="approve(row)" [class.disabled]="!canApprove(row)"
+                            matTooltip="Approve">
+                            <i-tabler name="circle-check" class="icon-18"></i-tabler>
+                        </a>
+                        <a class="m-r-10 cursor-pointer" (click)="pause(row)" [class.disabled]="!canPause(row)"
+                            matTooltip="Pause">
+                            <i-tabler name="player-pause" class="icon-18"></i-tabler>
+                        </a>
+                        <a class="m-r-10 cursor-pointer" (click)="resume(row)" [class.disabled]="!canResume(row)"
+                            matTooltip="Resume">
+                            <i-tabler name="player-play" class="icon-18"></i-tabler>
+                        </a>
+                        <a class="cursor-pointer" (click)="cancel(row)" [class.disabled]="!canCancel(row)"
+                            matTooltip="Cancel">
+                            <i-tabler name="trash" class="icon-18"></i-tabler>
+                        </a>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+            </table>
+
+            <mat-paginator [pageSize]="20" [pageSizeOptions]="[5,10,20,50]" showFirstLastButtons></mat-paginator>
+        </div>
+    </mat-card-content>
+</mat-card>

@@ -1,0 +1,20 @@
+<div class="loading-overlay" *ngIf="loadingVehicles">
+  <mat-spinner></mat-spinner>
+</div>
+<app-top-cards></app-top-cards>
+<div class="row">
+  <div class="col-lg-6">
+    <app-revenue-updates></app-revenue-updates>
+  </div>
+  <div class="col-lg-3">
+    <app-vehicle-status-graphic></app-vehicle-status-graphic>
+  </div>
+  <div class="col-lg-3">
+    <app-recent-rentals></app-recent-rentals>
+  </div>
+</div>
+
+<div class="col-lg-8">
+  <app-top-projects [vehicles]="dataSource.data" (add)="openCreateDialog()"
+    (edit)="openEditDialog($event)"></app-top-projects>
+</div>

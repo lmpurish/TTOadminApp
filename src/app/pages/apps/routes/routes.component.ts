@@ -45,7 +45,8 @@ export class RoutesComponent implements OnInit, AfterViewInit {
     'deliveryStops',
     'zoneId',
     'paymentType',
-    'priceRoute'
+    'priceRoute',
+    'action'
 
   ];
   routeStatuses: string[] = ['Available', 'Assigned', 'In Progress', 'Future', 'Completed', 'Loading', 'PendingCompletion', 'Cancelled'];
@@ -166,6 +167,23 @@ export class RoutesComponent implements OnInit, AfterViewInit {
     return date.toISOString().split('T')[0];
   }
 
+  editRoute(row: any): void {
+    const dialogRef = this.dialog.open(RouteBonusDialogComponent, {
+      width: '520px',
+      autoFocus: false,
+      data: {
+        route: row
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((saved) => {
+      if (saved) {
+        // aquí puedes recargar la tabla si quieres
+        // this.loadRoutes();
+      }
+    });
+  }
+
   /** ✅ Cargar rutas por fecha */
   loadRoutesByDate(): void {
     this.loading = true;
@@ -234,7 +252,7 @@ export class RoutesComponent implements OnInit, AfterViewInit {
 
   /** ✅ Cargar conductores */
   loadUsers(): void {
-    this.employeeService.getEmployees().subscribe({
+    this.employeeService.getDriverbyWarehouse(this.warehouseId).subscribe({
       next: (res: any[]) => {
         // Log crudo para diagnosticar
 
@@ -343,7 +361,7 @@ export class RoutesComponent implements OnInit, AfterViewInit {
 
   getAvailableZones(selectedZoneId: number | null): any[] {
     if (!this.zones) return [];
-   
+
     const assignedZones = this.dataSource.data
       .filter((route: any) => route.zoneId !== null && route.zoneId !== selectedZoneId)
       .map((route: any) => route.zoneId);
@@ -474,7 +492,7 @@ export class RoutesComponent implements OnInit, AfterViewInit {
       routeStatus: r.routeStatus ?? 'Available'   // 👈 como string
     }));
 
-    
+
     this.routesService.assignRoutes(payload).subscribe({
       next: () => {
         this.snackBar.open('Routes updated successfully!', 'Close', { duration: 3000, verticalPosition: 'top', horizontalPosition: 'center' });
@@ -538,6 +556,7 @@ export class RoutesComponent implements OnInit, AfterViewInit {
 
 /** === Dialog (sin cambios relevantes para esta petición) === */
 import { NgForm } from '@angular/forms';
+import { ToastrService } from 'ngx-toastr';
 @Component({
   selector: 'route-dialog-content',
   imports: [
@@ -583,7 +602,7 @@ export class RouteDialogContentComponent {
     // Ajusta warehouseId fijo si corresponde
     this.warehouseService.getZonesByWarehouse(this.wid).subscribe(data => {
       this.zones = data;
-      
+
     });
 
     const tomorrow = new Date();
@@ -680,4 +699,74 @@ interface Driver {
   name: string;
   lastName: string;
   identificationNumber?: string;
+}
+
+
+
+
+@Component({
+  selector: 'app-route-bonus-dialog',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, MaterialModule],
+  templateUrl: './route-bonus-dialog.component.html'
+})
+export class RouteBonusDialogComponent implements OnInit {
+  bonusForm!: FormGroup;
+  loading = false;
+  local_data: any;
+
+  constructor(
+    private fb: FormBuilder,
+    private routesService: RoutesService,
+    private toastr: ToastrService,
+    public dialogRef: MatDialogRef<RouteBonusDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any
+  ) {
+    this.local_data = data?.route || data;
+  }
+
+  ngOnInit(): void {
+    this.bonusForm = this.fb.group({
+      type: ['Other', Validators.required],
+      amount: [null, [Validators.required, Validators.min(0.01)]],
+      note: ['']
+    });
+  }
+
+  saveBonus(): void {
+    if (this.bonusForm.invalid) {
+      this.bonusForm.markAllAsTouched();
+      return;
+    }
+
+    const routeId = this.local_data?.id;
+    if (!routeId) {
+      this.toastr.error('Route id not found.', 'Error');
+      return;
+    }
+
+    const payload = {
+      type: this.bonusForm.value.type,
+      amount: Number(this.bonusForm.value.amount),
+      note: this.bonusForm.value.note?.trim() || null
+    };
+
+    this.loading = true;
+
+    this.routesService.addRouteBonus(routeId, payload).subscribe({
+      next: (res) => {
+        this.loading = false;
+        this.toastr.success('Route bonus added successfully.', 'Success');
+        this.dialogRef.close(res);
+      },
+      error: (err) => {
+        this.loading = false;
+        this.toastr.error(err?.error?.message || 'Error adding route bonus.', 'Error');
+      }
+    });
+  }
+
+  closeDialog(): void {
+    this.dialogRef.close();
+  }
 }

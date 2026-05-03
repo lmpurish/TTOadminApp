@@ -4,14 +4,15 @@
   <p><b>Message:</b> {{ r.message ?? '-' }}</p>
   <p><b>Warehouse:</b> {{ r.warehouseId ?? '-' }}</p>
 
-  <p>
+  <p *ngIf="r.dateRange">
     <b>Date range:</b>
     {{ r.dateRange?.minDate ?? '-' }} → {{ r.dateRange?.maxDate ?? '-' }}
   </p>
 
   <mat-divider class="m-y-12"></mat-divider>
 
-  <div class="row">
+  <!-- Summary (si viene) -->
+  <div class="row" *ngIf="r.rowsRead != null || r.routesUpdated != null || r.routesCreated != null">
     <div class="col"><b>Rows read:</b> {{ r.rowsRead ?? 0 }}</div>
     <div class="col"><b>Routes updated:</b> {{ r.routesUpdated ?? 0 }}</div>
     <div class="col"><b>Routes created:</b> {{ r.routesCreated ?? 0 }}</div>
@@ -19,22 +20,57 @@
 
   <mat-divider class="m-y-12"></mat-divider>
 
-  <h3>Driver not found ({{ r.driverNotFound?.length ?? 0 }})</h3>
-  <div *ngIf="(r.driverNotFound?.length ?? 0) === 0">-</div>
+  <!-- ========================= -->
+  <!-- NO ONTRAC: driverNotFound -->
+  <!-- ========================= -->
+  <ng-container *ngIf="(r.driverNotFound?.length ?? 0) > 0; else ontracNotFoundBlock">
+    <h3>Driver not found ({{ r.driverNotFound?.length ?? 0 }})</h3>
 
-  <table class="w-100" *ngIf="(r.driverNotFound?.length ?? 0) > 0">
-    <tr>
-      <th>Date</th><th>Route</th><th>Driver</th>
-    </tr>
-    <tr *ngFor="let d of r.driverNotFound">
-      <td>{{ d.date ?? '-' }}</td>
-      <td>{{ d.routeCode ?? '-' }}</td>
-      <td>{{ d.driverName ?? '-' }}</td>
-    </tr>
-  </table>
+    <table class="w-100">
+      <tr>
+        <th>Date</th><th>Route</th><th>Driver</th>
+      </tr>
+      <tr *ngFor="let d of r.driverNotFound">
+        <td>{{ d?.date ?? '-' }}</td>
+        <td>{{ d?.routeCode ?? '-' }}</td>
+        <td>{{ d?.driverName ?? '-' }}</td>
+      </tr>
+    </table>
 
-  <h3 class="m-t-16">Driver ambiguous ({{ r.driverAmbiguous?.length ?? 0 }})</h3>
-  <div *ngIf="(r.driverAmbiguous?.length ?? 0) === 0">-</div>
+    <h3 class="m-t-16">Driver ambiguous ({{ r.driverAmbiguous?.length ?? 0 }})</h3>
+    <div *ngIf="(r.driverAmbiguous?.length ?? 0) === 0">-</div>
+  </ng-container>
+
+  <!-- ========================= -->
+  <!-- ONTRAC: notFoundUsers[]   -->
+  <!-- ========================= -->
+  <ng-template #ontracNotFoundBlock>
+    <ng-container
+      *ngIf="(r.notFoundUsers?.length ?? r.notFountInUsers?.length ?? 0) > 0; else noNotFoundAny">
+      <h3>
+        Drivers not found ({{ (r.notFoundUsers?.length ?? r.notFountInUsers?.length ?? 0) }})
+      </h3>
+
+      <table class="w-100">
+        <tr>
+          <th>Identification #</th>
+        </tr>
+
+        <tr *ngFor="let id of (r.notFoundUsers ?? r.notFountInUsers)">
+          <td>{{ id }}</td>
+        </tr>
+      </table>
+    </ng-container>
+  </ng-template>
+
+  <!-- Fallback: nada que mostrar -->
+  <ng-template #noNotFoundAny>
+    <h3>Drivers not found (0)</h3>
+    <div>-</div>
+
+    <h3 class="m-t-16">Driver ambiguous (0)</h3>
+    <div>-</div>
+  </ng-template>
 </div>
 
 <div mat-dialog-actions align="end">

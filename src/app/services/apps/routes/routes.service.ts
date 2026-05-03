@@ -62,5 +62,9 @@ export class RoutesService {
 
     return this.http.get<Route[]>(`${this.baseUrl}/Routes/routes-by-date-and-warehouse`, { params });
   }
+
+  addRouteBonus(routeId: number, payload: { type: string; amount: number; note?: string | null }) {
+    return this.http.post<any>(`${this.baseUrl}/Routes/routes/${routeId}/bonus`, payload);
+  }
 }
 
