@@ -43,9 +43,9 @@ export class AddComponent {
   constructor() {
     this.form = this.fb.nonNullable.group({
       driverId: ['', [Validators.required]],
-      principal: [0, [Validators.min(1)]],
-      installmentAmount: [0, [Validators.min(1)]],
-      maxDeductionPerPayRun: [0],
+      principal: [0, [Validators.required, Validators.min(1)]],
+      installmentAmount: [0, [Validators.required, Validators.min(1)]],
+      maxDeductionPerPayRun: [0, [Validators.required, Validators.min(1)]],
       notes: [''],
     });
   }
