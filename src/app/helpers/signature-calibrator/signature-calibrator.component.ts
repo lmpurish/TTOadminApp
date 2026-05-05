@@ -1,9 +1,11 @@
+import { NgIf } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TemplateFieldDto } from 'src/app/services/company.service';
 
 @Component({
   selector: 'app-signature-calibrator',
   standalone: true,
+  imports: [NgIf],
   template: `
     <div class="calibrator">
       <p *ngIf="pdfUrl">Calibrando sobre: <a [href]="pdfUrl" target="_blank">{{ pdfUrl }}</a></p>

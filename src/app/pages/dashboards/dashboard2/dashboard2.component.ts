@@ -23,14 +23,12 @@ import { AppEmployeeSalaryComponent } from 'src/app/components/dashboard2/employ
 @Component({
   selector: 'app-dashboard2',
   imports: [
-    AppWelcomeCardComponent,
     AppProductsComponent,
     AppRevenueUpdatesTwoComponent,
     AppSalesOverviewComponent,
     AppTotalEarningsComponent,
     AppFullcalendarComponent,
     AppPaymentGatewaysComponent,
-    AppSalesProfitComponent,
     AppEmployeeSalaryComponent,
     /*AppSalesProfitComponent,
     AppMonthlyEarningsTwoComponent,

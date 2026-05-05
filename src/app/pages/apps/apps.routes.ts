@@ -47,10 +47,10 @@ export const AppsRoutes: Routes = [
 
         data: {
           role: ['Admin', 'Manager','Driver','Assistans'],
-          title: 'Applicants',
+          title: 'Loans',
           urls: [
             { title: 'Dashboard', url: '/dashboards/dashboard1' },
-            { title: 'Applicants' },
+            { title: 'Loans' },
           ],
         },
       },

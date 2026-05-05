@@ -10,8 +10,15 @@ import { CoreService } from 'src/app/services/core.service';
 import { LoanDto, LoanService } from 'src/app/services/loan.service';
 import { Router } from '@angular/router';
 import { MatPaginator } from '@angular/material/paginator';
+import { AddComponent } from '../add/add.component';
 
-type LoanStatusFilter = 'all' | 'Draft' | 'Active' | 'Paused' | 'Completed' | 'Cancelled';
+type LoanStatusFilter =
+  | 'all'
+  | 'Draft'
+  | 'Active'
+  | 'Paused'
+  | 'Completed'
+  | 'Cancelled';
 @Component({
   selector: 'app-my-loan',
   imports: [
@@ -22,11 +29,19 @@ type LoanStatusFilter = 'all' | 'Draft' | 'Active' | 'Paused' | 'Completed' | 'C
     CommonModule,
   ],
   templateUrl: './my-loan.component.html',
-  styleUrl: './my-loan.component.scss'
+  styleUrl: './my-loan.component.scss',
 })
 export class MyLoanComponent {
   dataSource = new MatTableDataSource<any>([]);
-  displayedColumns = ['id', 'principal', 'balance', 'installmentAmount', 'status', 'createdAt', 'action'];
+  displayedColumns = [
+    'id',
+    'principal',
+    'balance',
+    'installmentAmount',
+    'status',
+    'createdAt',
+    'action',
+  ];
   searchText = '';
   loading = false;
   statusFilter: LoanStatusFilter = 'all';
@@ -36,20 +51,23 @@ export class MyLoanComponent {
     public dialog: MatDialog,
     private loansService: LoanService,
     private settings: CoreService,
-    private router: Router
-  ) { }
+    private router: Router,
+  ) {}
 
   ngOnInit(): void {
     this.loadMyLoans();
   }
   loadMyLoans(): void {
     this.loading = true;
+    const userInfo = this.settings.getUserInfoFromToken();
+    const userId = userInfo?.id ?? 0;
 
     this.loansService
-      .getMine(this.statusFilter === 'all' ? null : this.statusFilter)
+      .getMine(this.statusFilter === 'all' ? null : this.statusFilter, userId)
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (res: any) => {
+          console.log(res)
           // 🔹 Soporta: [] | { $values: [] }
           const list: any[] = Array.isArray(res)
             ? res
@@ -59,7 +77,7 @@ export class MyLoanComponent {
 
           // 🔹 Mapear { loan, repayments } → row usable por la tabla
           console.log('getMine raw response:', res);
-          const rows = list.map(item => {
+          const rows = list.map((item) => {
             const loan = item.loan ?? item.Loan ?? item; // defensivo
             const repaymentsRaw = item.repayments ?? item.Repayments ?? [];
 
@@ -79,7 +97,7 @@ export class MyLoanComponent {
               notes: loan.notes,
               createdAt: loan.createdAt,
               approvedAt: loan.approvedAt,
-              repayments
+              repayments,
             };
           });
 
@@ -87,20 +105,16 @@ export class MyLoanComponent {
 
           // paginator / sort (si los usas)
           if (this.paginator) this.dataSource.paginator = this.paginator;
-
         },
-        error: err => {
+        error: (err) => {
           console.error('Error loading my loans', err);
-
-        }
+        },
       });
   }
 
   applyFilter(value: string): void {
     this.searchText = (value ?? '').trim().toLowerCase();
-
   }
-
 
   onStatusChange(status: LoanStatusFilter): void {
     this.statusFilter = status;
@@ -113,4 +127,20 @@ export class MyLoanComponent {
     this.router.navigate(['/apps/loans', row.id]); // ajusta el path a tu routing real
   }
 
+  onCreate() {
+    const dialogRef = this.dialog.open(AddComponent, {
+      data: null,
+      width: '800px',
+      maxWidth: '95vw',
+      height: '70vh',
+      autoFocus: false,
+      restoreFocus: false,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === 'created') {
+        this.loadMyLoans(); // recarga la lista después de crear un nuevo préstamo
+      }
+    });
+  }
 }

@@ -1,11 +1,11 @@
-<h2 mat-dialog-title class="m-0">PayRun #{{ data.run?.id }} · Driver {{ data.run?.driverId }}</h2>
+<h2 mat-dialog-title class="m-0">PayRun #{{ data.run.id }} · Driver {{ data.run.driverId }}</h2>
 
 <mat-dialog-content>
   <div class="grid gap-2">
-    <div><b>Gross:</b> {{ data.run?.grossAmount | currency }}</div>
-    <div><b>Adjustments:</b> {{ data.run?.adjustments | currency }}</div>
-    <div><b>Net:</b> {{ data.run?.netAmount | currency }}</div>
-    <div><b>Status:</b> {{ data.run?.status }}</div>
+    <div><b>Gross:</b> {{ data.run.grossAmount | currency }}</div>
+    <div><b>Adjustments:</b> {{ data.run.adjustments | currency }}</div>
+    <div><b>Net:</b> {{ data.run.netAmount | currency }}</div>
+    <div><b>Status:</b> {{ data.run.status }}</div>
   </div>
 
   <div class="m-t-12">

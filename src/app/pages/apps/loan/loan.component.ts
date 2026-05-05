@@ -12,9 +12,15 @@ import { TablerIconsModule } from 'angular-tabler-icons';
 import { CoreService } from 'src/app/services/core.service';
 import { finalize } from 'rxjs/operators';
 import { LoanDto, LoanService } from 'src/app/services/loan.service';
+import { AddComponent } from './add/add.component';
 
-
-type LoanStatusFilter = 'all' | 'Draft' | 'Active' | 'Paused' | 'Completed' | 'Cancelled';
+type LoanStatusFilter =
+  | 'all'
+  | 'Draft'
+  | 'Active'
+  | 'Paused'
+  | 'Completed'
+  | 'Cancelled';
 
 @Component({
   selector: 'app-loans',
@@ -55,8 +61,8 @@ export class LoanComponent implements AfterViewInit, OnInit {
   constructor(
     public dialog: MatDialog,
     private loansService: LoanService,
-    private settings: CoreService
-  ) { }
+    private settings: CoreService,
+  ) {}
 
   ngOnInit(): void {
     this.loadLoans();
@@ -75,8 +81,12 @@ export class LoanComponent implements AfterViewInit, OnInit {
         !t ||
         String(row.id).includes(t) ||
         String(row.driverId).includes(t) ||
-        String(row.status || '').toLowerCase().includes(t) ||
-        String(row.notes || '').toLowerCase().includes(t);
+        String(row.status || '')
+          .toLowerCase()
+          .includes(t) ||
+        String(row.notes || '')
+          .toLowerCase()
+          .includes(t);
 
       const matchesStatus =
         !f.status || f.status === 'all' || row.status === f.status;
@@ -98,14 +108,19 @@ export class LoanComponent implements AfterViewInit, OnInit {
     this.loading = true;
 
     this.loansService
-      .getAll(this.driverIdFilter, this.statusFilter === 'all' ? null : this.statusFilter)
+      .getAll(
+        this.driverIdFilter,
+        this.statusFilter === 'all' ? null : this.statusFilter,
+      )
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (res: any) => {
           // Soporta: array normal []  o  { $values: [] }
           const rawList: any[] = Array.isArray(res)
             ? res
-            : (Array.isArray(res?.$values) ? res.$values : []);
+            : Array.isArray(res?.$values)
+              ? res.$values
+              : [];
 
           // Tu API devuelve { Loan, Repayments }
           const rows = rawList
@@ -120,7 +135,9 @@ export class LoanComponent implements AfterViewInit, OnInit {
 
         error: (err) => {
           console.error(err);
-          this.settings.showError(err?.error?.message || 'Error loading loans.');
+          this.settings.showError(
+            err?.error?.message || 'Error loading loans.',
+          );
         },
       });
   }
@@ -175,19 +192,45 @@ export class LoanComponent implements AfterViewInit, OnInit {
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: () => {
-          this.settings.showSuccess?.(msg) ?? this.settings.showError(msg); // por si solo tienes showError
+          this.settings.showSuccess?.(msg)
           this.loadLoans();
         },
         error: (err: any) => {
           console.error(err);
-          this.settings.showError(err?.error?.message || 'Action failed.');
+          this.settings.showError(err.error || 'Action failed.');
         },
       });
   }
 
   // helpers UI
-  canApprove(r: LoanDto) { return r.status === 'Draft'; }
-  canPause(r: LoanDto) { return r.status === 'Active'; }
-  canResume(r: LoanDto) { return r.status === 'Paused'; }
-  canCancel(r: LoanDto) { return r.status !== 'Completed' && r.status !== 'Cancelled'; }
+  canApprove(r: LoanDto) {
+    return r.status === 'Draft';
+  }
+  canPause(r: LoanDto) {
+    return r.status === 'Active';
+  }
+  canResume(r: LoanDto) {
+    return r.status === 'Paused';
+  }
+  canCancel(r: LoanDto) {
+    return r.status !== 'Completed' && r.status !== 'Cancelled';
+  }
+
+  onCreate() {
+    const dialogRef = this.dialog.open(AddComponent, {
+      data: null,
+      width: '800px',
+      maxWidth: '95vw',
+      height: '70vh',
+      autoFocus: false,
+      restoreFocus: false,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      console.log(result)
+      if (result === true) {
+        this.loadLoans(); // recarga la lista después de crear un nuevo préstamo
+      }
+    });
+  }
 }

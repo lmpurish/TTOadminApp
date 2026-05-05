@@ -18,7 +18,7 @@ export const navItems: any[] = [
   },
   {
     displayName: 'My Loans',
-    iconName: 'money-bill-trend-up',
+    iconName: 'currency-dollar',
     route: '/apps/myLoans',
     allowedRoles: ['CompanyOwner', 'Admin', 'Manager', 'Driver']
   },
@@ -47,9 +47,9 @@ export const navItems: any[] = [
   },
   {
     displayName: 'Loans',
-    iconName: 'map-dollar',
+    iconName: 'currency-dollar',
     route: 'apps/loan',
-    allowedRoles: ['CompanyOwner']
+    allowedRoles: ['CompanyOwner','Admin']
   },
   {
     displayName: 'Routes',

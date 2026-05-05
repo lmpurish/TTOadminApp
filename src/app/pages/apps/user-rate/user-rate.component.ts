@@ -10,8 +10,6 @@ import {
 } from '@angular/forms';
 import { TablerIconComponent } from 'angular-tabler-icons';
 import { MaterialModule } from 'src/app/material.module';
-import { RolePipe } from '../employee/role.pipe';
-import { StatusLabelPipe } from 'src/app/pipe/status-label.pipe';
 import { MatTableDataSource } from '@angular/material/table';
 import { RateType, UserRate } from './user-rate';
 import { WarehouseService } from 'src/app/services/apps/warehouse/warehouse.service';
@@ -36,8 +34,6 @@ type TableFilter = {
     ReactiveFormsModule,
     TablerIconComponent,
     CommonModule,
-    RolePipe,
-    StatusLabelPipe,
   ],
   templateUrl: './user-rate.component.html',
   styleUrl: './user-rate.component.scss',

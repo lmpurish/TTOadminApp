@@ -9,7 +9,7 @@
   <div class="chips">
     <span class="chip" *ngFor="let k of payrollKeys()">
       {{ k }}:
-      <strong>{{ data.payrollBySourceType?.[k] | currency:'USD':'symbol':'1.2-2' }}</strong>
+      <strong>{{ data.payrollBySourceType[k] | currency:'USD':'symbol':'1.2-2' }}</strong>
     </span>
 
     <span class="chip total">

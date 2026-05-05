@@ -25,8 +25,6 @@ import { startWith } from 'rxjs';
     ReactiveFormsModule,
     TablerIconComponent,
     CommonModule,
-    RolePipe,
-    StatusLabelPipe,
   ],
   providers: [DatePipe],
   templateUrl: './hired-dialog-content.component.html',

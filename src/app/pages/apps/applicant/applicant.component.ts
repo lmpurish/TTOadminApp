@@ -25,7 +25,6 @@ import { RolePipe } from './role.pipe';
 import { WarehouseService } from 'src/app/services/apps/warehouse/warehouse.service';
 import { ViewUserinfoComponent } from '../view-userinfo/view-userinfo.component';
 import { ToastrService } from 'ngx-toastr';
-import { StatusLabelPipe } from 'src/app/pipe/status-label.pipe';
 import { environment } from 'src/environments/environment';
 import { MatSort } from '@angular/material/sort';
 import { HiredDialogContentComponent } from './hired-dialog-content/hired-dialog-content.component';
@@ -44,8 +43,6 @@ export type StatusKey = 'Applicant' | 'PreOnboarding' | 'InitialContact' | 'Awai
     ReactiveFormsModule,
     TablerIconsModule,
     CommonModule,
-    RolePipe,
-    StatusLabelPipe,
   ],
   animations: [
     trigger('detailExpand', [

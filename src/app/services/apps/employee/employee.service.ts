@@ -34,6 +34,7 @@ export class EmployeeService {
     return this.http.get<any[]>(`${this.baseUrl}/User/active-by-warehouse`, { params });
 
   }
+  
   getApplicants() {
     return this.http.get<any>(`${this.baseUrl}/User/applicantByRol/`);
   }

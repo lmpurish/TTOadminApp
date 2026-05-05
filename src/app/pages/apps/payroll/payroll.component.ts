@@ -59,8 +59,6 @@ function toYmd(d: Date): string {
     MatNativeDateModule,
 
     TablerIconsModule,
-    RolePipe,
-    StatusLabelPipe,
   ],
   templateUrl: './payroll.component.html',
   styleUrls: ['payroll.component.scss'],
