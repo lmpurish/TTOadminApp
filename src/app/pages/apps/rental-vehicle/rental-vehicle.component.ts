@@ -124,6 +124,7 @@ export class RentalVehiclesComponent implements OnInit {
       }
     });
   }
+  
   loadMetros(companyId: number | null) {
 
     if (!companyId) return;

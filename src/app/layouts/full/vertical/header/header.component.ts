@@ -267,7 +267,7 @@ export class AppSearchDialogComponent {
     private warehouseService: WarehouseService, private dialog: MatDialog) { }
   warehouses: any[] = [];
   isAdmin = false;
-  selectedWarehouseId?: number;
+  selectedWarehouseId: number | null = null;
   private getWarehouseId(): number | null {
     if (this.isAdmin) return this.selectedWarehouseId ?? null;
     return this.userInfo?.warehouseID ?? null;
@@ -278,6 +278,17 @@ export class AppSearchDialogComponent {
     return this.warehouses?.find(w => Number(w.id) === id) ?? null;
   }
   ngOnInit(): void {
+    if (!this.isAdmin) {
+      const user = this.core.getUserInfoFromToken();
+
+      if (!user || !user.WarehouseID) {
+        console.warn('User has no WarehouseID in token');
+        this.selectedWarehouseId = null;
+        return;
+      }
+
+      this.selectedWarehouseId = Number(user.WarehouseID);
+    }
     this.loadUserInfo();
     this.warehouseService.getWarehouses().subscribe(
       res => {

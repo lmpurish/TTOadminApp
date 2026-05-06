@@ -1,130 +1,161 @@
-<!-- Contenedor del spinner que cubre todo el diálogo -->
-<div class="loading-overlay" *ngIf="loading">
-  <mat-spinner></mat-spinner>
-</div>
+<div class="warehouse-dashboard">
 
+  <!-- HEADER -->
+  <div class="dashboard-header">
+ 
 
-<mat-card class="cardWithShadow">
-  <mat-card-content>
-    <div class="row justify-content-between gap-16">
-      <div class="col-lg-4">
-        <mat-form-field appearance="outline" class="w-100 hide-hint">
-          <input matInput placeholder="Search Warehouse" (keyup)="applyFilter($any($event.target).value)" />
-          <mat-icon matSuffix>
-            <i-tabler name="search" class="icon-20 d-flex m-t-2"></i-tabler>
-          </mat-icon>
+    <button mat-flat-button color="primary">
+      Export Report
+    </button>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid">
+
+    <div class="kpi-card">
+      <div class="kpi-icon bg-blue">📦</div>
+      <div>
+        <p>Total Packages</p>
+        <h3>18,450</h3>
+        <span class="positive">+12% this week</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon bg-green">✅</div>
+      <div>
+        <p>Delivered</p>
+        <h3>16,980</h3>
+        <span class="positive">92.1% completed</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon bg-orange">🚚</div>
+      <div>
+        <p>Active Drivers</p>
+        <h3>86</h3>
+        <span>Across all warehouses</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon bg-red">⚠️</div>
+      <div>
+        <p>Lost / Missing</p>
+        <h3>34</h3>
+        <span class="negative">Needs review</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="dashboard-grid">
+
+    <!-- CHART CARD -->
+    <div class="panel large">
+      <div class="panel-header">
+        <div>
+          <h3>Package Flow</h3>
+          <p>Received vs Delivered</p>
+        </div>
+
+        <mat-form-field appearance="outline">
+          <mat-select value="week">
+            <mat-option value="week">This Week</mat-option>
+            <mat-option value="month">This Month</mat-option>
+          </mat-select>
         </mat-form-field>
       </div>
 
-      <div class="col-lg-4 d-flex align-items-center justify-content-end">
-        <div class="col-lg-3">
+      <div class="chart-placeholder">
+        Chart: Packages Received vs Delivered
+      </div>
+    </div>
 
-          <button mat-flat-button (click)="openDialog('AddMetro', {})" color="primary">
-            Add Metro
-          </button>
-        </div>
-        <!-- add employee -->
-        <button mat-flat-button (click)="openDialog('Add', {})" color="primary">
-          Add Warehouse
-        </button>
+    <!-- ALERTS -->
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Warehouse Alerts</h3>
       </div>
 
+      <div class="alert-item danger">
+        <strong>Houston OnTrac</strong>
+        <p>Driver shortage detected. Need 4 more drivers.</p>
+      </div>
+
+      <div class="alert-item warning">
+        <strong>Dallas Warehouse</strong>
+        <p>High RD package count today.</p>
+      </div>
+
+      <div class="alert-item info">
+        <strong>Austin Warehouse</strong>
+        <p>Route completion below target.</p>
+      </div>
     </div>
-  </mat-card-content>
-</mat-card>
-<mat-card class="cardWithShadow">
-  <mat-card-content>
-    <div class="table-responsive">
-      <table mat-table [dataSource]="dataSource" class="w-100">
 
-        <ng-container matColumnDef="company">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">Company</th>
-          <td mat-cell *matCellDef="let element">
-            <div class="d-flex align-items-center gap-16">
-              <div>
-                <h6 class="f-w-600 f-s-16 m-t-0">
-                  {{ element.company }}
-                </h6>
-                <span class="f-s-14">{{ element.Position }}</span>
-              </div>
-            </div>
-          </td>
-        </ng-container>
+  </div>
 
-        <ng-container matColumnDef="address">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
-            Address
-          </th>
-          <td mat-cell *matCellDef="let element" class="f-s-14">
-            {{ element.address }}
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="city">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
-            City
-          </th>
-          <td mat-cell *matCellDef="let element" class="f-s-14">
-            {{ element.city }}
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="state">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
-            State
-          </th>
-          <td mat-cell *matCellDef="let element" class="f-s-14">
-            {{ element.state }}
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="manager">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
-            Manager
-          </th>
-          <td mat-cell *matCellDef="let element" class="f-s-14">
-            {{ element.manager }}
-          </td>
-        </ng-container>
-
-
-        <ng-container matColumnDef="sendPayroll">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
-            Send Payroll
-          </th>
-          <td mat-cell *matCellDef="let element" class="f-s-14">
-            {{ element.sendPayroll ? '✅' : '❌' }}
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="isHiring">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
-            Hiring
-          </th>
-          <td mat-cell *matCellDef="let element" class="f-s-14">
-            {{ element.isHiring ? '✅' : '❌' }}
-          </td>
-        </ng-container>
-
-        <ng-container matColumnDef="action">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
-            Action
-          </th>
-          <td mat-cell *matCellDef="let element" class="action-link">
-            <a [routerLink]="['/apps/smsContact', element.id]" class="m-r-10 cursor-pointer"
-              title="Manage hiring messages"><i-tabler name="message" class="icon-18"></i-tabler> </a>
-            <a [routerLink]="['/apps/zoneWarehouse', element.id]" class="m-r-10 cursor-pointer"
-              title="Manage zones"><i-tabler name="road" class="icon-18"></i-tabler> </a>
-            <a (click)="openDialog('Update', element)" class="m-r-10 cursor-pointer" title="Update Warehouse"><i-tabler
-                name="edit" class="icon-18"></i-tabler></a>
-            <!--  <a (click)="openDialog('Delete', element)" class="cursor-pointer" title="Delete Warehouse">
-              <i-tabler name="trash" class="icon-18"></i-tabler>
-            </a>-->
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-      </table>
-      <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+  <!-- TABLE -->
+  <div class="panel table-panel">
+    <div class="panel-header">
+      <div>
+        <h3>Warehouse Performance</h3>
+        <p>Daily operational summary</p>
+      </div>
     </div>
-  </mat-card-content>
-</mat-card>
+
+    <table class="warehouse-table">
+      <thead>
+        <tr>
+          <th>Warehouse</th>
+          <th>City</th>
+          <th>Packages</th>
+          <th>Delivered</th>
+          <th>Drivers</th>
+          <th>Routes</th>
+          <th>On Time %</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td>OnTrac Houston</td>
+          <td>Houston</td>
+          <td>4,850</td>
+          <td>4,390</td>
+          <td>22</td>
+          <td>18</td>
+          <td>94%</td>
+          <td><span class="status success">Healthy</span></td>
+        </tr>
+
+        <tr>
+          <td>SpeedX Dallas</td>
+          <td>Dallas</td>
+          <td>3,240</td>
+          <td>2,810</td>
+          <td>14</td>
+          <td>13</td>
+          <td>86%</td>
+          <td><span class="status warning">Needs Attention</span></td>
+        </tr>
+
+        <tr>
+          <td>UniUni Austin</td>
+          <td>Austin</td>
+          <td>2,120</td>
+          <td>1,970</td>
+          <td>10</td>
+          <td>9</td>
+          <td>91%</td>
+          <td><span class="status success">Healthy</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>

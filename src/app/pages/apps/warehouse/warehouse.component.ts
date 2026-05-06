@@ -32,14 +32,17 @@ import { debounceTime, map, Observable, of, startWith } from 'rxjs';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 
 @Component({
+  selector: 'app-warehouse',
+  standalone: true,
   templateUrl: './warehouse.component.html',
+  styleUrls: ['./warehouse.component.scss'],
   imports: [
+    CommonModule,
+    RouterModule,
     MaterialModule,
     FormsModule,
     ReactiveFormsModule,
-    TablerIconsModule,
-    CommonModule,
-    RouterModule
+    TablerIconsModule
   ],
 })
 export class WarehouseComponent implements AfterViewInit {

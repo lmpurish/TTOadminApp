@@ -107,6 +107,7 @@ export class AppTopProjectsComponent implements OnChanges {
   }
 
   getVehicleImage(vehicle: RentalVehicle): string {
+  
     if (vehicle.mainImageUrl) {
       return this.baseUrl + vehicle.mainImageUrl;
     }
