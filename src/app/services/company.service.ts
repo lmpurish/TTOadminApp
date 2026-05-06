@@ -58,6 +58,13 @@ export interface SignTemplateRequest {
   signatureImageBase64?: string; // "data:image/png;base64,..."
   signatureText?: string;
 }
+
+export interface CompanyStats {
+  totalVolumePackages: number;
+  totalStops: number;
+  warehouses: number;
+  activeDrivers: number;
+}
 @Injectable({
   providedIn: 'root'
 })
@@ -169,7 +176,11 @@ export class CompanyService {
     return this.http.get<Company[]>(`${environment.apiUrl}/companies`)
   }
 
-
+  getCompanyStats(companyId: number): Observable<CompanyStats> {
+    return this.http.get<CompanyStats>(
+      `${environment.apiUrl}/Companies/statsCompany/${companyId}/simple`,
+    );
+  }
 }
 export interface Company {
   id: number | string;

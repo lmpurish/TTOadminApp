@@ -1,23 +1,27 @@
 <div class="warehouse-dashboard">
-
   <!-- HEADER -->
   <div class="dashboard-header">
- 
-
-    <button mat-flat-button color="primary">
-      Export Report
+    <div>
+      <h2>Warehouse Dashboard</h2>
+      <p class="subtitle">Real-time operational overview</p>
+    </div>
+    <button
+      mat-flat-button
+      color="primary"
+      (click)="loadKpis(); loadChartData()"
+    >
+      <mat-icon>refresh</mat-icon> Refresh
     </button>
   </div>
 
   <!-- KPI CARDS -->
   <div class="kpi-grid">
-
     <div class="kpi-card">
       <div class="kpi-icon bg-blue">📦</div>
       <div>
         <p>Total Packages</p>
-        <h3>18,450</h3>
-        <span class="positive">+12% this week</span>
+        <h3>{{ kpis.totalPackages | number }}</h3>
+        <span class="positive">All warehouses</span>
       </div>
     </div>
 
@@ -25,8 +29,14 @@
       <div class="kpi-icon bg-green">✅</div>
       <div>
         <p>Delivered</p>
-        <h3>16,980</h3>
-        <span class="positive">92.1% completed</span>
+        <h3>{{ kpis.delivered | number }}</h3>
+        <span class="positive">
+          {{
+            kpis.totalPackages > 0
+              ? ((kpis.delivered / kpis.totalPackages) * 100 | number: "1.1-1")
+              : 0
+          }}% completed</span
+        >
       </div>
     </div>
 
@@ -34,7 +44,7 @@
       <div class="kpi-icon bg-orange">🚚</div>
       <div>
         <p>Active Drivers</p>
-        <h3>86</h3>
+        <h3>{{ kpis.activeDrivers }}</h3>
         <span>Across all warehouses</span>
       </div>
     </div>
@@ -43,34 +53,49 @@
       <div class="kpi-icon bg-red">⚠️</div>
       <div>
         <p>Lost / Missing</p>
-        <h3>34</h3>
+        <h3>{{ kpis.lost | number }}</h3>
         <span class="negative">Needs review</span>
       </div>
     </div>
-
   </div>
 
   <!-- MAIN CONTENT -->
   <div class="dashboard-grid">
-
     <!-- CHART CARD -->
     <div class="panel large">
       <div class="panel-header">
         <div>
           <h3>Package Flow</h3>
-          <p>Received vs Delivered</p>
+           <p>{{ chartSubtitle }}</p>
         </div>
 
-        <mat-form-field appearance="outline">
-          <mat-select value="week">
+        <mat-form-field appearance="outline" class="compact-select">
+          <mat-select
+            [(value)]="chartPeriod"
+            (selectionChange)="onPeriodChange($event.value)"
+          >
             <mat-option value="week">This Week</mat-option>
             <mat-option value="month">This Month</mat-option>
           </mat-select>
         </mat-form-field>
       </div>
 
-      <div class="chart-placeholder">
-        Chart: Packages Received vs Delivered
+      <!-- APEXCHART -->
+      <div class="chart-container">
+        <apx-chart
+          #flowChart
+          [series]="packageFlowChart.series"
+          [chart]="packageFlowChart.chart"
+          [dataLabels]="packageFlowChart.dataLabels"
+          [plotOptions]="packageFlowChart.plotOptions"
+          [xaxis]="packageFlowChart.xaxis"
+          [yaxis]="packageFlowChart.yaxis"
+          [colors]="packageFlowChart.colors"
+          [stroke]="packageFlowChart.stroke"
+          [legend]="packageFlowChart.legend"
+          [tooltip]="packageFlowChart.tooltip"
+          [grid]="packageFlowChart.grid"
+        ></apx-chart>
       </div>
     </div>
 
@@ -95,7 +120,6 @@
         <p>Route completion below target.</p>
       </div>
     </div>
-
   </div>
 
   <!-- TABLE -->
@@ -157,5 +181,4 @@
       </tbody>
     </table>
   </div>
-
 </div>

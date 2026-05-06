@@ -8,14 +8,24 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { MessangeContact } from 'src/app/pages/apps/warehouse/messange-contact/messangeContact';
 
+export interface FlowData {
+  date: string; 
+  received: number;
+  delivered: number;
+}
+
+
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class WarehouseService {
-
   private baseUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient, private toastr: ToastrService, private router: Router) { }
+  constructor(
+    private http: HttpClient,
+    private toastr: ToastrService,
+    private router: Router,
+  ) {}
 
   getWarehouses() {
     return this.http.get<any>(`${this.baseUrl}/Warehouses`);
@@ -29,12 +39,14 @@ export class WarehouseService {
   }
 
   getMetros(companyId: number) {
-    return this.http.get<any>(`${this.baseUrl}/Warehouses/metros/${companyId}`)
+    return this.http.get<any>(`${this.baseUrl}/Warehouses/metros/${companyId}`);
   }
 
   updateWarehouse(warehouse: Warehouse): Observable<Warehouse> {
-
-    return this.http.put<Warehouse>(`${this.baseUrl}/Warehouses/${warehouse.id}`, warehouse);
+    return this.http.put<Warehouse>(
+      `${this.baseUrl}/Warehouses/${warehouse.id}`,
+      warehouse,
+    );
   }
 
   deleteWarehouse(id: number): Observable<void> {
@@ -46,7 +58,7 @@ export class WarehouseService {
   }
 
   getZones() {
-    return this.http.get<any>(`${this.baseUrl}/Zones`,);
+    return this.http.get<any>(`${this.baseUrl}/Zones`);
   }
   updateZone(zone: Zone): Observable<Zone> {
     return this.http.put<Zone>(`${this.baseUrl}/Zones/${zone.id}`, zone);
@@ -61,17 +73,27 @@ export class WarehouseService {
   }
 
   getMessageContact(id: number) {
-    return this.http.get<any>(`${this.baseUrl}/WarehouseMessageTemplates/allMessageByWarehouse/${id}`);
+    return this.http.get<any>(
+      `${this.baseUrl}/WarehouseMessageTemplates/allMessageByWarehouse/${id}`,
+    );
   }
   AddMessageContact(message: MessangeContact): Observable<Zone> {
-    return this.http.post<Zone>(`${this.baseUrl}/WarehouseMessageTemplates`, message);
+    return this.http.post<Zone>(
+      `${this.baseUrl}/WarehouseMessageTemplates`,
+      message,
+    );
   }
   updateMessageContact(message: MessangeContact): Observable<Zone> {
-    return this.http.put<Zone>(`${this.baseUrl}/WarehouseMessageTemplates/${message.id}`, message);
+    return this.http.put<Zone>(
+      `${this.baseUrl}/WarehouseMessageTemplates/${message.id}`,
+      message,
+    );
   }
 
   deleteMessageContact(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/WarehouseMessageTemplates/${id}`);
+    return this.http.delete<void>(
+      `${this.baseUrl}/WarehouseMessageTemplates/${id}`,
+    );
   }
 
   addMetro(data: any): Observable<any> {
@@ -85,5 +107,9 @@ export class WarehouseService {
   deleteMetro(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/Warehouses/Metro/${id}`);
   }
-}
 
+
+  getCompanyFlow(period: 'week' | 'month' = 'week'): Observable<FlowData[]> {
+  return this.http.get<FlowData[]>(`${this.baseUrl}/Warehouses/flow?period=${period}`);
+  }
+}
