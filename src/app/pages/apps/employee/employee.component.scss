@@ -1,0 +1,254 @@
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.employees-page {
+    padding: 24px;
+    background: #f6f8fb;
+    min-height: 100vh;
+}
+
+.page-header-card {
+    border-radius: 0 0 18px 18px;
+    border: 1px solid #e4e9f2;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+    margin: -24px -24px 22px;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.page-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.page-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: #2f73ff;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    color: #020b24;
+}
+
+.breadcrumb-text {
+    color: #64748b;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.breadcrumb-text span {
+    margin: 0 8px;
+}
+
+.date-pill {
+    background: #f8fafc;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.employees-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.search-field {
+    flex: 1;
+}
+
+.filter-field {
+    width: 180px;
+}
+
+.employees-table-card {
+    border-radius: 16px;
+    border: 1px solid #e4e9f2;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+    background: #ffffff;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.employees-table {
+    width: 100%;
+    background: #ffffff;
+}
+
+.employees-table th {
+    background: #f8fafc;
+    color: #91a0b8;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    height: 50px;
+    white-space: nowrap;
+}
+
+.employees-table td {
+    height: 66px;
+    color: #061334;
+    font-size: 14px;
+    border-bottom: 1px solid #e5eaf2;
+    white-space: nowrap;
+}
+
+.employee-row:hover {
+    background: #f8fafc;
+}
+
+.employee-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.employee-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.employee-info h6 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.employee-info span,
+.warehouse-cell span {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.driver-badge {
+    display: inline-flex;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #eaf1ff;
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.status-pill.active {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.status-pill.inactive {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.status-pill mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.warehouse-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.warehouse-cell strong {
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.action-buttons button {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+}
+
+.view-btn,
+.edit-btn,
+.delete-btn {
+    background: transparent !important;
+    color: #94a3b8 !important;
+    border: none;
+}
+
+.view-btn:hover,
+.edit-btn:hover,
+.delete-btn:hover {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+}
+
+::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+}
+
+::ng-deep .mat-mdc-text-field-wrapper {
+    border-radius: 10px !important;
+    background: #ffffff;
+}
+
+mat-paginator {
+    border-top: 1px solid #e5e7eb;
+}
+
+@media (max-width: 900px) {
+    .employees-filter-bar {
+        flex-direction: column;
+    }
+
+    .search-field,
+    .filter-field {
+        width: 100%;
+    }
+
+    .page-header {
+        align-items: flex-start;
+        gap: 12px;
+        flex-direction: column;
+    }
+}

@@ -18,44 +18,45 @@
             <span class="f-s-14 d-block f-s-14 m-t-8">Your Admin Dashboard</span>
 
             <form class="m-t-30" [formGroup]="loginForm" (ngSubmit)="onLogin()">
-              <mat-label class="f-s-14 f-w-600 m-b-12 d-block">Username</mat-label>
-              <mat-form-field appearance="outline" class="w-100" color="primary">
-                <input matInput formControlName="email" />
-                @if(f['email'].touched && f['email'].invalid) {
-                <mat-hint class="m-b-16 error-msg">
-                  @if(f['email'].errors && f['email'].errors['required']) {
-                  <div class="text-error">Username is required.</div>
-                  }
-                  @if(f['email'].errors && f['email'].errors['minlength']) {
-                  <div class="text-error">Username should be 6 character.</div>
-                  }
-                </mat-hint>
-                }
-              </mat-form-field>
+              <mat-label class="f-s-14 f-w-600 m-b-12 d-block">Email or Phone</mat-label>
+                <mat-form-field appearance="outline" class="w-100" color="primary">
+                  <input matInput formControlName="login" />
 
-              <mat-label class="f-s-14 f-w-600 m-b-12 d-block">Password</mat-label>
-              <mat-form-field appearance="outline" class="w-100" color="primary">
-                <input matInput type="password" formControlName="password" />
-                @if(f['password'].touched && f['password'].invalid) {
-                <mat-hint class="m-b-16 error-msg">
-                  @if(f['password'].errors && f['password'].errors['required']) {
-                  <div class="text-error">Password is required.</div>
+                  @if(f['login'].touched && f['login'].invalid) {
+                  <mat-hint class="m-b-16 error-msg">
+                    @if(f['login'].errors && f['login'].errors['required']) {
+                    <div class="text-error">Email or phone is required.</div>
+                    }
+                    @if(f['login'].errors && f['login'].errors['minlength']) {
+                    <div class="text-error">Email or phone should be at least 3 characters.</div>
+                    }
+                  </mat-hint>
                   }
-                </mat-hint>
-                }
-              </mat-form-field>
+                </mat-form-field>
 
-              <div class="d-flex align-items-center m-b-12">
-                <mat-checkbox color="primary">Remember this Device</mat-checkbox>
-                <a [routerLink]="['/authentication/side-forgot-pwd']"
-                  class="text-primary f-w-600 text-decoration-none m-l-auto f-s-14">
-                  Forgot Password ?
-                </a>
-              </div>
+                <mat-label class="f-s-14 f-w-600 m-b-12 d-block">Password</mat-label>
+                <mat-form-field appearance="outline" class="w-100" color="primary">
+                  <input matInput type="password" formControlName="password" />
+                  @if(f['password'].touched && f['password'].invalid) {
+                  <mat-hint class="m-b-16 error-msg">
+                    @if(f['password'].errors && f['password'].errors['required']) {
+                    <div class="text-error">Password is required.</div>
+                    }
+                  </mat-hint>
+                  }
+                </mat-form-field>
 
-              <button mat-flat-button color="primary" class="w-100" [disabled]="!loginForm.valid">
-                Sign In
-              </button>
+                <div class="d-flex align-items-center m-b-12">
+                  <mat-checkbox color="primary">Remember this Device</mat-checkbox>
+                  <a [routerLink]="['/authentication/side-forgot-pwd']"
+                    class="text-primary f-w-600 text-decoration-none m-l-auto f-s-14">
+                    Forgot Password ?
+                  </a>
+                </div>
+
+                <button mat-flat-button color="primary" class="w-100" [disabled]="!loginForm.valid">
+                  Sign In
+                </button>
             </form>
 
             <span class="d-block f-w-500 m-t-24">

@@ -40,4 +40,7 @@ export class ReportService {
   getDriverStats(id: number, startDate: string, endDate: string) {
     return this.http.get<any>(`${this.baseUrl}/User/${id}/daily-summary?from=${startDate}&to=${endDate}`);
   }
+  getDashboardKpis() {
+    return this.http.get<any>(`${this.baseUrl}/Report/dashboard-kpis`);
+  }
 }

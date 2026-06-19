@@ -1,0 +1,195 @@
+<div class="payroll-detail-page">
+
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner></mat-spinner>
+  </div>
+
+  <ng-container *ngIf="payRun">
+
+    <div class="header-card">
+
+      <div>
+        <h2>Payroll #{{ payRun.payRunId }}</h2>
+
+        <p>
+          {{ payRun.startDate | date:'MMM d, y' }}
+          -
+          {{ payRun.endDate | date:'MMM d, y' }}
+        </p>
+      </div>
+
+      <span class="status approved">
+        {{ payRun.status }}
+      </span>
+
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid">
+
+      <div class="kpi-card">
+        <span>Gross Pay</span>
+        <h2>
+          {{ payRun.grossAmount | currency }}
+        </h2>
+      </div>
+
+      <div class="kpi-card">
+        <span>Adjustments</span>
+        <h2 class="danger">
+          -{{ payRun.adjustments | currency }}
+        </h2>
+      </div>
+
+      <div class="kpi-card">
+        <span>Net Pay</span>
+        <h2 class="success">
+          {{ payRun.netAmount | currency }}
+        </h2>
+      </div>
+
+      <div class="kpi-card">
+        <span>Paid Date</span>
+        <h2>
+          {{ payRun.paidDate | date:'MMM d' }}
+        </h2>
+      </div>
+
+    </div>
+
+    <!-- SUMMARY -->
+
+    <div class="summary-grid">
+
+      <div class="summary-card">
+        <span>Routes</span>
+        <strong>{{ totalRoutes }}</strong>
+      </div>
+
+      <div class="summary-card">
+        <span>Stops</span>
+        <strong>{{ totalStops }}</strong>
+      </div>
+
+      <div class="summary-card">
+        <span>Lines</span>
+        <strong>{{ totalLines }}</strong>
+      </div>
+
+      <div class="summary-card">
+        <span>Adjustments</span>
+        <strong>{{ totalAdjustments | currency }}</strong>
+      </div>
+
+    </div>
+
+    <!-- PAYROLL LINES -->
+
+    <mat-card class="table-card">
+
+      <mat-card-header>
+        <mat-card-title>
+          Payroll Details
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+
+        <table mat-table
+               [dataSource]="payRun.lines"
+               class="w-100">
+
+          <ng-container matColumnDef="routeDate">
+            <th mat-header-cell *matHeaderCellDef>Date</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.routeDate | date:'MM/dd/yyyy' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="sourceType">
+            <th mat-header-cell *matHeaderCellDef>Type</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.sourceType }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.description }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="qty">
+            <th mat-header-cell *matHeaderCellDef>Qty</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.qty }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="rate">
+            <th mat-header-cell *matHeaderCellDef>Rate</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.rate | currency }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef>Amount</th>
+            <td mat-cell *matCellDef="let row">
+              <strong>
+                {{ row.amount | currency }}
+              </strong>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        </table>
+
+      </mat-card-content>
+
+    </mat-card>
+
+    <!-- ADJUSTMENTS -->
+
+    <mat-card
+      *ngIf="payRun.adjustmentsList?.length"
+      class="table-card">
+
+      <mat-card-header>
+        <mat-card-title>
+          Adjustments
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+
+        <div
+          *ngFor="let adj of payRun.adjustmentsList"
+          class="adjustment-row">
+
+          <div>
+            <strong>
+              {{ adj.description }}
+            </strong>
+
+            <div>
+              {{ adj.createdAt | date:'MMM d, y' }}
+            </div>
+          </div>
+
+          <div class="danger">
+            {{ adj.amount | currency }}
+          </div>
+
+        </div>
+
+      </mat-card-content>
+
+    </mat-card>
+
+  </ng-container>
+
+</div>

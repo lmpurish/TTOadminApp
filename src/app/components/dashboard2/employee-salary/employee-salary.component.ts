@@ -14,6 +14,8 @@ import {
 } from 'ng-apexcharts';
 import { MaterialModule } from '../../../material.module';
 import { TablerIconsModule } from 'angular-tabler-icons';
+import { isPlatformBrowser } from '@angular/common';
+import { Inject, PLATFORM_ID } from '@angular/core';
 
 export interface WarehouseGrossRow {
   warehouseId: number;
@@ -53,8 +55,10 @@ export class AppEmployeeSalaryComponent implements OnChanges {
   totalGross = 0;
   warehousesCount = 0;
   subtitleDate = '';
+  isBrowser = false;
 
-  constructor() {
+  constructor(@Inject(PLATFORM_ID) private platformId: Object) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
     // ✅ chart base (vacío, se rellena en ngOnChanges)
     this.employeeChart = {
       series: [{ name: 'Gross', data: [] }],
@@ -112,28 +116,45 @@ export class AppEmployeeSalaryComponent implements OnChanges {
 
   private applyRows(rows: WarehouseGrossRow[]) {
     const clean = (rows ?? [])
-      .filter(x => !!x && typeof x.grossAmountTotal === 'number')
-      .slice()
-      .sort((a, b) => (b.grossAmountTotal ?? 0) - (a.grossAmountTotal ?? 0));
+      .filter(x => !!x)
+      .map((x: any) => ({
+        ...x,
+        warehouse: x.warehouse ?? x.warehouseName ?? x.city ?? 'Unknown',
+        grossAmountTotal: Number(x.grossAmountTotal ?? x.gross ?? x.totalGross ?? 0),
+        date: x.date ?? ''
+      }))
+      .filter(x => x.grossAmountTotal > 0)
+      .sort((a, b) => b.grossAmountTotal - a.grossAmountTotal);
 
-    this.totalGross = clean.reduce((sum, r) => sum + (r.grossAmountTotal ?? 0), 0);
+    this.totalGross = clean.reduce((sum, r) => sum + r.grossAmountTotal, 0);
     this.warehousesCount = clean.length;
 
     const dates = Array.from(new Set(clean.map(x => x.date).filter(Boolean)));
     this.subtitleDate =
-      dates.length === 1 ? dates[0] : (dates.length ? `${dates[0]} - ${dates[dates.length - 1]}` : '');
+      dates.length === 1
+        ? dates[0]
+        : dates.length
+          ? `${dates[0]} - ${dates[dates.length - 1]}`
+          : '';
 
     const data = clean.map(r => r.grossAmountTotal);
-    const categories = clean.map(r => [r.warehouse]); // 👈 para que quede como tu ejemplo: [['Houston...'], ['Tampa...']]
+    const categories = clean.map(r => r.warehouse || 'Unknown');
 
-    // ✅ Colores distribuidos: deja uno "highlight" (el 1ro = mayor)
     const colors = clean.map((_, i) => (i === 0 ? '#5D87FF' : '#ECF2FF'));
 
     this.employeeChart = {
       ...this.employeeChart,
       colors,
-      series: [{ name: 'Gross', data }],
-      xaxis: { ...this.employeeChart.xaxis, categories },
+      series: [
+        {
+          name: 'Gross',
+          data
+        }
+      ],
+      xaxis: {
+        ...this.employeeChart.xaxis,
+        categories
+      }
     };
   }
 }

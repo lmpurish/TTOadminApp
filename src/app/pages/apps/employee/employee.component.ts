@@ -31,6 +31,7 @@ import { catchError, Observable, of, shareReplay } from 'rxjs';
 @Component({
   selector: 'app-employee',
   templateUrl: './employee.component.html',
+  styleUrl: './employee.component.scss',
   standalone: true,
   imports: [
     MaterialModule,
@@ -65,7 +66,7 @@ export class EmployeeComponent implements AfterViewInit, OnInit {
   selectedRoleFilter: string = 'all';
   isAdmin = false;
   textFilter: string = '';
-
+  today = new Date();
   constructor(
     public dialog: MatDialog,
     private employeeService: EmployeeService,
@@ -281,7 +282,7 @@ interface DialogData {
 @Component({
   selector: 'app-employee-dialog-content',
   templateUrl: './employee-dialog-content.html',
-
+  styleUrl: './employee-dialog.content.scss',
   standalone: true,
   imports: [
     MaterialModule,
@@ -308,11 +309,10 @@ export class AppEmployeeDialogContentComponent implements OnInit {
   ) {
     this.action = data?.action ?? '';
     this.local_data = data?.local_data ? { ...data.local_data } : {}; // ← nunca undefined
+    console.log(this.local_data)
 
     // 2) userRole a string si viene
-    if (this.local_data.userRole !== undefined && this.local_data.userRole !== null) {
-      this.local_data.userRole = String(this.local_data.userRole);
-    }
+    this.local_data.userRole = this.normalizeRoleForView(this.local_data.userRole);
 
     // 3) Normaliza warehouseId desde varias formas posibles
     const w = this.local_data.warehouse;
@@ -357,7 +357,29 @@ export class AppEmployeeDialogContentComponent implements OnInit {
     const userInfo = this.settings.getUserInfoFromToken();
     this.isAdmin = userInfo?.role === 'Admin';
   }
+  private normalizeRoleForView(role: any): string | null {
+    if (role === null || role === undefined || role === '') return null;
 
+    const roleMap: Record<string, string> = {
+      Admin: '0',
+      Administrator: '0',
+      Manager: '1',
+      Assistant: '2',
+      Driver: '3',
+      Rsp: '4',
+      RSP: '4',
+      Applicant: '5',
+      Recruiter: '7',
+    };
+
+    const roleText = String(role).trim();
+
+    if (roleMap[roleText] !== undefined) {
+      return roleMap[roleText];
+    }
+
+    return roleText;
+  }
   loadWarehouses() {
     this.loading = true;
     this.warehouseService.getWarehouses().subscribe({
@@ -370,25 +392,37 @@ export class AppEmployeeDialogContentComponent implements OnInit {
   }
 
   doAction(): void {
-    this.loading = true; // 🔄 Activar spinner
+    this.loading = true;
 
-    // Convertir valores antes de enviar al backend
-    this.local_data.userRole = Number(this.local_data.userRole);
-    this.local_data.warehouseId = Number(this.local_data.warehouseId);
+    this.local_data.userRole =
+      this.local_data.userRole !== null && this.local_data.userRole !== undefined
+        ? Number(this.local_data.userRole)
+        : null;
+
+    this.local_data.warehouseId =
+      this.local_data.warehouseId !== null && this.local_data.warehouseId !== undefined && this.local_data.warehouseId !== ''
+        ? Number(this.local_data.warehouseId)
+        : null;
 
     if (this.action === 'Add') {
       this.employeeService.addEmployee(this.local_data).subscribe({
-        next: () => this.successHandler('Employee added successfully!', 'Refresh'),
+        next: () => this.successHandler('Contractor added successfully!', 'Refresh'),
         error: (err) => this.handleError(err),
       });
     } else if (this.action === 'Update') {
+      if (!this.isAdmin) {
+        delete this.local_data.name;
+        delete this.local_data.lastName;
+
+      }
+
       this.employeeService.updateEmployee(this.local_data).subscribe({
-        next: () => this.successHandler('Employee updated successfully!', 'Update'),
+        next: () => this.successHandler('Contractor updated successfully!', 'Update'),
         error: (err) => this.handleError(err),
       });
     } else if (this.action === 'Delete') {
       this.employeeService.deleteEmployee(this.local_data.id).subscribe({
-        next: () => this.successHandler('Employee deleted successfully!', 'Delete'),
+        next: () => this.successHandler('Contractor deleted successfully!', 'Delete'),
         error: (err) => this.handleError(err),
       });
     }

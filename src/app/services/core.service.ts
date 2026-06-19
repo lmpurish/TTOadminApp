@@ -85,9 +85,9 @@ export class CoreService {
     }
   }
 
-getCompanyId(): number | null {
-  return this.getUserInfoFromToken()?.companyId ?? null;
-}
+  getCompanyId(): number | null {
+    return this.getUserInfoFromToken()?.companyId ?? null;
+  }
 
   isTokenExpired(token?: string): boolean {
     const t = token ?? this.getToken();
@@ -240,10 +240,15 @@ getCompanyId(): number | null {
   createBankAccount(dto: any) {
     return this.http.post(`${this.baseUrl}/Accounts/`, dto)
   }
-  completeProfile(formData: FormData): Observable<any> {
-    return this.http.post(`${this.baseUrl}/User/complete-profile`, formData);
-  }
+  completeProfile(formData: FormData, section?: string) {
+    let url = `${this.baseUrl}/User/complete-profile`;
 
+    if (section) {
+      url += `?section=${encodeURIComponent(section)}`;
+    }
+
+    return this.http.post<any>(url, formData);
+  }
 
 
   setLanguage(lang: string) {
@@ -259,13 +264,23 @@ getCompanyId(): number | null {
   }
 
   login(loginObj: any) {
-    return this.http.post<any>(`${this.baseUrl}/User/authenticate`, loginObj).pipe(
+    return this.http.post<any>(
+      `${this.baseUrl}/User/authenticate`,
+      loginObj
+    ).pipe(
       tap(res => localStorage.setItem('token', res.token)),
-      // Cargar preferencias inmediatamente después del login
-      switchMap(() => this.loadUserSettings())
+      switchMap(res =>
+        this.loadUserSettings().pipe(
+          map(() => res)
+        )
+      )
     );
   }
-
+  forgotPassword(email: string) {
+    return this.http.post<any>(`${this.baseUrl}/User/forgot-password`, {
+      email: email
+    });
+  }
   showSuccess(message: any) {
     this.toastr.success(message, 'Success!');
   }
@@ -334,6 +349,35 @@ getCompanyId(): number | null {
       catchError((err: HttpErrorResponse) => throwError(() => err)) // ✅ preserva err.error.message
     );
   }
+  uploadSwiftXDspSummary(formData: FormData, warehouseId: number) {
+    return this.http.post<any>(
+      `${this.baseUrl}/Routes/upload-swiftx-dsp-summary/${warehouseId}`,
+      formData,
+      {
+        observe: 'events',
+        reportProgress: true
+      }
+    );
+  }
+  uploadRouteManifestPdf(
+    files: File[],
+    warehouseId: number
+  ) {
+    const formData = new FormData();
+
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+
+    return this.http.post(
+      `${environment.apiUrl}/Routes/upload-route-manifest-pdf/${warehouseId}`,
+      formData,
+      {
+        observe: 'events',
+        reportProgress: true
+      }
+    );
+  }
 
   uploadXmlFileOther(formData: FormData, warehouseId: number): Observable<HttpEvent<ImportResultDto>> {
     formData.append('warehouseId', warehouseId.toString());
@@ -379,6 +423,13 @@ getCompanyId(): number | null {
   latestGrossAmountByWarehouse(): Observable<WarehouseGrossRow[]> {
     return this.http.get<WarehouseGrossRow[]>(
       `${this.baseUrl}/PayRoll/latestGrossAmountByWarehouse`
+    );
+  }
+
+  setPassword(data: any) {
+    return this.http.post(
+      `${this.baseUrl}/user/set-password`,
+      data
     );
   }
 }

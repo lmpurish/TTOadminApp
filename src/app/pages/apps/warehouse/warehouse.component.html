@@ -5,13 +5,23 @@
       <h2>Warehouse Dashboard</h2>
       <p class="subtitle">Real-time operational overview</p>
     </div>
-    <button
-      mat-flat-button
-      color="primary"
-      (click)="loadKpis(); loadChartData()"
-    >
-      <mat-icon>refresh</mat-icon> Refresh
-    </button>
+    <div class="header-actions">
+
+      <button mat-flat-button color="primary" (click)="loadKpis(); loadChartData()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+
+      <button mat-flat-button color="primary" (click)="openDialog('Add', {})">
+        New Warehouse
+      </button>
+
+      <button mat-flat-button color="primary" (click)="openDialog('AddMetro', {})">
+        Add Metro
+      </button>
+
+    </div>
+
   </div>
 
   <!-- KPI CARDS -->
@@ -32,11 +42,10 @@
         <h3>{{ kpis.delivered | number }}</h3>
         <span class="positive">
           {{
-            kpis.totalPackages > 0
-              ? ((kpis.delivered / kpis.totalPackages) * 100 | number: "1.1-1")
-              : 0
-          }}% completed</span
-        >
+          kpis.totalPackages > 0
+          ? ((kpis.delivered / kpis.totalPackages) * 100 | number: "1.1-1")
+          : 0
+          }}% completed</span>
       </div>
     </div>
 
@@ -66,14 +75,11 @@
       <div class="panel-header">
         <div>
           <h3>Package Flow</h3>
-           <p>{{ chartSubtitle }}</p>
+          <p>{{ chartSubtitle }}</p>
         </div>
 
         <mat-form-field appearance="outline" class="compact-select">
-          <mat-select
-            [(value)]="chartPeriod"
-            (selectionChange)="onPeriodChange($event.value)"
-          >
+          <mat-select [(value)]="chartPeriod" (selectionChange)="onPeriodChange($event.value)">
             <mat-option value="week">This Week</mat-option>
             <mat-option value="month">This Month</mat-option>
           </mat-select>
@@ -82,42 +88,109 @@
 
       <!-- APEXCHART -->
       <div class="chart-container">
-        <apx-chart
-          #flowChart
-          [series]="packageFlowChart.series"
-          [chart]="packageFlowChart.chart"
-          [dataLabels]="packageFlowChart.dataLabels"
-          [plotOptions]="packageFlowChart.plotOptions"
-          [xaxis]="packageFlowChart.xaxis"
-          [yaxis]="packageFlowChart.yaxis"
-          [colors]="packageFlowChart.colors"
-          [stroke]="packageFlowChart.stroke"
-          [legend]="packageFlowChart.legend"
-          [tooltip]="packageFlowChart.tooltip"
-          [grid]="packageFlowChart.grid"
-        ></apx-chart>
+        <apx-chart #flowChart [series]="packageFlowChart.series" [chart]="packageFlowChart.chart"
+          [dataLabels]="packageFlowChart.dataLabels" [plotOptions]="packageFlowChart.plotOptions"
+          [xaxis]="packageFlowChart.xaxis" [yaxis]="packageFlowChart.yaxis" [colors]="packageFlowChart.colors"
+          [stroke]="packageFlowChart.stroke" [legend]="packageFlowChart.legend" [tooltip]="packageFlowChart.tooltip"
+          [grid]="packageFlowChart.grid"></apx-chart>
       </div>
     </div>
 
     <!-- ALERTS -->
     <div class="panel">
-      <div class="panel-header">
-        <h3>Warehouse Alerts</h3>
+      <div class="panel-header d-flex align-items-center justify-content-between">
+        <h3 class="m-0">Warehouses</h3>
+
+        <span class="warehouse-count">
+          {{ dataSource.data.length }} Warehouses
+        </span>
       </div>
 
-      <div class="alert-item danger">
-        <strong>Houston OnTrac</strong>
-        <p>Driver shortage detected. Need 4 more drivers.</p>
-      </div>
+      <div class="table-responsive">
 
-      <div class="alert-item warning">
-        <strong>Dallas Warehouse</strong>
-        <p>High RD package count today.</p>
-      </div>
+        <table mat-table [dataSource]="dataSource" class="warehouse-mat-table">
 
-      <div class="alert-item info">
-        <strong>Austin Warehouse</strong>
-        <p>Route completion below target.</p>
+          <!-- Warehouse -->
+          <ng-container matColumnDef="warehouse">
+            <th mat-header-cell *matHeaderCellDef>
+              Warehouse
+            </th>
+
+            <td mat-cell *matCellDef="let warehouse">
+              <div class="warehouse-name">
+                <strong>
+                  {{ warehouse.company }} ({{ warehouse.city }})
+                </strong>
+
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Manager -->
+          <ng-container matColumnDef="manager">
+            <th mat-header-cell *matHeaderCellDef>
+              Manager
+            </th>
+
+            <td mat-cell *matCellDef="let warehouse">
+              {{ warehouse.manager || 'No Manager' }}
+            </td>
+          </ng-container>
+
+          <!-- Payroll -->
+          <ng-container matColumnDef="payroll">
+            <th mat-header-cell *matHeaderCellDef>
+              Payroll
+            </th>
+
+            <td mat-cell *matCellDef="let warehouse">
+
+              <span class="status-badge info" *ngIf="warehouse.sendPayroll">
+
+                Enabled
+              </span>
+
+              <span class="status-badge warning" *ngIf="!warehouse.sendPayroll">
+
+                Disabled
+              </span>
+
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>
+              Actions
+            </th>
+
+            <td mat-cell *matCellDef="let warehouse">
+
+              <button mat-icon-button color="primary" (click)="openDialog('Update', warehouse)">
+
+                <i-tabler name="edit" class="icon-18">
+                </i-tabler>
+
+              </button>
+
+              <button mat-icon-button color="accent" [routerLink]="['/apps/zoneWarehouse', warehouse.id]">
+                <i-tabler name="map-pin-plus" class="icon-18"></i-tabler>
+              </button>
+              <button mat-icon-button color="accent" [routerLink]="['/apps/smsContact', warehouse.id]">
+                <i-tabler name="message-circle" class="icon-18"></i-tabler>
+              </button>
+
+
+
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="warehouseColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: warehouseColumns"></tr>
+
+        </table>
+
+        <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons>
+        </mat-paginator>
+
       </div>
     </div>
   </div>
@@ -130,7 +203,23 @@
         <p>Daily operational summary</p>
       </div>
     </div>
+    <div class="performance-filter">
+      <mat-form-field appearance="outline">
+        <mat-label>Date range</mat-label>
 
+        <mat-date-range-input [rangePicker]="performancePicker">
+
+          <input matStartDate placeholder="From" [(ngModel)]="performanceFromDate">
+
+          <input matEndDate placeholder="To" [(ngModel)]="performanceToDate" (dateChange)="onPerformanceDateChange()">
+        </mat-date-range-input>
+
+        <mat-datepicker-toggle matIconSuffix [for]="performancePicker">
+        </mat-datepicker-toggle>
+
+        <mat-date-range-picker #performancePicker></mat-date-range-picker>
+      </mat-form-field>
+    </div>
     <table class="warehouse-table">
       <thead>
         <tr>
@@ -138,6 +227,7 @@
           <th>City</th>
           <th>Packages</th>
           <th>Delivered</th>
+          <th>Stops</th>
           <th>Drivers</th>
           <th>Routes</th>
           <th>On Time %</th>
@@ -146,37 +236,36 @@
       </thead>
 
       <tbody>
-        <tr>
-          <td>OnTrac Houston</td>
-          <td>Houston</td>
-          <td>4,850</td>
-          <td>4,390</td>
-          <td>22</td>
-          <td>18</td>
-          <td>94%</td>
-          <td><span class="status success">Healthy</span></td>
+        <tr *ngIf="performanceLoading">
+          <td colspan="8" class="text-center">
+            Loading performance...
+          </td>
         </tr>
 
-        <tr>
-          <td>SpeedX Dallas</td>
-          <td>Dallas</td>
-          <td>3,240</td>
-          <td>2,810</td>
-          <td>14</td>
-          <td>13</td>
-          <td>86%</td>
-          <td><span class="status warning">Needs Attention</span></td>
+        <tr *ngIf="!performanceLoading && warehousePerformance.length === 0">
+          <td colspan="8" class="text-center">
+            No performance data available
+          </td>
         </tr>
 
-        <tr>
-          <td>UniUni Austin</td>
-          <td>Austin</td>
-          <td>2,120</td>
-          <td>1,970</td>
-          <td>10</td>
-          <td>9</td>
-          <td>91%</td>
-          <td><span class="status success">Healthy</span></td>
+        <tr *ngFor="let item of warehousePerformance">
+          <td>{{ item.warehouse }}</td>
+          <td>{{ item.city }}</td>
+          <td>{{ item.volumen | number }}</td>
+          <td>{{ item.delivered | number }}</td>
+          <td>{{ item.stops | number }}</td>
+          <td>{{ item.cantDrivers }}</td>
+          <td>{{ item.countRoutes }}</td>
+          <td>{{ item.onTimePercent }}%</td>
+          <td>
+            <span class="status" [ngClass]="{
+            success: item.status === 'Healthy',
+            warning: item.status === 'Needs Attention',
+            muted: item.status === 'No Data'
+          }">
+              {{ item.status }}
+            </span>
+          </td>
         </tr>
       </tbody>
     </table>

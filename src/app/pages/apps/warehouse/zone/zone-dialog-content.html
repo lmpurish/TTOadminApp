@@ -1,124 +1,309 @@
 <div class="d-flex align-items-center justify-content-between m-b-16 p-x-20 p-t-16">
   <h3>{{ action }} Zone</h3>
-  <button mat-icon-button mat-dialog-close class="d-flex justify-content-center"></button>
+  <button mat-icon-button mat-dialog-close class="d-flex justify-content-center">
+    <mat-icon>close</mat-icon>
+  </button>
 </div>
 
-<!-- MODO CREATE/EDIT -->
 <mat-dialog-content *ngIf="action !== 'Delete'; else deleteTemplate">
   <form #zoneForm="ngForm">
-    <div class="row">
-      <!-- Zone Code -->
-      <div class="col-lg-6">
-        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Zone Code</mat-label>
-        <mat-form-field appearance="outline" class="w-100">
-          <input
-            matInput
-            type="text"
-            required
-            [(ngModel)]="local_data.zoneCode"
-            name="zoneCode"
-            placeholder="Zone Code"
-          />
-        </mat-form-field>
-      </div>
+    <mat-tab-group animationDuration="200ms">
 
-      <!-- Price Stop -->
-      <div class="col-lg-6">
-        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Price Stop</mat-label>
-        <mat-form-field appearance="outline" class="w-100">
-          <input
-            matInput
-            type="number"
-            min="0"
-            step="0.01"
-            required
-            [(ngModel)]="local_data.priceStop"
-            name="priceStop"
-            placeholder="Price per stop"
-          />
-        </mat-form-field>
-      </div>
+      <mat-tab label="General Information">
+        <div class="row p-t-20">
 
-      <!-- Area -->
-      <div class="col-lg-6">
-        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Area</mat-label>
-        <mat-form-field appearance="outline" class="w-100">
-          <input
-            matInput
-            type="text"
-            required
-            [(ngModel)]="local_data.area"
-            name="area"
-            placeholder="Area"
-          />
-        </mat-form-field>
-      </div>
+          <div class="col-lg-6">
+            <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Zone Code</mat-label>
+            <mat-form-field appearance="outline" class="w-100">
+              <input matInput type="text" required [(ngModel)]="local_data.zoneCode" name="zoneCode"
+                placeholder="Zone Code" />
+            </mat-form-field>
+          </div>
 
-      <!-- Warehouse -->
-      <div class="col-lg-6">
-        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Warehouse</mat-label>
-        <mat-form-field appearance="outline" class="w-100">
-          <mat-select
-            [(ngModel)]="local_data.idWarehouse"
-            name="warehouseId"
-            required
-          >
-            <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
-              {{ warehouse.name || (warehouse.company + ' - ' + warehouse.city) }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
+          <div class="col-lg-6">
+            <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Area</mat-label>
+            <mat-form-field appearance="outline" class="w-100">
+              <input matInput type="text" required [(ngModel)]="local_data.area" name="area" placeholder="Area" />
+            </mat-form-field>
+          </div>
 
-      <!-- ZIP Codes (chips) -->
-      <div class="col-lg-12">
-        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">ZIP Codes</mat-label>
-        <mat-form-field appearance="outline" class="w-100">
-          <mat-chip-grid #chipGrid aria-label="ZIP Codes">
-            <mat-chip-row
-              *ngFor="let zip of zipCodes"
-              [removable]="true"
-              (removed)="removeZip(zip)"
-            >
-              {{ zip }}
-              <button matChipRemove type="button" aria-label="Remove zip">
-                <mat-icon>cancel</mat-icon>
-              </button>
-            </mat-chip-row>
+          <div class="col-lg-12">
+            <mat-label class="f-s-14 f-w-600 m-b-8 d-block">ZIP Codes</mat-label>
 
-            <input
-              placeholder="Add ZIP and press Enter"
-              [matChipInputFor]="chipGrid"
-              [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-              [matChipInputAddOnBlur]="addOnBlur"
-              (matChipInputTokenEnd)="addZip($event)"
-            />
-          </mat-chip-grid>
-          <mat-hint>Push Enter or coma. Ej: 77001 o 77001-1234</mat-hint>
-        </mat-form-field>
-      </div>
-    </div>
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-chip-grid #chipGrid aria-label="ZIP Codes">
+                <mat-chip-row *ngFor="let zip of zipCodes" [removable]="true" (removed)="removeZip(zip)">
+                  {{ zip }}
 
-    <div mat-dialog-actions class="p-t-8">
-      <button mat-flat-button color="primary" (click)="doAction()" [disabled]="!zoneForm.valid">
+                  <button matChipRemove type="button" aria-label="Remove zip">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip-row>
+
+                <input placeholder="Add ZIP and press Enter" [matChipInputFor]="chipGrid"
+                  [matChipInputSeparatorKeyCodes]="separatorKeysCodes" [matChipInputAddOnBlur]="addOnBlur"
+                  (matChipInputTokenEnd)="addZip($event)" />
+              </mat-chip-grid>
+
+              <mat-hint>Push Enter or comma. Ej: 77001 o 77001-1234</mat-hint>
+            </mat-form-field>
+          </div>
+
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Payment Rules">
+        <div class="p-t-20">
+
+          <div class="d-flex align-items-center justify-content-between m-b-16">
+            <div>
+              <h4 class="m-0">Zone Payment Rules</h4>
+              <p class="m-0 text-muted f-s-13">
+                Configure how this zone will be paid.
+              </p>
+            </div>
+
+            <button mat-raised-button color="primary" type="button" (click)="addPayRule()">
+              <mat-icon>add</mat-icon>
+              Add Rule
+            </button>
+          </div>
+
+          <mat-card class="m-b-16">
+            <mat-card-content>
+              <div class="row">
+
+                <div class="col-lg-4">
+                  <mat-label class="f-s-14 f-w-600 m-b-8 d-block">
+                    Payment Type
+                  </mat-label>
+
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-select [(ngModel)]="newRule.paymentType" [ngModelOptions]="{ standalone: true }">
+                      <mat-option [value]="0">Per Route</mat-option>
+                      <mat-option [value]="1">Per Stop</mat-option>
+                      <mat-option [value]="2">Per Block</mat-option>
+                      <mat-option [value]="3">Per Stop + Additional Package</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <div class="col-lg-4">
+                  <mat-label class="f-s-14 f-w-600 m-b-8 d-block">
+                    {{
+                    newRule.paymentType === 0 ? 'Route Price' :
+                    newRule.paymentType === 1 ? 'Stop Price' :
+                    newRule.paymentType === 2 ? 'Block Price' :
+                    newRule.paymentType === 3 ? 'Stop Price' :
+                    'Base Amount'
+                    }}
+                  </mat-label>
+
+                  <mat-form-field appearance="outline" class="w-100">
+                    <input matInput type="number" min="0" step="0.01" [(ngModel)]="newRule.baseAmount"
+                      [ngModelOptions]="{ standalone: true }" [placeholder]="
+                        newRule.paymentType === 0 ? 'Route Price' :
+                        newRule.paymentType === 1 ? 'Stop Price' :
+                        newRule.paymentType === 2 ? 'Block Price' :
+                        newRule.paymentType === 3 ? 'Stop Price' :
+                        'Base Amount'
+                      " />
+                  </mat-form-field>
+                </div>
+
+                <div class="col-lg-4" *ngIf="newRule.paymentType === 2">
+                  <mat-label class="f-s-14 f-w-600 m-b-8 d-block">
+                    Packages Per Block
+                  </mat-label>
+
+                  <mat-form-field appearance="outline" class="w-100">
+                    <input matInput type="number" min="1" [(ngModel)]="newRule.maxPackages"
+                      [ngModelOptions]="{ standalone: true }" placeholder="Packages Per Block" />
+                  </mat-form-field>
+                </div>
+
+                <div class="col-lg-4" *ngIf="newRule.paymentType === 2 || newRule.paymentType === 3">
+                  <mat-label class="f-s-14 f-w-600 m-b-8 d-block">
+                    {{
+                    newRule.paymentType === 2
+                    ? 'Stop Price'
+                    : 'Additional Package Rate'
+                    }}
+                  </mat-label>
+
+                  <mat-form-field appearance="outline" class="w-100">
+                    <input matInput type="number" min="0" step="0.01" [(ngModel)]="newRule.extraAmount"
+                      [ngModelOptions]="{ standalone: true }" [placeholder]="
+                        newRule.paymentType === 2
+                          ? 'Stop Price'
+                          : 'Additional Package Rate'
+                      " />
+                  </mat-form-field>
+                </div>
+
+                <div class="col-lg-4 d-flex align-items-center" *ngIf="newRule.paymentType !== 2">
+
+                  <mat-slide-toggle color="primary" [(ngModel)]="newRule.useDriverRateForExtra"
+                    [ngModelOptions]="{ standalone: false }">
+
+                    Use Driver Rate Extra
+
+                  </mat-slide-toggle>
+
+                </div>
+
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <div *ngIf="!payRules?.length" class="text-center p-y-24 text-muted">
+            <mat-icon class="m-b-8">payments</mat-icon>
+            <p class="m-0">No pay rules added yet.</p>
+          </div>
+
+          <div class="table-responsive" *ngIf="payRules?.length">
+            <table mat-table [dataSource]="payRules" class="w-100">
+
+              <ng-container matColumnDef="paymentType">
+                <th mat-header-cell *matHeaderCellDef>Type</th>
+                <td mat-cell *matCellDef="let rule">
+                  {{
+                  rule.paymentType === 0 || rule.paymentType === 'PerRoute' ? 'Per Route' :
+                  rule.paymentType === 1 || rule.paymentType === 'PerStop' ? 'Per Stop' :
+                  rule.paymentType === 2 || rule.paymentType === 'PerBlock' ? 'Per Block' :
+                  rule.paymentType === 3 || rule.paymentType === 'PerStopPlusAdditionalPackage' ? 'Per Stop + Additional
+                  Package' :
+                  'Unknown'
+                  }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="baseAmount">
+                <th mat-header-cell *matHeaderCellDef>Main Price</th>
+                <td mat-cell *matCellDef="let rule">
+                  <div *ngIf="rule.paymentType === 0 || rule.paymentType === 'PerRoute'">
+                    Route Price: {{ rule.baseAmount | currency }}
+                  </div>
+
+                  <div *ngIf="rule.paymentType === 1 || rule.paymentType === 'PerStop'">
+                    Stop Price: {{ rule.baseAmount | currency }}
+                  </div>
+
+                  <div *ngIf="rule.paymentType === 2 || rule.paymentType === 'PerBlock'">
+                    Block Price: {{ rule.baseAmount | currency }}
+                  </div>
+
+                  <div *ngIf="rule.paymentType === 3 || rule.paymentType === 'PerStopPlusAdditionalPackage'">
+                    Stop Price: {{ rule.baseAmount | currency }}
+                  </div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="extraAmount">
+                <th mat-header-cell *matHeaderCellDef>Secondary Price</th>
+                <td mat-cell *matCellDef="let rule">
+                  <span *ngIf="rule.paymentType === 2 || rule.paymentType === 'PerBlock'">
+                    Stop Price: {{ rule.extraAmount | currency }}
+                  </span>
+
+                  <span *ngIf="rule.paymentType === 3 || rule.paymentType === 'PerStopPlusAdditionalPackage'">
+                    Additional Package Rate: {{ rule.extraAmount | currency }}
+                  </span>
+
+                  <span *ngIf="
+                      rule.paymentType === 0 ||
+                      rule.paymentType === 1 ||
+                      rule.paymentType === 'PerRoute' ||
+                      rule.paymentType === 'PerStop'
+                    ">
+                    -
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="packages">
+                <th mat-header-cell *matHeaderCellDef>Packages</th>
+                <td mat-cell *matCellDef="let rule">
+                  <span *ngIf="rule.paymentType === 2 || rule.paymentType === 'PerBlock'">
+                    Packages Per Block: {{ rule.maxPackages || '-' }}
+                  </span>
+
+                  <span *ngIf="
+                      rule.paymentType !== 2 &&
+                      rule.paymentType !== 'PerBlock'
+                    ">
+                    -
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="version">
+                <th mat-header-cell *matHeaderCellDef>Version</th>
+                <td mat-cell *matCellDef="let rule">
+                  v{{ rule.version }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let rule">
+                  <span class="badge bg-success" *ngIf="rule.isActive">
+                    Active
+                  </span>
+
+                  <span class="badge bg-error" *ngIf="!rule.isActive">
+                    Inactive
+                  </span>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let rule" class="text-right">
+                  <button mat-icon-button color="warn" type="button" (click)="deletePayRule(rule.id)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="displayedColumnsRules"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumnsRules"></tr>
+
+            </table>
+          </div>
+
+        </div>
+      </mat-tab>
+
+    </mat-tab-group>
+
+    <div mat-dialog-actions class="p-t-16 d-flex justify-content-end">
+      <button mat-flat-button color="primary" type="button" (click)="doAction()" [disabled]="!zoneForm.valid">
         {{ action }}
       </button>
-      <button mat-flat-button class="m-l-8 bg-error text-white" (click)="closeDialog()">
+
+      <button mat-flat-button type="button" class="m-l-8 bg-error text-white" (click)="closeDialog()">
         Cancel
       </button>
     </div>
   </form>
 </mat-dialog-content>
 
-<!-- MODO DELETE -->
 <ng-template #deleteTemplate>
   <div class="p-x-24 m-y-8">
     <p class="f-s-14">
-      Are you sure you want to delete <span class="f-w-600">{{ local_data.zoneCode }}</span>?
+      Are you sure you want to delete
+      <span class="f-w-600">{{ local_data.zoneCode }}</span>?
     </p>
   </div>
+
   <div mat-dialog-actions class="p-x-24 p-b-24">
-    <button (click)="doAction()" mat-flat-button>{{ action }}</button>
-    <button mat-flat-button (click)="closeDialog()" class="m-l-8 bg-error text-white">Cancel</button>
+    <button type="button" (click)="doAction()" mat-flat-button color="warn">
+      {{ action }}
+    </button>
+
+    <button type="button" mat-flat-button (click)="closeDialog()" class="m-l-8">
+      Cancel
+    </button>
   </div>
 </ng-template>

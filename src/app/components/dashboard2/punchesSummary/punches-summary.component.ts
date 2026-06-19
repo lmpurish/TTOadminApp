@@ -8,12 +8,13 @@ import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
-  selector: 'app-payment-gateways',
+  selector: 'app-driver-punches',
   standalone: true,
   imports: [MaterialModule],
-  templateUrl: './payment-gateways.component.html',
+  templateUrl: './punches-summary.component.html',
+  styleUrls: ['./punches-summary.component.scss']
 })
-export class AppPaymentGatewaysComponent implements OnInit, OnDestroy {
+export class AppPunchesSummary implements OnInit, OnDestroy {
   loading = false;
   loadingSummary = false;
   showSummary = false;

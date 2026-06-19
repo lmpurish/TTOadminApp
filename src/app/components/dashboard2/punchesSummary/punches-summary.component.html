@@ -1,0 +1,117 @@
+<mat-card class="dashboard-card punches-card">
+  <div class="card-header">
+    <div>
+      <h3>Employee punches of the day</h3>
+      <p>Today attendance status</p>
+    </div>
+
+    <button mat-stroked-button class="summary-btn" type="button" (click)="toggleSummary()">
+      <mat-icon>summarize</mat-icon>
+      Summary
+    </button>
+  </div>
+
+  <mat-card-content class="punches-content">
+    <div class="managers-scroll">
+
+      @for (m of sortedManagers; track m.managerId) {
+      <div class="punch-row" [ngClass]="{
+          'active': isActive(m),
+          'out': isPunchedOut(m),
+          'missing': hasNoPunch(m)
+        }">
+
+        <div class="punch-avatar">
+          <img [src]="avatarSrc$(m) | async" />
+        </div>
+
+        <div class="punch-info">
+          <h6>{{ m.name }}</h6>
+
+          <p>
+            <strong>IN:</strong>
+            {{ m.arrivalAtUtc ? (m.arrivalAtUtc | date:'hh:mm a') : '--' }}
+          </p>
+
+          <p *ngIf="m.departureAtUtc">
+            <strong>OUT:</strong>
+            {{ m.departureAtUtc | date:'hh:mm a' }}
+          </p>
+
+          <span>
+            <ng-container *ngIf="isActive(m)">Active • counting</ng-container>
+            <ng-container *ngIf="isPunchedOut(m)">Punched out</ng-container>
+            <ng-container *ngIf="hasNoPunch(m)">No punch</ng-container>
+          </span>
+        </div>
+
+        <div class="punch-actions">
+          <button mat-icon-button type="button" [disabled]="!hasCoords(m)" (click)="openMaps(m)">
+            <mat-icon>location_on</mat-icon>
+          </button>
+
+          <button *ngIf="isAdmin && isActive(m)" mat-icon-button type="button" (click)="forcePunchOutOne(m)"
+            [disabled]="forcingPunchOut">
+            <mat-icon>exit_to_app</mat-icon>
+          </button>
+
+          <strong>{{ getElapsedText(m) }}</strong>
+        </div>
+
+      </div>
+      }
+
+    </div>
+
+    <div *ngIf="showSummary" class="summary-panel">
+      <div class="summary-header">
+        <div>
+          <h4>Managers summary</h4>
+          <p>
+            {{ summary?.dateUtc ? (summary!.dateUtc | date:'MMM d, y') : '' }}
+            <span *ngIf="summary?.warehouseId"> • Warehouse {{ summary!.warehouseId }}</span>
+          </p>
+        </div>
+
+        <button mat-icon-button type="button" (click)="showSummary=false">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div *ngIf="loadingSummary" class="summary-loading">
+        Loading…
+      </div>
+
+      <div *ngIf="!loadingSummary && summary" class="summary-grid">
+        <div class="summary-item">
+          <span>Total</span>
+          <strong>{{ summary.totalManagers }}</strong>
+        </div>
+
+        <div class="summary-item success">
+          <span>Active</span>
+          <strong>{{ summary.active }}</strong>
+        </div>
+
+        <div class="summary-item error">
+          <span>Punched out</span>
+          <strong>{{ summary.punchedOut }}</strong>
+        </div>
+
+        <div class="summary-item warning">
+          <span>No punch</span>
+          <strong>{{ summary.noPunch }}</strong>
+        </div>
+
+        <div class="summary-item">
+          <span>Total time</span>
+          <strong>{{ formatSeconds(summary.totalSeconds) }}</strong>
+        </div>
+      </div>
+
+      <div *ngIf="!loadingSummary && summaryError" class="summary-error">
+        {{ summaryError }}
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

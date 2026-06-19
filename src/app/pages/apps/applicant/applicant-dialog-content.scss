@@ -1,0 +1,117 @@
+mat-dialog-content {
+    padding: 24px !important;
+    overflow: hidden;
+}
+
+form {
+    width: 100%;
+}
+
+.row {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 0;
+}
+
+.col-lg-6,
+.col-lg-3 {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.col-lg-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+
+.col-lg-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+mat-form-field {
+    width: 100%;
+}
+
+mat-checkbox {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.d-flex.justify-content-end {
+    margin-top: 24px;
+    gap: 10px;
+}
+
+button[mat-flat-button] {
+    min-width: 100px;
+    height: 42px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+button[mat-flat-button]:first-child {
+    background: #2563eb;
+    color: white;
+}
+
+.bg-error {
+    background: #dc2626 !important;
+}
+
+.text-white {
+    color: white !important;
+}
+
+/* Header */
+.d-flex.align-items-center.justify-content-between {
+    padding: 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #ffffff;
+}
+
+.d-flex.align-items-center.justify-content-between h3 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+/* Modal completo */
+::ng-deep .mat-mdc-dialog-surface {
+    border-radius: 20px !important;
+    overflow: hidden !important;
+}
+
+::ng-deep .mat-mdc-dialog-container {
+    padding: 0 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+
+    .col-lg-6,
+    .col-lg-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .d-flex.justify-content-end {
+        flex-direction: column;
+    }
+
+    .d-flex.justify-content-end button {
+        width: 100%;
+    }
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}

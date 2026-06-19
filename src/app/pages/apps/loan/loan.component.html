@@ -1,214 +1,455 @@
 <div class="loading-overlay" *ngIf="loading">
   <mat-spinner></mat-spinner>
 </div>
-<mat-card class="cardWithShadow">
+
+<!-- DASHBOARD -->
+<div class="row m-b-20">
+
+  <!-- TOTAL LOANS -->
+  <div class="col-lg-3 col-sm-6">
+    <mat-card class="cardWithShadow dashboard-card">
+      <mat-card-content>
+
+        <div class="d-flex align-items-center justify-content-between">
+
+          <div>
+            <p class="text-muted m-0">Total Loans</p>
+            <h3 class="m-0">{{ dashboard.totalLoans }}</h3>
+          </div>
+
+          <div class="icon-box bg-primary">
+            <i-tabler name="cash" class="icon-48"></i-tabler>
+          </div>
+
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- ACTIVE BALANCE -->
+  <div class="col-lg-3 col-sm-6">
+    <mat-card class="cardWithShadow dashboard-card">
+      <mat-card-content>
+
+        <div class="d-flex align-items-center justify-content-between">
+
+          <div>
+            <p class="text-muted m-0">Active Balance</p>
+            <h3 class="m-0">
+              {{ dashboard.activeBalance | currency }}
+            </h3>
+          </div>
+
+          <div class="icon-box bg-success">
+            <i-tabler name="wallet" class="icon-48"></i-tabler>
+          </div>
+
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- PRINCIPAL -->
+  <div class="col-lg-3 col-sm-6">
+    <mat-card class="cardWithShadow dashboard-card">
+      <mat-card-content>
+
+        <div class="d-flex align-items-center justify-content-between">
+
+          <div>
+            <p class="text-muted m-0">Principal Issued</p>
+            <h3 class="m-0">
+              {{ dashboard.totalPrincipal | currency }}
+            </h3>
+          </div>
+
+          <div class="icon-box bg-warning">
+            <i-tabler name="receipt-dollar" class="icon-48"></i-tabler>
+          </div>
+
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="col-lg-3 col-sm-6">
+    <mat-card class="cardWithShadow dashboard-card">
+      <mat-card-content>
+
+        <div class="d-flex align-items-center justify-content-between">
+
+          <div>
+            <p class="text-muted m-0">Completed</p>
+            <h3 class="m-0">{{ dashboard.completedLoans }}</h3>
+          </div>
+
+          <div class="icon-box bg-info">
+            <i-tabler name="circle-check" class="icon-48"></i-tabler>
+          </div>
+
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>
+
+<!-- CHARTS -->
+<div class="row m-b-20">
+
+  <!-- BAR CHART -->
+  <div class="col-lg-7">
+    <mat-card class="cardWithShadow h-100">
+      <mat-card-content>
+
+        <div class="d-flex align-items-center justify-content-between m-b-16">
+
+          <div>
+            <h3 class="m-0">Loan Profit Overview</h3>
+
+            <p class="text-muted m-0">
+              Principal, collections and estimated profit
+            </p>
+          </div>
+
+        </div>
+
+        <apx-chart [series]="profitChart.series" [chart]="profitChart.chart" [xaxis]="profitChart.xaxis"
+          [dataLabels]="profitChart.dataLabels" [plotOptions]="profitChart.plotOptions" [legend]="profitChart.legend"
+          [tooltip]="profitChart.tooltip">
+        </apx-chart>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- DONUT -->
+  <div class="col-lg-3">
+    <mat-card class="cardWithShadow h-100">
+      <mat-card-content>
+
+        <div class="d-flex align-items-center justify-content-between m-b-16">
+
+          <div>
+            <h3 class="m-0">Loans Status</h3>
+
+            <p class="text-muted m-0">
+              Current loan distribution
+            </p>
+          </div>
+
+        </div>
+
+        <div class="d-flex justify-content-center">
+
+          <apx-chart [series]="statusChart.series" [chart]="statusChart.chart" [labels]="statusChart.labels"
+            [legend]="statusChart.legend">
+          </apx-chart>
+
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- PROFIT SUMMARY -->
+  <div class="col-lg-2">
+    <mat-card class="cardWithShadow h-100">
+      <mat-card-content>
+
+        <div class="d-flex align-items-center justify-content-between m-b-20">
+
+          <div>
+            <h3 class="m-0">Profit Summary</h3>
+
+            <p class="text-muted m-0">
+              Overview
+            </p>
+          </div>
+
+        </div>
+
+        <div class="summary-mini-row">
+          <span>Total Principal</span>
+
+          <strong>
+            {{ dashboard.totalPrincipal | currency }}
+          </strong>
+        </div>
+
+        <div class="summary-mini-row">
+          <span>Total To Collect</span>
+
+          <strong>
+            {{ dashboard.totalToCollect | currency }}
+          </strong>
+        </div>
+
+        <div class="summary-mini-row profit">
+          <span>Estimated Profit</span>
+
+          <strong>
+            {{ dashboard.estimatedProfit | currency }}
+          </strong>
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>
+
+<!-- FILTERS -->
+<mat-card class="cardWithShadow m-b-20">
   <mat-card-content>
-    <div class="row justify-content-between gap-16">
-      <!-- Search -->
-      <div class="col-lg-3">
+
+    <div class="row align-items-center">
+
+      <!-- SEARCH -->
+      <div class="col-lg-4">
         <mat-form-field appearance="outline" class="w-100 hide-hint">
-          <input
-            matInput
-            placeholder="Search Loan"
-            (keyup)="applyFilter($any($event.target).value)"
-          />
+
+          <input matInput placeholder="Search Loan" (keyup)="applyFilter($any($event.target).value)" />
+
           <mat-icon matSuffix>
-            <i-tabler name="search" class="icon-20 d-flex m-t-2"></i-tabler>
+            <i-tabler name="search" class="icon-20 d-flex m-t-2">
+            </i-tabler>
           </mat-icon>
+
         </mat-form-field>
       </div>
 
-      <!-- DriverId -->
+      <!-- DRIVER -->
       <div class="col-lg-3">
         <mat-form-field appearance="outline" class="w-100 hide-hint">
+
           <mat-label>Employee</mat-label>
-          <input
-            matInput
-            type="number"
-            [ngModel]="driverIdFilter"
-            (ngModelChange)="onDriverIdChange($event)"
-          />
+
+          <input matInput type="number" [ngModel]="driverIdFilter" (ngModelChange)="onDriverIdChange($event)" />
+
         </mat-form-field>
       </div>
 
-      <!-- Status -->
+      <!-- STATUS -->
       <div class="col-lg-3">
-        <mat-form-field
-          appearance="outline"
-          class="theme-select w-100"
-          style="min-width: 240px"
-        >
+        <mat-form-field appearance="outline" class="theme-select w-100">
+
           <mat-label>Status</mat-label>
-          <mat-select
-            [(value)]="statusFilter"
-            (selectionChange)="onStatusChange($event.value)"
-          >
+
+          <mat-select [(value)]="statusFilter" (selectionChange)="onStatusChange($event.value)">
+
             <mat-option value="all">All</mat-option>
             <mat-option value="Draft">Draft</mat-option>
             <mat-option value="Active">Active</mat-option>
             <mat-option value="Paused">Paused</mat-option>
             <mat-option value="Completed">Completed</mat-option>
             <mat-option value="Cancelled">Cancelled</mat-option>
+
           </mat-select>
+
         </mat-form-field>
       </div>
 
-      <div class="col-lg-2 d-flex justify-content-end">
-       <button
-          mat-flat-button
-          color="primary"
-          class="w-100 m-x-5"
-          (click)="onCreate()"
-        >
-        Create
+      <!-- BUTTONS -->
+      <div class="col-lg-2 d-flex justify-content-end gap-8">
+
+        <button mat-flat-button color="primary" class="w-100" (click)="onCreate()">
+
+          <i-tabler name="plus" class="icon-18 m-r-4">
+          </i-tabler>
+
+          Create
         </button>
-        <button
-          mat-flat-button
-          color="primary"
-          class="w-100"
-          (click)="loadLoans()"
-          [disabled]="loading"
-        >
+
+        <button mat-stroked-button color="primary" class="w-100" (click)="loadLoans()" [disabled]="loading">
+
+          <i-tabler name="refresh" class="icon-18 m-r-4">
+          </i-tabler>
+
           Refresh
         </button>
+
       </div>
+
     </div>
+
   </mat-card-content>
 </mat-card>
 
+<!-- TABLE -->
 <mat-card class="cardWithShadow">
   <mat-card-content>
+
     <div class="table-responsive">
+
       <table mat-table [dataSource]="dataSource" class="w-100" matSort>
-        <ng-container matColumnDef="id">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            class="f-s-16 f-w-600"
-            mat-sort-header
-          >
-            Loan#
-          </th>
-          <td mat-cell *matCellDef="let row">{{ row.id }}</td>
-        </ng-container>
 
+        <!-- DRIVER -->
         <ng-container matColumnDef="driver">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            class="f-s-16 f-w-600"
-            mat-sort-header
-          >
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+
             Employee
+
           </th>
-          <td mat-cell *matCellDef="let row">{{ row.driver }}</td>
+
+          <td mat-cell *matCellDef="let row">
+            {{ row.driver }}
+          </td>
         </ng-container>
 
+        <!-- PRINCIPAL -->
         <ng-container matColumnDef="principal">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            class="f-s-16 f-w-600"
-            mat-sort-header
-          >
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+
             Principal
+
           </th>
+
           <td mat-cell *matCellDef="let row">
-            {{ row.principal | number: "1.2-2" }}
+            {{ row.principal | currency }}
           </td>
         </ng-container>
 
+        <!-- INSTALLMENT -->
+        <ng-container matColumnDef="installmentAmount">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+
+            Installment Amount
+
+          </th>
+
+          <td mat-cell *matCellDef="let row">
+            {{ row.installmentAmount | currency }}
+          </td>
+        </ng-container>
+
+        <!-- BALANCE -->
         <ng-container matColumnDef="balance">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            class="f-s-16 f-w-600"
-            mat-sort-header
-          >
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+
             Balance
+
           </th>
+
           <td mat-cell *matCellDef="let row">
-            {{ row.balance | number: "1.2-2" }}
+            {{ row.balance | currency }}
           </td>
         </ng-container>
 
+        <!-- PAID -->
+        <ng-container matColumnDef="paid">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+
+            Paid
+
+          </th>
+
+          <td mat-cell *matCellDef="let row">
+
+            {{
+            ((row.installmentAmount || 0) - (row.balance || 0))
+            | currency
+            }}
+
+          </td>
+        </ng-container>
+
+        <!-- STATUS -->
         <ng-container matColumnDef="status">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            class="f-s-16 f-w-600"
-            mat-sort-header
-          >
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+
             Status
+
           </th>
+
           <td mat-cell *matCellDef="let row">
-            <strong>{{ row.status }}</strong>
+
+            <span class="status-pill" [ngClass]="{
+                'status-active': row.status === 'Active',
+                'status-completed': row.status === 'Completed',
+                'status-draft': row.status === 'Draft',
+                'status-paused': row.status === 'Paused',
+                'status-cancelled': row.status === 'Cancelled'
+              }">
+
+              {{ row.status }}
+
+            </span>
+
           </td>
         </ng-container>
 
+        <!-- CREATED -->
         <ng-container matColumnDef="createdAt">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            class="f-s-16 f-w-600"
-            mat-sort-header
-          >
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>
+
             Created
+
           </th>
+
           <td mat-cell *matCellDef="let row">
-            {{ row.createdAt | date: "short" }}
+            {{ row.createdAt | date:'MMM d, y h:mm a' }}
           </td>
         </ng-container>
 
+        <!-- ACTION -->
         <ng-container matColumnDef="action">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">
+          <th mat-header-cell *matHeaderCellDef>
+
             Action
+
           </th>
+
           <td mat-cell *matCellDef="let row" class="action-link">
-            <a
-              class="m-r-10 cursor-pointer"
-              (click)="approve(row)"
-              [class.disabled]="!canApprove(row)"
-              matTooltip="Approve"
-            >
-              <i-tabler name="circle-check" class="icon-18"></i-tabler>
-            </a>
-            <a
-              class="m-r-10 cursor-pointer"
-              (click)="pause(row)"
-              [class.disabled]="!canPause(row)"
-              matTooltip="Pause"
-            >
-              <i-tabler name="player-pause" class="icon-18"></i-tabler>
-            </a>
-            <a
-              class="m-r-10 cursor-pointer"
-              (click)="resume(row)"
-              [class.disabled]="!canResume(row)"
-              matTooltip="Resume"
-            >
-              <i-tabler name="player-play" class="icon-18"></i-tabler>
-            </a>
-            <a
-              class="cursor-pointer"
-              (click)="cancel(row)"
-              [class.disabled]="!canCancel(row)"
-              matTooltip="Cancel"
-            >
-              <i-tabler name="trash" class="icon-18"></i-tabler>
-            </a>
+
+            <button mat-icon-button color="primary" (click)="approve(row)" [disabled]="!canApprove(row)">
+
+              <i-tabler name="circle-check" class="icon-18">
+              </i-tabler>
+
+            </button>
+
+            <button mat-icon-button color="accent" (click)="pause(row)" [disabled]="!canPause(row)">
+
+              <i-tabler name="player-pause" class="icon-18">
+              </i-tabler>
+
+            </button>
+
+            <button mat-icon-button color="primary" (click)="resume(row)" [disabled]="!canResume(row)">
+
+              <i-tabler name="player-play" class="icon-18">
+              </i-tabler>
+
+            </button>
+
+            <button mat-icon-button color="warn" (click)="cancel(row)" [disabled]="!canCancel(row)">
+
+              <i-tabler name="trash" class="icon-18">
+              </i-tabler>
+
+            </button>
+
           </td>
         </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns">
+        </tr>
+
+        <tr mat-row *matRowDef="let row; columns: displayedColumns">
+        </tr>
+
       </table>
 
-      <mat-paginator
-        [pageSize]="20"
-        [pageSizeOptions]="[5, 10, 20, 50]"
-        showFirstLastButtons
-      ></mat-paginator>
+      <mat-paginator [pageSize]="10" [pageSizeOptions]="[5, 10, 20, 50]" showFirstLastButtons>
+      </mat-paginator>
+
     </div>
+
   </mat-card-content>
 </mat-card>

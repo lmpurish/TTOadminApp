@@ -7,23 +7,29 @@
 <mat-card class="cardWithShadow">
   <mat-card-content>
     <div class="row gap-16 align-items-end">
-      <!-- Búsqueda -->
+
+      <!-- Search -->
       <div class="col-lg-3">
-        <mat-form-field appearance="outline" style="min-width: 300px; margin-left: 16px;">
-          <input matInput placeholder="Search Warehouse"
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Search Warehouse</mat-label>
+          <input
+            matInput
+            placeholder="Search Warehouse"
             (keyup)="dataSourceWh.filter = $any($event.target).value.trim().toLowerCase()" />
+
           <mat-icon matSuffix>
             <i-tabler name="search" class="icon-20 d-flex m-t-2"></i-tabler>
           </mat-icon>
         </mat-form-field>
       </div>
 
-      <!-- Warehouse (solo admin) -->
+      <!-- Warehouse -->
       <div class="col-lg-3" *ngIf="isAdmin">
-        <mat-form-field appearance="outline" style="min-width: 300px; margin-left: 16px;">
+        <mat-form-field appearance="outline" class="w-100">
           <mat-label>Warehouse</mat-label>
           <mat-select [value]="selectedWarehouseId" (selectionChange)="onWarehouseChange($event.value)">
             <mat-option [value]="null">All Warehouses</mat-option>
+
             <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
               {{ warehouse.name || (warehouse.company + ' - ' + warehouse.city) }}
             </mat-option>
@@ -31,128 +37,586 @@
         </mat-form-field>
       </div>
 
-      <!-- Período: Start / End -->
-      <div class="col-lg-2">
+      <!-- Date Range -->
+      <div class="col-lg-3">
         <mat-form-field appearance="outline" class="w-100">
-          <mat-label>Período</mat-label>
-          <mat-date-range-input [rangePicker]="picker" [formGroup]="form" [dateFilter]="payrollDateFilter">
-            <input matStartDate formControlName="weekStart" placeholder="Inicio" (dateChange)="onDateRangeChanged()" />
+          <mat-label>Monthly Period</mat-label>
 
-            <input matEndDate formControlName="weekEnd" placeholder="Fin" (dateChange)="onDateRangeChanged()" />
+          <mat-date-range-input
+            [rangePicker]="picker"
+            [formGroup]="form"
+            [dateFilter]="payrollDateFilter">
+
+            <input
+              matStartDate
+              formControlName="weekStart"
+              placeholder="Start"
+              />
+
+            <input
+              matEndDate
+              formControlName="weekEnd"
+              placeholder="End"
+              (dateChange)="onDateRangeChanged()" />
           </mat-date-range-input>
 
           <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-date-range-picker #picker></mat-date-range-picker>
 
           <mat-hint *ngIf="isCurrentPeriodSelected">
-            No puedes calcular nómina hasta que termine el período (viernes).
+            Payroll cannot be calculated until the period ends.
           </mat-hint>
         </mat-form-field>
-
-
       </div>
 
-      <!-- Acciones -->
-      <div class="col-lg-6 d-flex gap-8">
+      <!-- Actions -->
+      <div class="col-lg-3 d-flex gap-8 flex-wrap">
         <button mat-raised-button color="primary" (click)="loadWarehousesSummary()">
-          <i-tabler name="sum" class="icon-18 m-r-6 d-flex"></i-tabler> Load by Warehouse
+          <i-tabler name="sum" class="icon-18 m-r-6 d-flex"></i-tabler>
+          Load Summary
         </button>
-        <button mat-stroked-button color="primary" (click)="linkDriverRate()">
-          <i-tabler name="cloud-dollar" class="icon-18 m-r-6 d-flex"></i-tabler>Employee Rate
-        </button>
-        <button mat-stroked-button color="primary" (click)="linkPayrollConf()">
-          <i-tabler name="settings" class="icon-18 m-r-6 d-flex"></i-tabler>Payroll Configuration
-        </button>
-        <button mat-stroked-button color="warn" *ngIf="payrollErrors?.length" (click)="openErrorsModal()">
-          Ver errores ({{ payrollErrors.length }})
-        </button>
-        <button mat-stroked-button color="primary" (click)="exportWarehousesCsv()"
+
+        <button
+          mat-stroked-button
+          color="primary"
+          (click)="exportWarehousesCsv()"
           [disabled]="!dataSourceWh.data.length">
-          <i-tabler name="file-export" class="icon-18 m-r-6 d-flex"></i-tabler> Export
+          <i-tabler name="file-export" class="icon-18 m-r-6 d-flex"></i-tabler>
+          Export
+        </button>
+      </div>
+
+    </div>
+
+    <div class="row m-t-12">
+      <div class="col-lg-12 d-flex gap-8 flex-wrap">
+        <button mat-stroked-button color="primary" (click)="linkDriverRate()">
+          <i-tabler name="cloud-dollar" class="icon-18 m-r-6 d-flex"></i-tabler>
+          Employee Rate
+        </button>
+
+        <button mat-stroked-button color="primary" (click)="linkPayrollConf()">
+          <i-tabler name="settings" class="icon-18 m-r-6 d-flex"></i-tabler>
+          Payroll Configuration
+        </button>
+
+        <button
+          mat-stroked-button
+          color="warn"
+          *ngIf="payrollErrors?.length"
+          (click)="openErrorsModal()">
+          Ver errores ({{ payrollErrors.length }})
         </button>
       </div>
     </div>
   </mat-card-content>
 </mat-card>
 
-<!-- TABLA: Payroll por Warehouse -->
-<mat-card class="cardWithShadow">
+<!-- MONTHLY SUMMARY CARDS -->
+<div class="row m-t-20">
+
+  <div class="col-lg-3 col-md-6">
+    <mat-card class="cardWithShadow">
+      <mat-card-content>
+        <div class="d-flex align-items-center">
+          <div>
+            <span class="text-muted f-s-14">Total Net Paid</span>
+            <h3 class="m-0 f-w-700">{{ totalNetWh | currency }}</h3>
+          </div>
+          <div class="m-l-auto">
+            <i-tabler name="cash" class="icon-32 text-success"></i-tabler>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <mat-card class="cardWithShadow">
+      <mat-card-content>
+        <div class="d-flex align-items-center">
+          <div>
+            <span class="text-muted f-s-14">Total Gross</span>
+            <h3 class="m-0 f-w-700">{{ totalGrossWh | currency }}</h3>
+          </div>
+          <div class="m-l-auto">
+            <i-tabler name="report-money" class="icon-32 text-primary"></i-tabler>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <mat-card class="cardWithShadow">
+      <mat-card-content>
+        <div class="d-flex align-items-center">
+          <div>
+            <span class="text-muted f-s-14">Adjustments</span>
+            <h3 class="m-0 f-w-700">{{ totalAdjustmentsWh | currency }}</h3>
+          </div>
+          <div class="m-l-auto">
+            <i-tabler name="adjustments-dollar" class="icon-32 text-warning"></i-tabler>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <mat-card class="cardWithShadow">
+      <mat-card-content>
+        <div class="d-flex align-items-center">
+          <div>
+            <span class="text-muted f-s-14">Drivers Paid</span>
+            <h3 class="m-0 f-w-700">{{ totalDriversWh }}</h3>
+          </div>
+          <div class="m-l-auto">
+            <i-tabler name="users" class="icon-32 text-info"></i-tabler>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>
+
+<!-- SECOND SUMMARY ROW -->
+<div class="row m-t-12">
+
+  <div class="col-lg-4 col-md-6">
+    <mat-card class="cardWithShadow">
+      <mat-card-content>
+        <span class="text-muted f-s-14">Average Pay / Driver</span>
+        <h3 class="m-0 f-w-700">
+          {{ totalDriversWh > 0 ? (totalNetWh / totalDriversWh | currency) : ('$0.00') }}
+        </h3>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-4 col-md-6">
+    <mat-card class="cardWithShadow">
+      <mat-card-content>
+        <span class="text-muted f-s-14">Total Warehouses</span>
+        <h3 class="m-0 f-w-700">{{ dataSourceWh.data.length }}</h3>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-4 col-md-6">
+    <mat-card class="cardWithShadow">
+      <mat-card-content>
+        <span class="text-muted f-s-14">Highest Payroll Warehouse</span>
+        <h3 class="m-0 f-w-700">
+          {{ highestPayrollWarehouse?.warehouseName || 'N/A' }}
+        </h3>
+        <span class="text-muted">
+          {{ highestPayrollWarehouse?.net | currency }}
+        </span>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>
+
+<!-- CHARTS -->
+<div class="row m-t-20">
+
+  <div class="col-lg-8">
+    <mat-card class="cardWithShadow">
+      <mat-card-header>
+        <mat-card-title>Payroll by Warehouse</mat-card-title>
+        <mat-card-subtitle>Monthly net payroll comparison</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <apx-chart
+          *ngIf="warehousePayrollChart"
+          [series]="warehousePayrollChart.series"
+          [chart]="warehousePayrollChart.chart"
+          [xaxis]="warehousePayrollChart.xaxis"
+          [yaxis]="warehousePayrollChart.yaxis"
+          [dataLabels]="warehousePayrollChart.dataLabels"
+          [plotOptions]="warehousePayrollChart.plotOptions"
+          [tooltip]="warehousePayrollChart.tooltip">
+        </apx-chart>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-4">
+    <mat-card class="cardWithShadow">
+      <mat-card-header>
+        <mat-card-title>Payroll Distribution</mat-card-title>
+        <mat-card-subtitle>% by warehouse</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <apx-chart
+          *ngIf="warehousePayrollDonutChart"
+          [series]="warehousePayrollDonutChart.series"
+          [chart]="warehousePayrollDonutChart.chart"
+          [labels]="warehousePayrollDonutChart.labels"
+          [legend]="warehousePayrollDonutChart.legend"
+          [dataLabels]="warehousePayrollDonutChart.dataLabels"
+          [tooltip]="warehousePayrollDonutChart.tooltip">
+        </apx-chart>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>
+
+<!-- TABLE: PAYROLL BY WAREHOUSE -->
+<mat-card class="cardWithShadow m-t-20">
+  <mat-card-header>
+    <mat-card-title>Monthly Payroll by Warehouse</mat-card-title>
+    <mat-card-subtitle>
+      Gross, adjustments, net paid and drivers by warehouse
+    </mat-card-subtitle>
+  </mat-card-header>
+
   <mat-card-content>
     <div class="table-responsive">
+
       <pre class="p-2" *ngIf="debugResults?.length">
 {{ debugResults | json }}
-</pre>
+      </pre>
+
       <table mat-table [dataSource]="dataSourceWh" class="w-100" matSort #whSort="matSort">
+
+        <!-- Warehouse -->
         <ng-container matColumnDef="warehouse">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>Warehouse</th>
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" mat-sort-header>
+            Warehouse
+          </th>
+
           <td mat-cell *matCellDef="let row">
             <div class="d-flex align-items-center gap-16">
+
               <div [ngSwitch]="row.warehouseCompany">
-                <img *ngSwitchCase="'OnTrac'" src="assets/images/warehouse/Ontrack-Logo.svg" width="40" alt="OnTrac" />
-                <img *ngSwitchCase="'Speedx'" src="assets/images/warehouse/SpeedX.webp" width="40" alt="Speedx" />
-                <img *ngSwitchCase="'Uni Uni'" src="assets/images/warehouse/UniUni.png" width="40" alt="Uni Uni" />
-                <!-- <img *ngSwitchDefault src="assets/images/warehouse/default.svg" width="40" alt="Default" /> -->
+                <img
+                  *ngSwitchCase="'OnTrac'"
+                  src="assets/images/warehouse/Ontrack-Logo.svg"
+                  width="40"
+                  alt="OnTrac" />
+
+                <img
+                  *ngSwitchCase="'Speedx'"
+                  src="assets/images/warehouse/SpeedX.webp"
+                  width="40"
+                  alt="Speedx" />
+
+                <img
+                  *ngSwitchCase="'Uni Uni'"
+                  src="assets/images/warehouse/UniUni.png"
+                  width="40"
+                  alt="Uni Uni" />
+
+                <i-tabler
+                  *ngSwitchDefault
+                  name="building-warehouse"
+                  class="icon-32 text-muted">
+                </i-tabler>
               </div>
 
               <div>
-                <h6 class="f-w-600 f-s-16 m-t-0">{{ row.warehouseName }}</h6>
-                <span class="f-s-13 text-muted">{{ row.startDate }} → {{ row.endDate }} ·
-                  Drivers: {{ row.drivers }}</span>
+                <h6 class="f-w-600 f-s-16 m-t-0 m-b-4">
+                  {{ row.warehouseName }}
+                </h6>
+
+                <span class="f-s-13 text-muted">
+                  {{ row.startDate }} → {{ row.endDate }}
+                </span>
               </div>
+
             </div>
           </td>
         </ng-container>
 
-        <!-- GROSS -->
-        <ng-container matColumnDef="gross">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600 text-right" mat-sort-header>Gross</th>
-          <td mat-cell *matCellDef="let row" class="text-right">{{ row.gross | currency }}</td>
-        </ng-container>
-
-        <!-- ADJUSTMENTS -->
-        <ng-container matColumnDef="adjustments">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600 text-right" mat-sort-header>Adjustments</th>
-          <td mat-cell *matCellDef="let row" class="text-right">{{ row.adjustments | currency }}</td>
-        </ng-container>
-
-        <!-- NET -->
-        <ng-container matColumnDef="net">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600 text-right" mat-sort-header>Net</th>
+        <!-- Drivers -->
+        <ng-container matColumnDef="drivers">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600 text-right" mat-sort-header>
+            Drivers
+          </th>
           <td mat-cell *matCellDef="let row" class="text-right">
-            <span [ngClass]="{'text-success': row.net >= 0, 'text-warn': row.net < 0}">
+            {{ row.drivers }}
+          </td>
+        </ng-container>
+
+        <!-- Gross -->
+        <ng-container matColumnDef="gross">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600 text-right" mat-sort-header>
+            Gross
+          </th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            {{ row.gross | currency }}
+          </td>
+        </ng-container>
+
+        <!-- Adjustments -->
+        <ng-container matColumnDef="adjustments">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600 text-right" mat-sort-header>
+            Adjustments
+          </th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            {{ row.adjustments | currency }}
+          </td>
+        </ng-container>
+
+        <!-- Net -->
+        <ng-container matColumnDef="net">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600 text-right" mat-sort-header>
+            Net
+          </th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            <span [ngClass]="{ 'text-success': row.net >= 0, 'text-warn': row.net < 0 }">
               {{ row.net | currency }}
             </span>
           </td>
         </ng-container>
 
-        <!-- ACTION -->
+        <!-- Avg Driver Pay -->
+        <ng-container matColumnDef="avgDriverPay">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600 text-right" mat-sort-header>
+            Avg / Driver
+          </th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            {{ row.drivers > 0 ? (row.net / row.drivers | currency) : ('$0.00') }}
+          </td>
+        </ng-container>
+
+        <!-- Percentage -->
+        <ng-container matColumnDef="percentage">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600 text-right">
+            % Month
+          </th>
+
+          <td mat-cell *matCellDef="let row" class="text-right">
+            <div
+              class="percentage-cell"
+              [ngClass]="{
+                'bg-light-success': row.net < 10000,
+                'bg-light-warning': row.net >= 10000 && row.net < 30000,
+                'bg-light-error': row.net >= 30000
+              }">
+
+              <span class="f-w-600">
+                {{ totalNetWh > 0 ? ((row.net / totalNetWh) * 100 | number:'1.1-1') : 0 }}%
+              </span>
+
+              <mat-progress-bar
+                mode="determinate"
+                [value]="totalNetWh > 0 ? (row.net / totalNetWh) * 100 : 0">
+              </mat-progress-bar>
+
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Action -->
         <ng-container matColumnDef="action">
-          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600">Action</th>
-          <td mat-cell *matCellDef="let row" class="action-link">
-            <a (click)="viewWarehouseDrivers(row)" class="m-r-10 cursor-pointer" title="View Drivers">
+          <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600 text-center">
+            Action
+          </th>
+
+          <td mat-cell *matCellDef="let row" class="text-center action-link">
+            <a
+              (click)="viewWarehouseDrivers(row)"
+              class="m-r-10 cursor-pointer"
+              title="View Drivers">
               <i-tabler name="eye" class="icon-18"></i-tabler>
             </a>
-            <a (click)="lockWarehousePeriod(row)" class="m-r-10 cursor-pointer" title="Lock Period">
+
+            <a
+              (click)="lockWarehousePeriod(row)"
+              class="m-r-10 cursor-pointer"
+              title="Lock Period">
               <i-tabler name="lock" class="icon-18"></i-tabler>
             </a>
           </td>
         </ng-container>
 
-        <!-- HEADER / ROWS -->
+        <!-- Header / Rows -->
         <tr mat-header-row *matHeaderRowDef="displayedColumnsWh"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumnsWh"></tr>
 
-        <!-- FOOTER total -->
+        <!-- Footer -->
         <ng-container matColumnDef="footerTotal">
-          <td mat-footer-cell *matFooterCellDef colspan="5" class="text-right f-w-600">
-            Total Net: {{ totalNetWh | currency }}
+          <td mat-footer-cell *matFooterCellDef colspan="8" class="text-right f-w-700 f-s-16">
+            Total Monthly Net: {{ totalNetWh | currency }}
           </td>
         </ng-container>
+
         <tr mat-footer-row *matFooterRowDef="['footerTotal']"></tr>
+
       </table>
 
-      <mat-paginator #whPaginator [pageSizeOptions]="[5, 10, 20, 50]" [pageSize]="10"
-        showFirstLastButtons></mat-paginator>
+      <mat-paginator
+        #whPaginator
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        [pageSize]="10"
+        showFirstLastButtons>
+      </mat-paginator>
+
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- WEEKLY SUMMARY TABLE -->
+<mat-card class="cardWithShadow m-t-20" *ngIf="weeklySummaryDataSource?.data?.length">
+  <mat-card-header>
+    <mat-card-title>Weekly Payroll Breakdown</mat-card-title>
+    <mat-card-subtitle>
+      Payroll totals grouped by week inside the selected month
+    </mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="table-responsive">
+
+      <table mat-table [dataSource]="weeklySummaryDataSource" class="w-100" matSort #weekSort="matSort">
+
+        <ng-container matColumnDef="period">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Period</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.startDate }} → {{ row.endDate }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="warehouses">
+          <th mat-header-cell *matHeaderCellDef class="text-right" mat-sort-header>
+            Warehouses
+          </th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            {{ row.warehouses }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="drivers">
+          <th mat-header-cell *matHeaderCellDef class="text-right" mat-sort-header>
+            Drivers
+          </th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            {{ row.drivers }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="gross">
+          <th mat-header-cell *matHeaderCellDef class="text-right" mat-sort-header>
+            Gross
+          </th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            {{ row.gross | currency }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="adjustments">
+          <th mat-header-cell *matHeaderCellDef class="text-right" mat-sort-header>
+            Adjustments
+          </th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            {{ row.adjustments | currency }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="net">
+          <th mat-header-cell *matHeaderCellDef class="text-right" mat-sort-header>
+            Net
+          </th>
+          <td mat-cell *matCellDef="let row" class="text-right f-w-600">
+            {{ row.net | currency }}
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumnsWeekly"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumnsWeekly"></tr>
+
+      </table>
+
+    </div>
+  </mat-card-content>
+</mat-card>
+
+<!-- DRIVER DETAIL TABLE -->
+<mat-card class="cardWithShadow m-t-20" *ngIf="selectedWarehouseDriversDataSource?.data?.length">
+  <mat-card-header>
+    <mat-card-title>Driver Payroll Detail</mat-card-title>
+    <mat-card-subtitle>
+      Selected warehouse driver payroll details
+    </mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="table-responsive">
+
+      <table mat-table [dataSource]="selectedWarehouseDriversDataSource" class="w-100" matSort #driverSort="matSort">
+
+        <ng-container matColumnDef="driver">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Driver</th>
+          <td mat-cell *matCellDef="let row">
+            <div class="d-flex align-items-center gap-8">
+              <i-tabler name="user" class="icon-20 text-muted"></i-tabler>
+              <span>{{ row.driverName }}</span>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="gross">
+          <th mat-header-cell *matHeaderCellDef class="text-right" mat-sort-header>
+            Gross
+          </th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            {{ row.gross | currency }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="adjustments">
+          <th mat-header-cell *matHeaderCellDef class="text-right" mat-sort-header>
+            Adjustments
+          </th>
+          <td mat-cell *matCellDef="let row" class="text-right">
+            {{ row.adjustments | currency }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="net">
+          <th mat-header-cell *matHeaderCellDef class="text-right" mat-sort-header>
+            Net
+          </th>
+          <td mat-cell *matCellDef="let row" class="text-right f-w-600">
+            {{ row.net | currency }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let row">
+            <span
+              class="rounded-pill p-x-8 p-y-4 f-s-12"
+              [ngClass]="{
+                'bg-light-success text-success': row.status === 'Approved',
+                'bg-light-warning text-warning': row.status === 'Draft',
+                'bg-light-error text-error': row.status === 'Rejected'
+              }">
+              {{ row.status }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="approvedAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Approved At</th>
+          <td mat-cell *matCellDef="let row">
+            {{ row.approvedAt | date:'MM/dd/yyyy' }}
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumnsDrivers"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumnsDrivers"></tr>
+
+      </table>
+
     </div>
   </mat-card-content>
 </mat-card>

@@ -13,6 +13,7 @@ import { CoreService } from 'src/app/services/core.service';
 import { finalize } from 'rxjs/operators';
 import { LoanDto, LoanService } from 'src/app/services/loan.service';
 import { AddComponent } from './add/add.component';
+import { NgApexchartsModule } from 'ng-apexcharts';
 
 type LoanStatusFilter =
   | 'all'
@@ -32,6 +33,7 @@ type LoanStatusFilter =
     ReactiveFormsModule,
     TablerIconsModule,
     CommonModule,
+    NgApexchartsModule,
   ],
 })
 export class LoanComponent implements AfterViewInit, OnInit {
@@ -46,10 +48,11 @@ export class LoanComponent implements AfterViewInit, OnInit {
   driverIdFilter: number | null = null;
 
   displayedColumns: string[] = [
-    'id',
     'driver',
     'principal',
+    'installmentAmount',
     'balance',
+    'paid',
     'status',
     'createdAt',
     'action',
@@ -62,7 +65,7 @@ export class LoanComponent implements AfterViewInit, OnInit {
     public dialog: MatDialog,
     private loansService: LoanService,
     private settings: CoreService,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadLoans();
@@ -127,7 +130,8 @@ export class LoanComponent implements AfterViewInit, OnInit {
             .map((x: any) => x?.Loan ?? x?.loan)
             .filter(Boolean);
           this.dataSource.data = rows;
-
+          this.buildDashboard(rows);
+          this.buildStatusChart(rows);
           if (this.paginator) this.dataSource.paginator = this.paginator;
 
           this.applyCompositeFilter();
@@ -157,7 +161,20 @@ export class LoanComponent implements AfterViewInit, OnInit {
     this.driverIdFilter = driverId;
     this.loadLoans();
   }
+  private buildStatusChart(loans: any[]): void {
 
+    const statuses = ['Draft', 'Active', 'Paused', 'Completed', 'Cancelled'];
+
+    const counts = statuses.map(status =>
+      loans.filter(x => x.status === status).length
+    );
+
+    this.statusChart = {
+      ...this.statusChart,
+      series: counts,
+      labels: statuses,
+    };
+  }
   private applyCompositeFilter(): void {
     const filterObj = {
       text: this.searchText,
@@ -233,4 +250,128 @@ export class LoanComponent implements AfterViewInit, OnInit {
       }
     });
   }
+
+  dashboard = {
+    totalLoans: 0,
+    activeBalance: 0,
+    totalPrincipal: 0,
+    completedLoans: 0,
+    totalToCollect: 0,
+    estimatedProfit: 0,
+  };
+
+  private buildDashboard(loans: any[]): void {
+    const totalPrincipal = loans.reduce(
+      (sum, x) => sum + Number(x.principal || 0),
+      0
+    );
+
+    const totalBalance = loans.reduce(
+      (sum, x) => sum + Number(x.balance || 0),
+      0
+    );
+
+    const activeBalance = loans
+      .filter(x => x.status === 'Active' || x.status === 'Paused')
+      .reduce((sum, x) => sum + Number(x.balance || 0), 0);
+
+    const completedLoans = loans.filter(x => x.status === 'Completed').length;
+
+    // Ganancia estimada:
+    // Si el préstamo original fue 1000 y el total a cobrar es 1250,
+    // debes tener un campo como totalAmount, amountToPay, totalRepayment, etc.
+    const totalToCollect = loans.reduce(
+      (sum, x) => sum + Number(x.installmentAmount || 0),
+      0
+    );
+
+    const estimatedProfit = totalToCollect - totalPrincipal;
+
+    this.dashboard = {
+      totalLoans: loans.length,
+      activeBalance,
+      totalPrincipal,
+      completedLoans,
+      totalToCollect,
+      estimatedProfit,
+    };
+
+    this.buildProfitChart(loans);
+  }
+  private buildProfitChart(loans: any[]): void {
+    const categories = loans.map(x => `Loan #${x.id}`);
+
+    const principal = loans.map(x => Number(x.principal || 0));
+
+    const totalToCollect = loans.map(x =>
+      Number(x.installmentAmount || 0)
+    );
+
+    const profit = loans.map((x, index) =>
+      totalToCollect[index] - principal[index]
+    );
+
+    this.profitChart = {
+      ...this.profitChart,
+      series: [
+        {
+          name: 'Principal',
+          data: principal,
+        },
+        {
+          name: 'Total To Collect',
+          data: totalToCollect,
+        },
+        {
+          name: 'Profit',
+          data: profit,
+        },
+      ],
+      xaxis: {
+        categories,
+      },
+    };
+  }
+  statusChart: any = {
+    series: [],
+    chart: {
+      type: 'donut',
+      height: 320,
+    },
+    labels: [],
+    legend: {
+      position: 'bottom',
+    },
+  };
+  profitChart: any = {
+    series: [],
+    chart: {
+      type: 'bar',
+      height: 340,
+      toolbar: {
+        show: false,
+      },
+    },
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        columnWidth: '45%',
+        borderRadius: 6,
+      },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    xaxis: {
+      categories: [],
+    },
+    legend: {
+      position: 'top',
+    },
+    tooltip: {
+      y: {
+        formatter: (val: number) => `$${val.toFixed(2)}`,
+      },
+    },
+  };
 }

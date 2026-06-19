@@ -1,0 +1,154 @@
+<mat-card class="dashboard-card ranking-card">
+  <div class="ranking-header">
+    <div>
+      <h3>Warehouse Ranking</h3>
+      <p>Performance by warehouse</p>
+    </div>
+
+    <mat-form-field appearance="outline" class="date-picker">
+      <mat-label>Date range</mat-label>
+
+      <mat-date-range-input [formGroup]="dateRange" [rangePicker]="picker">
+        <input matStartDate formControlName="start" placeholder="Start">
+        <input matEndDate formControlName="end" placeholder="End">
+      </mat-date-range-input>
+
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-date-range-picker #picker (closed)="onDateChange()"></mat-date-range-picker>
+    </mat-form-field>
+  </div>
+
+  <mat-card-content class="ranking-content">
+    <div class="table-responsive">
+      <table mat-table [dataSource]="dataSource" matSort matSortActive="averageLOSPerDay" matSortDirection="desc"
+        matSortDisableClear class="ranking-table">
+
+        <ng-container matColumnDef="index">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>#</th>
+
+          <td mat-cell *matCellDef="let element; let i = index">
+            <div class="ranking-badge" [ngClass]="{
+        'gold': getIndex(i) === 1,
+        'silver': getIndex(i) === 2,
+        'bronze': getIndex(i) === 3
+      }">
+              {{ getIndex(i) }}
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="WarehouseId">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Warehouse</th>
+          <td mat-cell *matCellDef="let element">
+            <div class="warehouse-cell">
+              <div class="warehouse-avatar">
+                {{ getWarehouseName(element.warehouseId)?.charAt(0) }}
+              </div>
+              <div>
+                <h6>{{ getWarehouseName(element.warehouseId) }}</h6>
+                <p>ID: {{ element.warehouseId }}</p>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="TotalVolume">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Volume</th>
+          <td mat-cell *matCellDef="let element">
+            <strong>{{ element.totalVolume | number }}</strong>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="TotalStops">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Stops</th>
+          <td mat-cell *matCellDef="let element">
+            {{ element.totalStops | number }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="TotalAttempts">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Attempts</th>
+          <td mat-cell *matCellDef="let element">
+            {{ element.totalAttempts | number }}
+          </td>
+        </ng-container>
+
+        <!--  <ng-container matColumnDef="TotalCNL">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>CNL</th>
+          <td mat-cell *matCellDef="let element">
+            {{ element.totalCNL | number }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="DPOM">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>DPMO</th>
+          <td mat-cell *matCellDef="let element">
+            {{ element.totalVolume > 0 ? ((element.totalCNL * 1000000) / element.totalVolume | number:'1.0-0') : 0 }}
+          </td>
+        </ng-container>-->
+
+        <ng-container matColumnDef="AverageLOSPerDay">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>LOS%</th>
+          <td mat-cell *matCellDef="let element">
+            <span class="status-pill" [ngClass]="{
+                'good': element.losPercentage >= 98,
+                'warning': element.losPercentage >= 95 && element.losPercentage < 98,
+                'bad': element.losPercentage < 95
+              }">
+              {{ element.losPercentage | number:'1.2-2' }}%
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="averageBranchOnTimePerDay">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Branch On Time</th>
+          <td mat-cell *matCellDef="let element">
+            <span class="status-pill" [ngClass]="{
+                'good': element.averageBranchOnTimePerDay >= 98,
+                'warning': element.averageBranchOnTimePerDay >= 95 && element.averageBranchOnTimePerDay < 98,
+                'bad': element.averageBranchOnTimePerDay < 95
+              }">
+              {{ element.averageBranchOnTimePerDay | number:'1.2-2' }}%
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Ranking">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Ranking</th>
+
+          <td mat-cell *matCellDef="let element">
+            <div class="ranking-score">
+              <div class="ranking-score-top">
+                <span class="score-value">
+                  {{ getRankingScore(element) | number:'1.2-2' }}
+                </span>
+
+                <span class="score-percent">
+                  {{ getRankingPercentage(element) | number:'1.0-0' }}%
+                </span>
+              </div>
+
+              <div class="ranking-progress">
+                <div class="ranking-progress-fill" [style.width.%]="getRankingPercentage(element)">
+                </div>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+
+
+
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
+            No records were found for the selected date range.
+          </td>
+        </tr>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+      </table>
+    </div>
+  </mat-card-content>
+</mat-card>

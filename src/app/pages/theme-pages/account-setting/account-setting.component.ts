@@ -56,7 +56,6 @@ export class AppAccountSettingComponent {
     if (id) {
       this.userService.getUserInfo().subscribe({
         next: (res) => {
-          console.log(res)
           this.userInfo = res;
           if (this.userInfo.avatar) {
             this.service.getAvatar(this.userInfo.avatar).subscribe(url => {

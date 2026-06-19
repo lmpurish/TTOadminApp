@@ -6,7 +6,6 @@
   <div class="col-lg-6">
     <form [formGroup]="form" class="d-flex flex-wrap align-items-center gap-3">
 
-      <!-- 🔹 Selector de fecha -->
       <mat-form-field class="theme-select" appearance="outline" style="min-width: 200px; margin-bottom: 16px;">
         <mat-label>Select Date</mat-label>
         <input matInput [matDatepicker]="picker" formControlName="selectedDate">
@@ -14,7 +13,6 @@
         <mat-datepicker #picker></mat-datepicker>
       </mat-form-field>
 
-      <!-- 🔹 Selector de almacén solo para admins -->
       <ng-container *ngIf="isAdmin">
         <mat-form-field appearance="outline" class="theme-select"
           style="min-width: 300px; margin-left: 16px; margin-bottom: 16px;">
@@ -38,25 +36,65 @@
       </button>
     </div>
   </div>
+
   <div class="col-lg-3">
-    <button mat-flat-button color="accent" (click)="createRoute('Add', {})" class="btn btn-secondary">
+    <button mat-flat-button color="accent" (click)="createRoute('Add', {})" class="btn btn-secondary mt-3">
       Create Routes
     </button>
   </div>
 </div>
 
-<div class="table-wrapper" style=" overflow-y: auto;">
+<!-- Package Distribution Summary -->
+<div class="row m-b-16" *ngIf="dataSource.data.length > 0">
+  <div class="col-lg-3 col-md-6">
+    <mat-card class="summary-card">
+      <mat-card-content>
+        <div class="summary-label">Total Packages</div>
+        <div class="summary-value">{{ totalPackages }}</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <mat-card class="summary-card">
+      <mat-card-content>
+        <div class="summary-label">Total Stops</div>
+        <div class="summary-value">{{ totalStops }}</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <mat-card class="summary-card">
+      <mat-card-content>
+        <div class="summary-label">Active Drivers</div>
+        <div class="summary-value">{{ activeDrivers }}</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="col-lg-3 col-md-6">
+    <mat-card class="summary-card">
+      <mat-card-content>
+        <div class="summary-label">Avg Packages / Driver</div>
+        <div class="summary-value">{{ avgPackagesPerDriver | number:'1.0-2' }}</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<div class="table-wrapper" style="overflow-y: auto;">
   <table mat-table [dataSource]="dataSource" class="w-100 mat-elevation-z8" *ngIf="dataSource.data.length > 0">
 
     <!-- Selection -->
     <ng-container matColumnDef="select">
       <th mat-header-cell *matHeaderCellDef sticky>
-        <!-- El master checkbox solo afecta filas editables -->
         <mat-checkbox (change)="toggleAllSelection()"
           [checked]="getEditableRows().length > 0 && selectedRoutes.length === getEditableRows().length"
           [indeterminate]="selectedRoutes.length > 0 && selectedRoutes.length < getEditableRows().length">
         </mat-checkbox>
       </th>
+
       <td mat-cell *matCellDef="let element">
         <mat-checkbox (change)="toggleSelection(element)" [checked]="isSelected(element)"
           [disabled]="!isRowEditable(element)" matTooltip="Completed routes cannot be edited"
@@ -73,23 +111,26 @@
     <!-- Date -->
     <ng-container matColumnDef="date">
       <th mat-header-cell *matHeaderCellDef sticky>Date</th>
-      <td mat-cell *matCellDef="let element">{{ element.date | date:'MMM d, y' }}</td>
+      <td mat-cell *matCellDef="let element">
+        {{ element.date | date:'MMM d, y' }}
+      </td>
     </ng-container>
+
+    <!-- Status -->
     <ng-container matColumnDef="routeStatus">
       <th mat-header-cell *matHeaderCellDef sticky>Status</th>
       <td mat-cell *matCellDef="let element" class="status-cell">
+
         <ng-container *ngIf="isRowEditable(element); else readOnlyStatus">
           <mat-form-field appearance="outline" class="status-field w-100">
             <mat-select [(ngModel)]="element.routeStatus" (ngModelChange)="handleStatusChange(element, $event)"
               [ngModelOptions]="{ standalone: true }" [panelClass]="'status-panel'" placeholder="Select Status">
 
-              <!-- Cómo se ve el valor seleccionado -->
               <mat-select-trigger>
                 <span class="status-dot" [ngClass]="statusClass(element.routeStatus)"></span>
                 <span>{{ element.routeStatus }}</span>
               </mat-select-trigger>
 
-              <!-- Opciones -->
               <mat-option *ngFor="let s of routeStatuses" [value]="s">
                 <span class="status-dot" [ngClass]="statusClass(s)"></span>
                 <span>{{ s }}</span>
@@ -98,102 +139,154 @@
           </mat-form-field>
         </ng-container>
 
-        <!-- Solo badge cuando no es editable -->
         <ng-template #readOnlyStatus>
           <span class="status-badge" [ngClass]="getStatusClass(element.routeStatus)">
             <span class="status-dot" [ngClass]="statusClass(element.routeStatus)"></span>
             {{ element.routeStatus }}
           </span>
         </ng-template>
+
       </td>
     </ng-container>
 
-
-    <!-- Driver Number -->
+    <!-- Driver -->
     <ng-container matColumnDef="userId">
-      <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" sticky>Driver</th>
+      <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" sticky>
+        Driver
+      </th>
+
       <td mat-cell *matCellDef="let element">
         <mat-form-field appearance="outline" class="m-0 w-100">
-          <mat-select [(ngModel)]="element.userId" (ngModelChange)="handleDriverChange(element, $event)"
-            [ngModelOptions]="{ standalone: true }" [compareWith]="compareIds" placeholder="Select Driver">
+          <input matInput [matAutocomplete]="driverAuto" [ngModel]="getDriverDisplay(element.userId)"
+            (focus)="filterDrivers(''); autocomplete.openPanel()" (ngModelChange)="filterDrivers($event)">
 
-            <mat-option [value]="null">— Unassigned —</mat-option>
+          <mat-autocomplete #driverAuto="matAutocomplete"
+            (optionSelected)="handleDriverChange(element, $event.option.value)">
 
-            <mat-option *ngFor="let d of drivers" [value]="d.id">
-              {{ d.name }} {{ d.lastName }} — #{{ d.identificationNumber || 'N/A' }}
+            <mat-option [value]="null">
+              — Unassigned —
             </mat-option>
-          </mat-select>
+
+            <mat-option *ngFor="let d of filteredDrivers" [value]="d.id">
+              {{ d.name }} {{ d.lastName }}
+              — #{{ d.identificationNumber || 'N/A' }}
+            </mat-option>
+
+          </mat-autocomplete>
         </mat-form-field>
       </td>
-    </ng-container>
 
+      <!-- CNL -->
+      <ng-container matColumnDef="cnl">
+        <th mat-header-cell *matHeaderCellDef sticky>CNL</th>
+        <td mat-cell *matCellDef="let element">
+          <ng-container *ngIf="isSelected(element) && isRowEditable(element); else readOnlyCnl">
+            <mat-form-field appearance="outline" class="m-0 w-100">
+              <input matInput [(ngModel)]="element.cnl" placeholder="Enter CNL" />
+            </mat-form-field>
+          </ng-container>
 
-    <!-- CNL -->
-    <ng-container matColumnDef="cnl">
-      <th mat-header-cell *matHeaderCellDef sticky>CNL</th>
-      <td mat-cell *matCellDef="let element">
-        <ng-container *ngIf="isSelected(element) && isRowEditable(element); else readOnlyCnl">
-          <mat-form-field appearance="outline" class="m-0 w-100">
-            <input matInput [(ngModel)]="element.cnl" placeholder="Enter CNL" />
+          <ng-template #readOnlyCnl>
+            {{ element?.cnl }}
+          </ng-template>
+        </td>
+      </ng-container>
+
+      <!-- Packages / Volume -->
+      <ng-container matColumnDef="volumen">
+        <th mat-header-cell *matHeaderCellDef sticky>Packages</th>
+        <td mat-cell *matCellDef="let element">
+          {{ element?.volumen || 0 }}
+        </td>
+      </ng-container>
+
+      <!-- Stops -->
+      <ng-container matColumnDef="deliveryStops">
+        <th mat-header-cell *matHeaderCellDef sticky>Stops</th>
+        <td mat-cell *matCellDef="let element">
+          {{ element?.deliveryStops || 0 }}
+        </td>
+      </ng-container>
+
+      <!-- Package Percent -->
+      <ng-container matColumnDef="packagePercent">
+        <th mat-header-cell *matHeaderCellDef sticky>% Packages</th>
+        <td mat-cell *matCellDef="let element">
+          <div class="package-percent-cell">
+            <span>{{ getPackagePercent(element) | number:'1.0-2' }}%</span>
+
+            <mat-progress-bar mode="determinate" [value]="getPackagePercent(element)">
+            </mat-progress-bar>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Zone -->
+      <ng-container matColumnDef="zoneId">
+        <th mat-header-cell *matHeaderCellDef sticky>Zone</th>
+        <td mat-cell *matCellDef="let element">
+          <mat-form-field appearance="outline">
+            <mat-select [(ngModel)]="element.zoneId" placeholder="Select Zone"
+              (ngModelChange)="handleZoneChange(element, $event)">
+
+              <mat-option *ngIf="!element.zoneId" [value]="null" disabled>
+                Select Zone
+              </mat-option>
+
+              <mat-option [value]="null">Unassign Zone</mat-option>
+
+              <mat-option *ngFor="let z of getAvailableZones(element.zoneId)" [value]="z.id">
+                {{ z.zoneCode }}{{ z.area ? '-' + z.area : '' }}
+              </mat-option>
+            </mat-select>
           </mat-form-field>
-        </ng-container>
-        <ng-template #readOnlyCnl>
-          {{ element?.cnl }}
-        </ng-template>
-      </td>
-    </ng-container>
+        </td>
+      </ng-container>
 
-    <!-- Volumen -->
-    <ng-container matColumnDef="volumen">
-      <th mat-header-cell *matHeaderCellDef sticky>Volume</th>
-      <td mat-cell *matCellDef="let element">{{ element?.volumen }}</td>
-    </ng-container>
+      <!-- Payment Type -->
+   <!--   <ng-container matColumnDef="paymentType">
+        <th mat-header-cell *matHeaderCellDef sticky>Payment Type</th>
+        <td mat-cell *matCellDef="let element">
+          <mat-form-field appearance="outline" class="m-0 w-100">
+            <mat-select [(ngModel)]="element.paymentType" (ngModelChange)="handlePaymentTypeChange(element, $event)"
+              [ngModelOptions]="{ standalone: true }" [disabled]="!isRowEditable(element)">
 
-    <!-- Stops -->
-    <ng-container matColumnDef="deliveryStops">
-      <th mat-header-cell *matHeaderCellDef sticky>Stops</th>
-      <td mat-cell *matCellDef="let element">{{ element?.deliveryStops }}</td>
-    </ng-container>
+              <mat-option value="PerStop">Per Stop</mat-option>
+              <mat-option value="PerRoute">Per Route</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </td>
+      </ng-container>
 
-    <!-- Zone -->
-    <ng-container matColumnDef="zoneId">
-      <th mat-header-cell *matHeaderCellDef sticky>Zone</th>
-      <td mat-cell *matCellDef="let element">
-        <mat-form-field appearance="outline">
-          <mat-select [(ngModel)]="element.zoneId" placeholder="Select Zone"
-            (ngModelChange)="handleZoneChange(element, $event)">
-            <mat-option *ngIf="!element.zoneId" [value]="null" disabled>Select Zone</mat-option>
-            <mat-option [value]="null">Unassign Zone</mat-option>
-            <mat-option *ngFor="let z of getAvailableZones(element.zoneId)" [value]="z.id">
-              {{ z.zoneCode }}{{ z.area ? '-' + z.area : '' }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </td>
-    </ng-container>
-    <ng-container matColumnDef="paymentType">
-      <th mat-header-cell *matHeaderCellDef sticky>Payment Type</th>
-      <td mat-cell *matCellDef="let element">{{ element?.paymentType }}</td>
-    </ng-container>
-    <ng-container matColumnDef="priceRoute">
-      <th mat-header-cell *matHeaderCellDef sticky>Price Route</th>
-      <td mat-cell *matCellDef="let element">
-        {{ element?.priceRoute != null ? ('$' + element.priceRoute) : '-' }}
-      </td>
-    </ng-container>
+      <ng-container matColumnDef="priceRoute">
+        <th mat-header-cell *matHeaderCellDef sticky>Price Route</th>
+        <td mat-cell *matCellDef="let element">
+          <mat-form-field appearance="outline" class="m-0 w-100">
+            <input matInput type="number" min="0" [(ngModel)]="element.priceRoute"
+              (ngModelChange)="handlePriceRouteChange(element)" [ngModelOptions]="{ standalone: true }"
+              [disabled]="!isRowEditable(element) || element.paymentType !== 'PerRoute'" placeholder="0.00" />
+          </mat-form-field>
+        </td>
+      </ng-container>-->
 
-    <!-- Table rows -->
-    <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-    <tr mat-row
-      *matRowDef="let row; columns: ['select','date','routeStatus','userId','cnl','volumen','deliveryStops','zoneId','paymentType','priceRoute','action']">
-    </tr>
-    <ng-container matColumnDef="action">
-      <th mat-header-cell *matHeaderCellDef sticky>Action</th>
-      <td mat-cell *matCellDef="let row">
-        <button mat-icon-button color="primary" (click)="editRoute(row)" matTooltip="Add Route Bonus">
-          <i-tabler name="cash" class="icon-18"></i-tabler>
-        </button>
-      </td>
+      <!-- Action -->
+      <ng-container matColumnDef="action">
+        <th mat-header-cell *matHeaderCellDef sticky>Action</th>
+        <td mat-cell *matCellDef="let row">
+          <button mat-icon-button color="primary" (click)="editRoute(row)" matTooltip="Add Route Bonus">
+            <i-tabler name="cash" class="icon-18"></i-tabler>
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- Rows -->
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+
+      <tr mat-row *matRowDef="let row; columns: displayedColumns" [ngClass]="{
+        'high-package-row': getPackagePercent(row) >= 20,
+        'empty-route-row': !row.volumen || row.volumen === 0
+      }">
+      </tr>
     </ng-container>
   </table>
 
@@ -201,5 +294,6 @@
     No data available.
   </div>
 
-  <mat-paginator [pageSizeOptions]="[5, 10, 20]" [pageSize]="20" showFirstLastButtons></mat-paginator>
+  <mat-paginator [pageSizeOptions]="[5, 10, 20]" [pageSize]="20" showFirstLastButtons>
+  </mat-paginator>
 </div>

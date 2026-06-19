@@ -16,40 +16,52 @@
 <mat-dialog-content class="mat-typography search-dialog">
   <form (submit)="uploadFile($event)">
 
-    <!-- SELECT WAREHOUSE -->
     <mat-form-field *ngIf="isAdmin" appearance="outline" class="theme-select"
       style="min-width: 300px; margin-left: 16px; margin-bottom: 16px;">
       <mat-label>Warehouse</mat-label>
 
-      <mat-select [(ngModel)]="selectedWarehouseId" name="selectedWarehouseId">
+      <mat-select [(ngModel)]="selectedWarehouseId" name="selectedWarehouseId"
+        (selectionChange)="selectedFile = null; selectedFiles = []">
         <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
           {{ warehouse.name || (warehouse.company + ' - ' + warehouse.city) }}
         </mat-option>
       </mat-select>
     </mat-form-field>
 
-    <!-- SELECT TYPE -->
     <mat-form-field appearance="outline" class="theme-select"
       style="min-width: 300px; margin-left: 16px; margin-bottom: 16px;" *ngIf="selectedWarehouseId">
       <mat-label>File Type</mat-label>
-      <mat-select [(ngModel)]="fileType" name="fileType" (selectionChange)="selectedFile = null">
+
+      <mat-select [(ngModel)]="fileType" name="fileType" (selectionChange)="selectedFile = null; selectedFiles = []">
         <mat-option value="report">Report</mat-option>
         <mat-option value="claims">Claims</mat-option>
       </mat-select>
     </mat-form-field>
 
-    <!-- FILE SELECT -->
     <div class="file-upload-container">
-      <input type="file" id="fileInput" (change)="onFileSelected($event)" [accept]="fileType === 'claims'
-      ? '.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      : '.xml,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'"
-        hidden>
+      <input type="file" id="fileInput" (change)="onFileSelected($event)"
+        [multiple]="isCargoVanSelected && fileType === 'report'" [accept]="
+          fileType === 'claims'
+            ? '.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            : isCargoVanSelected
+              ? '.pdf,application/pdf'
+              : '.xml,.xls,.xlsx,application/xml,text/xml,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        " hidden />
 
       <label for="fileInput" class="file-label" [ngClass]="{ 'disabled': isLoading || !fileType }">
         <mat-icon>cloud_upload</mat-icon>
 
-        <span *ngIf="!selectedFile">Select File</span>
-        <span *ngIf="selectedFile">{{ selectedFile.name }}</span>
+        <span *ngIf="!selectedFile && selectedFiles.length === 0">
+          {{ isCargoVanSelected && fileType === 'report' ? 'Select PDF Files' : 'Select File' }}
+        </span>
+
+        <span *ngIf="selectedFile && selectedFiles.length <= 1">
+          {{ selectedFile.name }}
+        </span>
+
+        <span *ngIf="selectedFiles.length > 1">
+          {{ selectedFiles.length }} files selected
+        </span>
       </label>
     </div>
 
@@ -58,12 +70,18 @@
     <div class="upload-actions">
       <button mat-button mat-dialog-close>Cancel</button>
 
-      <button mat-raised-button color="primary" type="submit" [disabled]="!selectedFile || isLoading || !fileType">
-
+      <button mat-raised-button color="primary" type="submit" [disabled]="
+          isLoading ||
+          !fileType ||
+          (isCargoVanSelected && fileType === 'report'
+            ? selectedFiles.length === 0
+            : !selectedFile)
+        ">
         <mat-progress-spinner *ngIf="isLoading" mode="indeterminate" diameter="20"></mat-progress-spinner>
 
-        <span *ngIf="!isLoading">Upload File</span>
-
+        <span *ngIf="!isLoading">
+          {{ isCargoVanSelected && fileType === 'report' ? 'Upload Files' : 'Upload File' }}
+        </span>
       </button>
     </div>
 

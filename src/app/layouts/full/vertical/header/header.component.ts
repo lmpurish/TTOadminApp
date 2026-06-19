@@ -233,13 +233,13 @@ export class HeaderComponent {
       subtitle: 'Account Settings',
       link: '/apps/account-setting',
     },
-    /*  {
-        id: 2,
-        img: '/assets/images/svgs/icon-inbox.svg',
-        title: 'My Inbox',
-        subtitle: 'Messages & Email',
-        link: '/apps/email/inbox',
-      },
+    {
+      id: 2,
+      img: '/assets/images/svgs/icon-inbox.svg',
+      title: 'Notifications',
+      subtitle: 'notificatios',
+      link: '/apps/notification/inbox',
+    },/** 
       {
         id: 3,
         img: '/assets/images/svgs/icon-tasks.svg',
@@ -260,6 +260,7 @@ export class HeaderComponent {
 
 export class AppSearchDialogComponent {
   selectedFile: File | null = null;
+  selectedFiles: File[] = [];
   isLoading = false;
   userInfo: any;
   fileType: 'report' | 'claims' | null = null;
@@ -277,6 +278,7 @@ export class AppSearchDialogComponent {
     const id = Number(warehouseId);
     return this.warehouses?.find(w => Number(w.id) === id) ?? null;
   }
+
   ngOnInit(): void {
     if (!this.isAdmin) {
       const user = this.core.getUserInfoFromToken();
@@ -292,6 +294,7 @@ export class AppSearchDialogComponent {
     this.loadUserInfo();
     this.warehouseService.getWarehouses().subscribe(
       res => {
+
         this.warehouses = res
       }
     )
@@ -337,33 +340,59 @@ export class AppSearchDialogComponent {
 
 
   onFileSelected(event: any) {
-    const file: File | undefined = event?.target?.files?.[0];
-    if (!file) return;
+    const files: File[] = Array.from(event?.target?.files || []);
 
-    const allowedMimeTypes = [
-      'text/xml',
-      'application/xml',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    ];
+    if (!files.length) return;
 
-    const allowedExtensions = ['xml', 'xls', 'xlsx'];
-    const extension = file.name.split('.').pop()?.toLowerCase();
+    const warehouseId = this.getWarehouseId();
+    const wh = warehouseId ? this.getSelectedWarehouse(warehouseId) : null;
+    const company = (wh?.company ?? '').toLowerCase();
 
-    const isValid =
-      allowedMimeTypes.includes(file.type) ||
-      allowedExtensions.includes(extension || '');
+    const isCargoVan = company === 'cargo van';
 
-    if (isValid) {
-      this.selectedFile = file;
-    } else {
+    if (!isCargoVan && files.length > 1) {
       this.snackBar.open(
-        'Por favor, selecciona un archivo válido (.xml, .xls, .xlsx).',
-        'Cerrar',
-        { duration: 3000 }
+        'Only Cargo Van allows multiple files. Please select only one file.',
+        'Close',
+        { duration: 4000 }
       );
+
       this.selectedFile = null;
+      this.selectedFiles = [];
       event.target.value = '';
+      return;
+    }
+
+    const allowedExtensions = isCargoVan
+      ? ['pdf']
+      : ['xml', 'xls', 'xlsx'];
+
+    const invalidFile = files.find(file => {
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      return !allowedExtensions.includes(extension || '');
+    });
+
+    if (invalidFile) {
+      this.snackBar.open(
+        isCargoVan
+          ? 'Cargo Van only allows PDF files.'
+          : 'Please select a valid file (.xml, .xls, .xlsx).',
+        'Close',
+        { duration: 4000 }
+      );
+
+      this.selectedFile = null;
+      this.selectedFiles = [];
+      event.target.value = '';
+      return;
+    }
+
+    if (isCargoVan) {
+      this.selectedFiles = files;
+      this.selectedFile = files[0] ?? null;
+    } else {
+      this.selectedFile = files[0];
+      this.selectedFiles = [];
     }
   }
 
@@ -371,9 +400,8 @@ export class AppSearchDialogComponent {
   uploadFile(event: Event) {
     event.preventDefault();
 
-    if (!this.selectedFile) return;
-
     const warehouseId = this.getWarehouseId();
+
     if (!warehouseId) {
       this.snackBar.open('Please select a warehouse.', 'Close', { duration: 4000 });
       return;
@@ -385,20 +413,44 @@ export class AppSearchDialogComponent {
     }
 
     const wh = this.getSelectedWarehouse(warehouseId);
-    const company = (wh?.company ?? '').toLowerCase();
+    const company = (wh?.company ?? '').toLowerCase().trim();
+
+    const isCargoVanReport = company === 'cargo van' && this.fileType === 'report';
+
+    if (isCargoVanReport) {
+      if (!this.selectedFiles.length) return;
+    } else {
+      if (!this.selectedFile) return;
+    }
 
     this.isLoading = true;
 
     const formData = new FormData();
-    formData.append('file', this.selectedFile);
 
-    let request$;
+    if (!isCargoVanReport) {
+      formData.append('file', this.selectedFile!);
+    }
+
+    let request$: any;
 
     if (this.fileType === 'report') {
-      request$ =
-        company === 'ontrac'
-          ? this.core.uploadXmlFileOntrac(formData, warehouseId)
-          : this.core.uploadXmlFileOther(formData, warehouseId);
+      if (company === 'ontrac') {
+        request$ = this.core.uploadXmlFileOntrac(formData, warehouseId);
+      } else if (company === 'speedx') {
+        request$ = this.core.uploadXmlFileOther(formData, warehouseId);
+      } else if (company === 'swiftx') {
+        request$ = this.core.uploadSwiftXDspSummary(formData, warehouseId);
+      } else if (company === 'cargo van') {
+        request$ = this.core.uploadRouteManifestPdf(this.selectedFiles, warehouseId);
+      } else {
+        this.isLoading = false;
+        this.snackBar.open(
+          `Unsupported company parser: ${wh?.company || 'Unknown'}`,
+          'Close',
+          { duration: 5000 }
+        );
+        return;
+      }
     } else {
       request$ = this.core.uploadClaimsFile(formData);
     }
@@ -409,6 +461,8 @@ export class AppSearchDialogComponent {
           const res = evt.body;
 
           this.selectedFile = null;
+          this.selectedFiles = [];
+
           console.log('RES:', res);
 
           if (this.fileType === 'claims') {
@@ -429,16 +483,11 @@ export class AppSearchDialogComponent {
             this.handleImportResponse(res, company);
 
             if (company !== 'ontrac' && res) {
-              try {
-                this.dialog.open(ImportResultComponent, {
-                  width: '900px',
-                  maxWidth: '95vw',
-                  data: res
-                });
-              } catch (e) {
-                console.error('DIALOG ERROR:', e);
-                this.snackBar.open('Error opening results modal.', 'Close', { duration: 5000 });
-              }
+              this.dialog.open(ImportResultComponent, {
+                width: '900px',
+                maxWidth: '95vw',
+                data: res
+              });
             }
           }
         }
@@ -467,6 +516,12 @@ export class AppSearchDialogComponent {
     });
   }
 
+  get isCargoVanSelected(): boolean {
+    const warehouseId = this.getWarehouseId();
+    const wh = warehouseId ? this.getSelectedWarehouse(warehouseId) : null;
+
+    return (wh?.company ?? '').toLowerCase().trim() === 'cargo van';
+  }
 
   private handleImportResponse(payload: any, company: string) {
     if (!payload) return;
@@ -493,7 +548,7 @@ export class AppSearchDialogComponent {
           message,
           notFoundUsers: notFound,
           missingCount: notFound.length,
-          warehouseId: 5
+          warehouseId: this.selectedWarehouseId
         }
       });
 
@@ -503,6 +558,8 @@ export class AppSearchDialogComponent {
 
     // (Tu comportamiento actual para NO OnTrac lo mantienes en el next)
   }
+
+
 }
 
 

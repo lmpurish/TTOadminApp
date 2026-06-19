@@ -18,14 +18,57 @@ export class SignatureCalibratorComponent {
   @Input() pdfUrl?: string;
   @Output() fieldsChange = new EventEmitter<TemplateFieldDto[]>(); // ✅ tipado
 
-  emitDemo() {
-    // Coordenadas demo (ajústalas con tu calibrador real)
-    const fields: TemplateFieldDto[] = [
-      { "Type": "Initials", "Role": "Contractor", "Page": 3, "X": 182, "Y": 665, "Width": 90, "Height": 22, "Label": "Initials", "Required": true },
-      { "Type": "Signature", "Role": "Contractor", "Page": 3, "X": 190, "Y": 412, "Width": 90, "Height": 28, "Label": "Signature", "Required": true },
-      { "Type": "Date", "Role": "Contractor", "Page": 3, "X": 338, "Y": 362, "Width": 90, "Height": 20, "Label": "Date", "Required": true },
-      { "Type": "Text", "Role": "Contractor", "Page": 3, "X": 182, "Y": 437, "Width": 100, "Height": 18, "Label": "Name", "Required": true }
+  @Input() fields: TemplateFieldDto[] = [];
+
+
+  emitDemo(): void {
+    this.fields = [
+      {
+        Type: 'Text',
+        Role: 'Contractor',
+        Page: 6,
+        X: 20,
+        Y: 130,
+        Width: 220,
+        Height: 24,
+        Label: 'Contractor Name',
+        Required: true
+      },
+      {
+        Type: 'Date',
+        Role: 'Contractor',
+        Page: 6,
+        X: 310,
+        Y: 130,
+        Width: 120,
+        Height: 24,
+        Label: 'Contractor Date',
+        Required: true
+      },
+      {
+        Type: 'Signature',
+        Role: 'Contractor',
+        Page: 6,
+        X: 20,
+        Y: 178,
+        Width: 220,
+        Height: 36,
+        Label: 'Contractor Signature',
+        Required: true
+      },
+      {
+        Type: 'Date',
+        Role: 'Contractor',
+        Page: 6,
+        X: 310,
+        Y: 178,
+        Width: 120,
+        Height: 24,
+        Label: 'Contractor Signature Date',
+        Required: true
+      }
     ];
-    this.fieldsChange.emit(fields);
+
+    this.fieldsChange.emit(this.fields);
   }
 }

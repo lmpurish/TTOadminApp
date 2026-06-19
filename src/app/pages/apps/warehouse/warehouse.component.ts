@@ -22,6 +22,7 @@ import { CommonModule } from '@angular/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   FlowData,
+  WarehousePerformance,
   WarehouseService,
 } from 'src/app/services/apps/warehouse/warehouse.service';
 import { CoreService } from 'src/app/services/core.service';
@@ -104,7 +105,7 @@ export class WarehouseComponent implements AfterViewInit {
     'isHiring',
     'action',
   ];
-  dataSource = new MatTableDataSource<WarehouseComponent>([]);
+  dataSource = new MatTableDataSource<any>([]);
   openTimeStr: string | null = null;
   loading: boolean = false;
 
@@ -114,10 +115,19 @@ export class WarehouseComponent implements AfterViewInit {
     activeDrivers: 0,
     lost: 0,
   };
-
+  warehouseColumns: string[] = [
+    'warehouse',
+    'manager',
+    'payroll',
+    'actions'
+  ];
   chartPeriod: 'week' | 'month' = 'week';
   chartSubtitle: string = '';
+  warehousePerformance: WarehousePerformance[] = [];
+  performanceLoading = false;
 
+  performanceFromDate: Date = this.getYesterday();
+  performanceToDate: Date = this.getYesterday();
   // ✅ REEMPLAZAMOS las variables viejas del chart SVG por el chart de Apex
   public packageFlowChart!: Partial<PackageFlowChart> | any;
 
@@ -125,6 +135,7 @@ export class WarehouseComponent implements AfterViewInit {
     public dialog: MatDialog,
     private warehouseService: WarehouseService,
     private settings: CoreService,
+
   ) {
     this.packageFlowChart = {
       series: [],
@@ -190,14 +201,45 @@ export class WarehouseComponent implements AfterViewInit {
 
   ngOnInit(): void {
     this.loadWarehouses();
+    this.loadWarehousePerformance();
     this.loadKpis();
     this.loadChartData();
   }
+  loadWarehousePerformance(): void {
+    if (!this.performanceFromDate || !this.performanceToDate) {
+      this.settings.showError('Please select a valid date range');
+      return;
+    }
 
+    this.performanceLoading = true;
+
+    const from = this.formatDate(this.performanceFromDate);
+    const to = this.formatDate(this.performanceToDate);
+
+    this.warehouseService
+      .getWarehousePerformance(from, to)
+      .subscribe({
+        next: (res) => {
+          console.log(res)
+          this.warehousePerformance = (res || []).sort(
+            (a, b) => b.onTimePercent - a.onTimePercent
+          );
+          this.performanceLoading = false;
+
+        },
+        error: (err) => {
+          this.performanceLoading = false;
+          this.settings.showError(
+            err?.error?.message || 'Error loading warehouse performance'
+          );
+        },
+      });
+  }
   loadWarehouses(): void {
     this.loading = true;
     this.warehouseService.getWarehouses().subscribe({
       next: (res) => {
+
         this.dataSource.data = res;
         if (this.paginator) {
           this.dataSource.paginator = this.paginator;
@@ -227,7 +269,7 @@ export class WarehouseComponent implements AfterViewInit {
           activeDrivers: stats.activeDrivers, // 925
           lost: stats.totalVolumePackages - stats.totalStops,
         };
-        console.log(this.kpis);
+
       },
       error: (err) => {
         this.settings.showError(err?.error?.message || 'Error loading KPIs');
@@ -243,7 +285,7 @@ export class WarehouseComponent implements AfterViewInit {
   loadChartData(): void {
     this.warehouseService.getCompanyFlow(this.chartPeriod).subscribe({
       next: (data: FlowData[]) => {
-        console.log(data)
+
         this.applyChartData(data);
       },
       error: (err) => {
@@ -253,62 +295,82 @@ export class WarehouseComponent implements AfterViewInit {
       },
     });
   }
+  onPerformanceDateChange(): void {
+    if (!this.performanceFromDate || !this.performanceToDate) {
+      return;
+    }
 
- private applyChartData(data: FlowData[]) {
-  if (!data || data.length === 0) {
-    this.packageFlowChart = {
-      ...this.packageFlowChart,
-      series: [],
-      xaxis: { ...this.packageFlowChart.xaxis, categories: [] },
-    };
-    this.chartSubtitle = 'No data available';
-    return;
+    this.loadWarehousePerformance();
+  }
+  private getYesterday(): Date {
+    const date = new Date();
+    date.setDate(date.getDate() - 1);
+    return date;
   }
 
-  // ✅ Labels con fecha incluida
-  const categories = data.map((d) => {
-    const date = new Date(d.date);
-    if (this.chartPeriod === 'week') {
-      return date.toLocaleDateString('en-US', { 
-        weekday: 'short',
-        month: 'numeric',
-        day: 'numeric'
-      }); // "Mon, 5/5"
-    } else {
-      return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
-      }); // "May 5"
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  private applyChartData(data: FlowData[]) {
+    if (!data || data.length === 0) {
+      this.packageFlowChart = {
+        ...this.packageFlowChart,
+        series: [],
+        xaxis: { ...this.packageFlowChart.xaxis, categories: [] },
+      };
+      this.chartSubtitle = 'No data available';
+      return;
     }
-  });
 
-  // ✅ Subtítulo con rango
-  const firstDate = new Date(data[0].date);
-  const lastDate = new Date(data[data.length - 1].date);
-  this.chartSubtitle = `${firstDate.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric' 
-  })} - ${lastDate.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric',
-    year: 'numeric'
-  })}`;
+    // ✅ Labels con fecha incluida
+    const categories = data.map((d) => {
+      const date = new Date(d.date);
+      if (this.chartPeriod === 'week') {
+        return date.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'numeric',
+          day: 'numeric'
+        }); // "Mon, 5/5"
+      } else {
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric'
+        }); // "May 5"
+      }
+    });
 
-  const receivedData = data.map((d) => d.received);
-  const deliveredData = data.map((d) => d.delivered);
+    // ✅ Subtítulo con rango
+    const firstDate = new Date(data[0].date);
+    const lastDate = new Date(data[data.length - 1].date);
+    this.chartSubtitle = `${firstDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    })} - ${lastDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })}`;
 
-  this.packageFlowChart = {
-    ...this.packageFlowChart,
-    series: [
-      { name: 'Received', data: receivedData },
-      { name: 'Delivered', data: deliveredData },
-    ],
-    xaxis: {
-      ...this.packageFlowChart.xaxis,
-      categories,
-    },
-  };
-}
+    const receivedData = data.map((d) => d.received);
+    const deliveredData = data.map((d) => d.delivered);
+
+    this.packageFlowChart = {
+      ...this.packageFlowChart,
+      series: [
+        { name: 'Received', data: receivedData },
+        { name: 'Delivered', data: deliveredData },
+      ],
+      xaxis: {
+        ...this.packageFlowChart.xaxis,
+        categories,
+      },
+    };
+  }
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
@@ -408,7 +470,7 @@ export class AppWarehouseDialogContentComponent {
   allPeople: any[] = [];
   metros: any[] = [];
 
-  companies: string[] = ['OnTrac', 'Speedx', 'Uni Uni', 'SwiftX'];
+  companies: string[] = ['OnTrac', 'Speedx', 'Uni Uni', 'SwiftX','Cargo Van'];
 
   personCtrl = new FormControl<string | any>('');
   filteredPeople$ = this.personCtrl.valueChanges.pipe(

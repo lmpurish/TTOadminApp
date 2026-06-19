@@ -1,0 +1,20 @@
+.unread-notification {
+  background: #fff8e1;
+}
+
+.unread-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fa896b;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.detail-part {
+  min-height: calc(100vh - 300px);
+}
+
+.text-muted {
+  color: #6c757d;
+}

@@ -41,6 +41,7 @@ export class RoutesService {
   }
 
   assignRoutes(payload: any[]): Observable<any> {
+    console.log(payload)
     return this.http.put(`${this.baseUrl}/Routes/assign-routes`, payload);
   }
 
@@ -65,6 +66,14 @@ export class RoutesService {
 
   addRouteBonus(routeId: number, payload: { type: string; amount: number; note?: string | null }) {
     return this.http.post<any>(`${this.baseUrl}/Routes/routes/${routeId}/bonus`, payload);
+  }
+  getRoutesByUser(userId: number, startDate?: string, endDate?: string): Observable<any[]> {
+    let params = new HttpParams();
+
+    if (startDate) params = params.set('startDate', startDate);
+    if (endDate) params = params.set('endDate', endDate);
+
+    return this.http.get<any[]>(`${this.baseUrl}/Routes/user/${userId}`, { params });
   }
 }
 

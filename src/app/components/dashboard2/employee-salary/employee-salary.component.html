@@ -7,11 +7,12 @@
   </mat-card-header>
 
   <mat-card-content>
-    <apx-chart [series]="employeeChart.series" [plotOptions]="employeeChart.plotOptions"
-      [dataLabels]="employeeChart.dataLabels" [chart]="employeeChart.chart" [legend]="employeeChart.legend"
-      [colors]="employeeChart.colors" [tooltip]="employeeChart.tooltip" [xaxis]="employeeChart.xaxis"
-      [yaxis]="employeeChart.yaxis" [grid]="employeeChart.grid"></apx-chart>
-
+    <ng-container *ngIf="isBrowser">
+      <apx-chart *ngIf="employeeChart?.series && employeeChart?.chart" [series]="employeeChart.series"
+        [plotOptions]="employeeChart.plotOptions" [dataLabels]="employeeChart.dataLabels" [chart]="employeeChart.chart"
+        [legend]="employeeChart.legend" [colors]="employeeChart.colors" [tooltip]="employeeChart.tooltip"
+        [xaxis]="employeeChart.xaxis" [yaxis]="employeeChart.yaxis" [grid]="employeeChart.grid"></apx-chart>
+    </ng-container>
     <div class="d-flex align-items-center justify-content-between m-t-16">
       <div class="d-flex align-items-center">
         <span class="text-primary bg-light-primary rounded icon-40 d-flex align-items-center justify-content-center">

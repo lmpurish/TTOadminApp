@@ -10,6 +10,7 @@ import { AppSideForgotPasswordComponent } from './side-forgot-password/side-forg
 import { AppSideLoginComponent } from './side-login/side-login.component';
 import { AppSideRegisterComponent } from './side-register/side-register.component';
 import { AppSideTwoStepsComponent } from './side-two-steps/side-two-steps.component';
+import { SetPasswordComponent } from './set-password/set-password.component';
 
 export const AuthenticationRoutes: Routes = [
   {
@@ -55,6 +56,10 @@ export const AuthenticationRoutes: Routes = [
         path: 'side-two-steps',
         component: AppSideTwoStepsComponent,
       },
+      {
+        path: 'set-password',
+       component: SetPasswordComponent
+      }
     ],
   },
 ];

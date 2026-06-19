@@ -1,22 +1,32 @@
 /* No dejes que .table-responsive cambie el display de mat-table */
 .table-responsive {
-  overflow: auto;                  /* scroll horizontal si hace falta */
+  overflow: auto;
+  /* scroll horizontal si hace falta */
 }
 
 .table-responsive .mat-mdc-table {
-  display: table !important;       /* fuerza layout de tabla */
+  display: table !important;
+  /* fuerza layout de tabla */
   width: 100%;
-  table-layout: fixed;             /* columnas con ancho consistente */
+  table-layout: fixed;
+  /* columnas con ancho consistente */
   border-spacing: 0;
 }
 
 /* Alineación y anchos por columna (usa las clases generadas por mat-table) */
-.mat-column-warehouse { width: 46%; }
+.mat-column-warehouse {
+  width: 46%;
+}
+
 .mat-column-gross,
 .mat-column-adjustments,
-.mat-column-net { width: 16%; }
+.mat-column-net {
+  width: 16%;
+}
 
-.mat-column-action { width: 6%; }
+.mat-column-action {
+  width: 6%;
+}
 
 /* Alineación a la derecha para numéricos */
 .text-right,
@@ -30,8 +40,22 @@
 }
 
 /* Evita que el contenido interno flex desplace el ancho */
-.mat-mdc-cell, .mat-mdc-header-cell, .mat-mdc-footer-cell {
-  white-space: nowrap;             /* opcional: evita saltos raros */
+.mat-mdc-cell,
+.mat-mdc-header-cell,
+.mat-mdc-footer-cell {
+  white-space: nowrap;
+  /* opcional: evita saltos raros */
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.table-responsive {
+  max-height: 700px;
+  overflow: auto;
+}
+
+.mat-mdc-header-row {
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }

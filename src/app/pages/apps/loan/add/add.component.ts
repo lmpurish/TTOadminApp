@@ -81,6 +81,7 @@ export class AddComponent {
 submit(): void {
   if (this.form.valid) {
     this.loading = true;
+    console.log(this.form.value)
     this.loansService.save(this.form.value).subscribe({
       next: () => {
         this.loading = false;

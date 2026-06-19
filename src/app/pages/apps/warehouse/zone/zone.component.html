@@ -1,63 +1,144 @@
-<mat-card class="cardWithShadow">
-  <mat-card-content>
-    <div class="row justify-content-between gap-16">
-      <div class="col-lg-4">
-        <mat-form-field appearance="outline" class="w-100 hide-hint">
-          <input matInput placeholder="Search Zone" (keyup)="applyFilter($any($event.target).value)" />
-          <mat-icon matSuffix>
-            <!--    <i-tabler name="search" class="icon-20 d-flex m-t-2"></i-tabler>-->
-          </mat-icon>
-        </mat-form-field>
+<div class="zones-page">
+
+  <section class="zones-hero-card">
+    <div class="hero-left">
+      <div class="hero-icon">
+        <i-tabler name="building-warehouse" class="icon-26"></i-tabler>
       </div>
-      <div class="col-lg-4 d-flex align-items-center justify-content-end">
-        <button mat-flat-button (click)="openDialog('Add', {})" color="primary">
-          Add Zone
-        </button>
+
+      <div>
+        <span class="hero-label">Warehouse</span>
+        <h1>{{ getWarehouseName(+warehouseId) }}</h1>
+        <p>Zone payment rules configured for this warehouse</p>
       </div>
     </div>
-  </mat-card-content>
-</mat-card>
 
-<mat-card class="cardWithShadow">
-  <mat-card-content>
-    <div class="table-responsive">
-      <table mat-table [dataSource]="dataSource" class="w-100">
-        <ng-container matColumnDef="id">
-          <th mat-header-cell *matHeaderCellDef>#</th>
-          <td mat-cell *matCellDef="let element">{{ element.id }}</td>
-        </ng-container>
+    <div class="hero-stats">
+      <div class="hero-stat-card">
+        <span>Total Zones</span>
+        <strong>{{ totalZonesCount }}</strong>
+      </div>
 
-        <ng-container matColumnDef="zoneCode">
-          <th mat-header-cell *matHeaderCellDef>Zone Code</th>
-          <td mat-cell *matCellDef="let element">{{ element.zoneCode }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="priceStops">
-          <th mat-header-cell *matHeaderCellDef>Price Stops</th>
-          <td mat-cell *matCellDef="let element"> $ {{ element.priceStop }}</td>
-        </ng-container>
-
-        <ng-container matColumnDef="warehouseId">
-          <th mat-header-cell *matHeaderCellDef>Warehouse</th>
-          <td mat-cell *matCellDef="let element">
-            {{ getWarehouseName(element.idWarehouse) }}
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="area">
-          <th mat-header-cell *matHeaderCellDef>Area</th>
-          <td mat-cell *matCellDef="let element"> {{ element.area }}</td>
-        </ng-container>
-        <ng-container matColumnDef="action">
-          <th mat-header-cell *matHeaderCellDef>Action</th>
-          <td mat-cell *matCellDef="let element">
-            <a (click)="openDialog('Update', element)"><i-tabler name="edit"></i-tabler></a>
-            <a (click)="openDialog('Delete', element)"><i-tabler name="trash"></i-tabler></a>
-          </td>
-        </ng-container>
-
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-      </table>
+      <div class="hero-stat-card">
+        <span>Active Rules</span>
+        <strong>{{ activeRulesCount }}</strong>
+      </div>
     </div>
-  </mat-card-content>
-</mat-card>
+  </section>
+
+  <section class="zones-action-card">
+    <mat-form-field appearance="outline" class="search-box hide-hint">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput placeholder="Search zone..." (keyup)="applyFilter($any($event.target).value)" />
+    </mat-form-field>
+
+    <button mat-flat-button color="primary" class="add-zone-btn" (click)="openDialog('Add', {})">
+      <i-tabler name="plus" class="icon-18"></i-tabler>
+      Add Zone
+    </button>
+  </section>
+
+
+  <mat-card class="zone-table-card">
+    <mat-card-content>
+
+      <div class="table-header-title">
+        <div>
+          <h3>Zone Payment Rules</h3>
+          <p>Payment configuration and rates by zone</p>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+
+        <table mat-table [dataSource]="dataSource" class="w-100 zones-table">
+
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef>#</th>
+            <td mat-cell *matCellDef="let element">
+              <span class="zone-id">{{ element.id }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="zoneCode">
+            <th mat-header-cell *matHeaderCellDef>Zone</th>
+            <td mat-cell *matCellDef="let element">
+              <div class="zone-name">
+                <strong>{{ element.zoneCode }}</strong>
+                <small>{{ element.area || 'All Areas' }}</small>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="paymentType">
+            <th mat-header-cell *matHeaderCellDef>Payment Type</th>
+            <td mat-cell *matCellDef="let element">
+              <span class="payment-chip" [ngClass]="{
+                  'chip-block': element.payRule?.paymentType === 'PerBlock',
+                  'chip-stop': element.payRule?.paymentType === 'PerStop' || !element.payRule,
+                  'chip-route': element.payRule?.paymentType === 'PerRoute',
+                  'chip-mixed': element.payRule?.paymentType === 'Mixed'
+                }">
+                {{ getPaymentTypeLabel(element.payRule?.paymentType) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="payAmount">
+            <th mat-header-cell *matHeaderCellDef>Payment</th>
+            <td mat-cell *matCellDef="let element">
+              <div class="payment-amount">
+                <strong>{{ getZonePayAmount(element) }}</strong>
+
+                <small *ngIf="element.payRule?.maxPackages">
+                  Max {{ element.payRule.maxPackages }} stops
+                </small>
+              </div>
+            </td>
+          </ng-container>
+
+
+
+          <ng-container matColumnDef="area">
+            <th mat-header-cell *matHeaderCellDef>Area</th>
+            <td mat-cell *matCellDef="let element">
+              <span class="area-chip">
+                {{ element.area || 'All' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="action">
+            <th mat-header-cell *matHeaderCellDef class="action-header">
+              Actions
+            </th>
+
+            <td mat-cell *matCellDef="let element" class="action-cell">
+              <div class="action-buttons">
+
+                <button mat-icon-button class="edit-btn" matTooltip="Edit Zone" (click)="openDialog('Update', element)">
+                  <i-tabler name="edit" class="icon-18"></i-tabler>
+                </button>
+
+                <button mat-icon-button class="delete-btn" matTooltip="Delete Zone"
+                  (click)="openDialog('Delete', element)">
+                  <i-tabler name="trash" class="icon-18"></i-tabler>
+                </button>
+
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+
+          <tr mat-row *matRowDef="let row; columns: displayedColumns" class="zone-row">
+          </tr>
+
+        </table>
+
+      </div>
+
+    </mat-card-content>
+  </mat-card>
+
+</div>

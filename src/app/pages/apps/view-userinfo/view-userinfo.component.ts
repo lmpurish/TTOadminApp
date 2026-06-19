@@ -16,6 +16,8 @@ import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { Clipboard } from '@angular/cdk/clipboard';
+import { RoutesService } from 'src/app/services/apps/routes/routes.service';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-view-userinfo',
@@ -25,8 +27,8 @@ import { Clipboard } from '@angular/cdk/clipboard';
     ReactiveFormsModule,
     TablerIconsModule,
     CommonModule,
-    ClipboardModule
-
+    ClipboardModule,
+    RouterModule
   ],
   templateUrl: './view-userinfo.component.html',
   styleUrl: './view-userinfo.component.scss'
@@ -47,6 +49,22 @@ export class ViewUserinfoComponent {
   @Input() ssnEncrypted?: string | null; // NO recomendable pasar plain-text por inputs
   @Input() canViewSsn = false; // permiso para ver desencriptado (control de acceso)
   private _fullSsn: string | null = null; // solo llena si traes el SSN real de forma segura
+  userRoutes: any[] = [];
+  loadingRoutes = false;
+  startDate: Date | null = null;
+  endDate: Date | null = null;
+
+  routeColumns: string[] = [
+    'date',
+    'routeCode',
+    'zone',
+    'stops',
+    'volume',
+    'attempts',
+    'cnl',
+    'status'
+  ];
+  encodeURIComponent = encodeURIComponent;
   constructor(
     public dialogRef: MatDialogRef<ViewUserinfoComponent>,
     private employeeService: EmployeeService,
@@ -55,22 +73,23 @@ export class ViewUserinfoComponent {
     private settings: CoreService,
     private toastr: ToastrService,
     private clipboard: Clipboard,
+    private routeService: RoutesService,
 
 
     @Optional() @Inject(MAT_DIALOG_DATA) public data: any
   ) {
     this.action = data?.action || '';
     this.local_data = { ...data?.local_data };
-
+    this.local_data.profile = this.local_data.profile || {};
+    this.local_data.account = this.local_data.account || {};
+    this.local_data.warehouse = this.local_data.warehouse || null;
     // Convertir `userRole` a string para `mat-select`
     if (this.local_data?.userRole !== undefined) {
       this.local_data.userRole = String(this.local_data.userRole);
-
-      console.log(this.local_data)
     }
 
     // Asignar `warehouseId` correctamente
-    if (this.local_data?.warehouse) {
+    if (this.local_data?.warehouse?.id) {
       this.local_data.warehouseId = this.local_data.warehouse.id;
     }
   }
@@ -107,6 +126,7 @@ export class ViewUserinfoComponent {
     }
     return this.avatarCache.get(file)!;
   }
+
   get displayedSsn(): string {
 
 
@@ -161,6 +181,23 @@ export class ViewUserinfoComponent {
     }
     return full;
   }
+  applyRouteDateFilter(): void {
+    this.loadUserRoutes();
+  }
+  private formatDate(date: Date | null): string | undefined {
+    if (!date) return undefined;
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+  clearRouteDateFilter(): void {
+    this.startDate = null;
+    this.endDate = null;
+    this.loadUserRoutes();
+  }
 
   // Ejemplo de llamada simulada al backend — reemplaza con tu HttpClient real
   private async fetchFullSsn(userId: number): Promise<string> {
@@ -187,16 +224,20 @@ export class ViewUserinfoComponent {
   }
 
   ngOnInit(): void {
-    // Si tienes id en local_data, pide al backend el user actualizado
+
     const id = this.local_data?.id;
+
     if (id != null) {
       this.loadUserFromApi(id);
+      this.loadUserRoutes();
     }
 
-    if (this.settings.getRole() === "Admin" || this.settings.getRole() === "CompanyOwner") {
+    if (
+      this.settings.getRole() === 'Admin' ||
+      this.settings.getRole() === 'CompanyOwner'
+    ) {
       this.canViewSsn = true;
     }
-
   }
 
   private loadUserFromApi(id: number | string): void {
@@ -215,7 +256,11 @@ export class ViewUserinfoComponent {
       complete: () => (this.loading = false),
     });
   }
-
+  onTabChange(event: any) {
+    if (event.index === 2 && this.userRoutes.length === 0) {
+      this.loadUserRoutes();
+    }
+  }
 
   onDownload(): void {
     // TODO: Implementa tu lógica real de descarga
@@ -319,5 +364,223 @@ export class ViewUserinfoComponent {
     if (this.showInsurance) {
       this.InsuranceAutoHideTimer = setTimeout(() => (this.showInsurance = false), 10_000);
     }
+  }
+  get profileCompletion(): number {
+    const checks = [
+      !!this.local_data?.name,
+      !!this.local_data?.lastName,
+      !!this.local_data?.email,
+      !!this.local_data?.profile?.phoneNumber,
+      !!this.local_data?.profile?.ssn,
+      !!this.local_data?.profile?.address,
+      !!this.local_data?.profile?.city,
+      !!this.local_data?.profile?.state,
+      !!this.local_data?.profile?.zipcode,
+      !!this.local_data?.account?.accountNumber,
+      !!this.local_data?.account?.routingNumber,
+      !!this.hasWarehouse,
+      !!this.userFromCurrent?.driverLicenseNumber,
+      !!this.userFromCurrent?.driverUrl,
+      !!this.userFromCurrent?.insuranceUrl,
+      !!this.userFromCurrent?.contractSigned
+    ];
+
+    const completed = checks.filter(Boolean).length;
+
+    return Math.round((completed / checks.length) * 100);
+  }
+  get hasAnyDocument(): boolean {
+    return !!(
+      this.userFromCurrent?.contractSigned ||
+      this.userFromCurrent?.driverLicenseNumber ||
+      this.userFromCurrent?.driverUrl ||
+      this.userFromCurrent?.ssnUrl ||
+      this.userFromCurrent?.insuranceUrl
+    );
+  }
+  loadUserRoutes(): void {
+
+    const userId = this.local_data?.id;
+
+    if (!userId) {
+      this.userRoutes = [];
+      return;
+    }
+
+    this.loadingRoutes = true;
+
+    this.routeService.getRoutesByUser(
+      userId,
+      this.formatDate(this.startDate),
+      this.formatDate(this.endDate)
+    )
+      .subscribe({
+        next: (res) => {
+          this.userRoutes = res || [];
+          this.loadingRoutes = false;
+        },
+        error: (err) => {
+          console.error(err);
+          this.loadingRoutes = false;
+        }
+      });
+  }
+  get hasWarehouse(): boolean {
+    const wh = this.local_data?.warehouse;
+
+    return !!(
+      wh &&
+      (
+        wh.id ||
+        wh.city ||
+        wh.company
+      )
+    );
+  }
+  get profileWarnings(): any[] {
+    const userId = this.local_data?.id;
+    const base = `/apps/complete-profile/${userId}`;
+
+    const warnings: any[] = [];
+
+    if (!this.local_data?.profile?.phoneNumber) {
+      warnings.push({
+        label: 'Missing phone number',
+        link: `${base}?section=personal`
+      });
+    }
+
+    if (!this.local_data?.profile?.address) {
+      warnings.push({
+        label: 'Missing address',
+        link: `${base}?section=address`
+      });
+    }
+
+    if (!this.local_data?.account?.accountNumber || !this.local_data?.account?.routingNumber) {
+      warnings.push({
+        label: 'Missing bank account',
+        link: `${base}?section=bank`
+      });
+    }
+
+    if (!this.userFromCurrent?.driverLicenseNumber || !this.userFromCurrent?.driverUrl) {
+      warnings.push({
+        label: 'Missing driver license',
+        link: `${base}?section=driver-license`
+      });
+    }
+
+    if (!this.userFromCurrent?.insuranceUrl) {
+      warnings.push({
+        label: 'Missing insurance',
+        link: `${base}?section=insurance`
+      });
+    }
+
+    if (!this.userFromCurrent?.contractSigned) {
+      warnings.push({
+        label: 'Missing contractor agreement',
+        link: `${base}?section=contract`
+      });
+    }
+
+    return warnings;
+  }
+  sendAllMissingLinks(): void {
+
+    if (!this.profileWarnings.length) {
+      this.snackBar.open('No missing items found.', 'OK', {
+        duration: 2000
+      });
+      return;
+    }
+
+    const phone = this.local_data?.profile?.phoneNumber;
+
+    if (!phone) {
+      this.snackBar.open('User does not have a phone number.', 'OK', {
+        duration: 3000
+      });
+      return;
+    }
+
+    const message =
+      `Hello ${this.local_data?.name},
+
+Please complete the following items:
+
+${this.profileWarnings.map(x => `• ${x.label}`).join('\n')}
+
+Profile Link:
+${this.baseUrl}/apps/complete-profile/${this.local_data?.id}
+
+Thank you.`;
+
+    window.open(
+      `https://wa.me/1${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`,
+      '_blank'
+    );
+  }
+  getWhatsappLink(warning: any): string {
+    const phone = this.getUserPhone();
+
+    console.log('Phone:', phone);
+
+    if (!phone) return '#';
+
+    let cleanPhone = phone.toString().replace(/\D/g, '');
+
+    if (cleanPhone.length === 10) {
+      cleanPhone = '1' + cleanPhone;
+    }
+
+    const message = `Hello ${this.local_data?.name},
+
+Please complete this missing item:
+
+${warning.label}
+
+Link:
+${warning.link}
+
+Thank you.`;
+
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+  }
+
+
+  openLink(link: string): void {
+    if (!link) return;
+    window.open(link, '_blank');
+  }
+
+  openWhatsapp(warning: any): void {
+    console.log('CLICK WHATSAPP');
+
+    const url = this.getWhatsappLink(warning);
+
+    if (!url || url === '#') {
+      this.snackBar.open('This user does not have a phone number.', 'Close', {
+        duration: 3000
+      });
+      return;
+    }
+
+    window.open(url, '_blank');
+  }
+
+  getUserPhone(): string | null {
+    return (
+      this.local_data?.profile?.phoneNumber ||
+      this.local_data?.profile?.phone ||
+      this.local_data?.phoneNumber ||
+      this.local_data?.phone ||
+      this.local_data?.mobile ||
+      this.userFromCurrent?.profile?.phoneNumber ||
+      this.userFromCurrent?.phoneNumber ||
+      this.userFromCurrent?.phone ||
+      null
+    );
   }
 }

@@ -22,13 +22,19 @@ export const navItems: any[] = [
     route: '/apps/myLoans',
     allowedRoles: ['CompanyOwner', 'Admin', 'Manager', 'Driver']
   },
+  {
+    displayName: 'My Payments',
+    iconName: 'receipt-dollar',
+    route: '/apps/my-payments',
+    allowedRoles: ['CompanyOwner', 'Admin', 'Manager', 'Driver', 'Assistant', 'Recruiter']
+  },
 
   {
     navCap: 'Apps',
     allowedRoles: ['CompanyOwner', 'Admin', 'Manager', 'Assistant', 'Recruiter']
   },
   {
-    displayName: 'Employee',
+    displayName: 'Contractor',
     iconName: 'users-group',
     route: 'apps/employee',
     allowedRoles: ['CompanyOwner', 'Admin', 'Manager', 'Assistant']
@@ -49,7 +55,7 @@ export const navItems: any[] = [
     displayName: 'Loans',
     iconName: 'currency-dollar',
     route: 'apps/loan',
-    allowedRoles: ['CompanyOwner','Admin']
+    allowedRoles: ['CompanyOwner', 'Admin']
   },
   {
     displayName: 'Routes',
@@ -73,7 +79,7 @@ export const navItems: any[] = [
     displayName: 'Rental Vehicle',
     iconName: 'car',
     route: 'apps/rentalVehicles',
-    allowedRoles: ['CompanyOwner','Admin']
+    allowedRoles: ['CompanyOwner', 'Admin']
   },
   {
     displayName: 'Daily Delivered Control',
@@ -81,6 +87,20 @@ export const navItems: any[] = [
     route: 'apps/dailyRd',
     allowedRoles: ['CompanyOwner', 'Admin', 'Manager']
 
+  },
+  {
+    displayName: 'Smart Recruiting',
+    iconName: 'messages',
+    route: 'https://tto-recruit-agent-production.up.railway.app',
+    external: true,
+    allowedRoles: ['CompanyOwner', 'Admin', 'Manager', 'Assistant', 'Recruiter']
+  },
+  {
+    displayName: 'Smart VPOD',
+    iconName: 'camera',
+    route: 'https://ttovpodagent-production.up.railway.app',
+    external: true,
+    allowedRoles: ['CompanyOwner', 'Admin', 'Manager']
   }
 
 

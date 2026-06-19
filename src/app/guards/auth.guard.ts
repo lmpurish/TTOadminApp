@@ -22,15 +22,17 @@ export class AuthGuard implements CanActivate {
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | UrlTree {
     if (!this.setting.isLoggedIn()) {
       this.toastr.info('Please log in again.');
-      return this.router.createUrlTree(['authentication/login']);
+      return this.router.createUrlTree(['/authentication/login']);
     }
+
     if (this.setting.isTokenExpired()) {
       this.toastr.warning('Your session has expired. Please log in again.');
       this.setting.logout(true);
-      return this.router.createUrlTree(['authentication/login'], { queryParams: { redirect: state.url, reason: 'expired' } });
+      return this.router.createUrlTree(['/authentication/login'], {
+        queryParams: { redirect: state.url, reason: 'expired' }
+      });
     }
 
-    // (Opcional) reprograma el auto-logout en cada navegación protegida
     this.setting.scheduleAutoLogout();
 
     const role = this.setting.getRole();
@@ -38,28 +40,40 @@ export class AuthGuard implements CanActivate {
     const hasCompany = this.setting.getHasCompany();
     const currentUrl = state.url;
 
-    // 🔒 Si es CompanyOwner sin compañía
-    if (role === 'CompanyOwner' && !hasCompany) {
-      if (currentUrl !== '/apps/register-company-owner') {
-        return this.router.createUrlTree(['/apps/register-company-owner']);
+    // Applicant first login
+    if (role === 'Applicant' && firstLogin) {
+      if (currentUrl === '/apps/complete-profile') {
+        return true;
       }
-    }
-    if (role == 'Applicant' && firstLogin) {
-      if (currentUrl !== '/apps/complete-profile') {
-        return this.router.createUrlTree(['/apps/complete-profile'])
-      }
-    }
-    else if (role == 'Applicant' && !firstLogin) {
-      if (currentUrl !== '/apps/account-setting') {
-        return this.router.createUrlTree(['/apps/account-setting'])
-      }
+
+      return this.router.createUrlTree(['/apps/complete-profile']);
     }
 
-    // 🔒 Si es Driver y está intentando acceder a una ruta no permitida
+    // Applicant after completing profile
+    if (role === 'Applicant' && !firstLogin) {
+      if (currentUrl === '/apps/account-setting') {
+        return true;
+      }
+
+      return this.router.createUrlTree(['/apps/account-setting']);
+    }
+
+    // CompanyOwner without company
+    if (role === 'CompanyOwner' && !hasCompany) {
+      if (currentUrl === '/apps/register-company-owner') {
+        return true;
+      }
+
+      return this.router.createUrlTree(['/apps/register-company-owner']);
+    }
+
+    // Driver allowed routes
     if (role === 'Driver') {
       const allowedRoutes = [
         '/dashboards/dashboard1',
-        '/dashboards/dashboard2'
+        '/dashboards/dashboard2',
+        '/apps/myLoans',
+        '/apps/my-payments'
       ];
 
       if (!allowedRoutes.includes(currentUrl)) {

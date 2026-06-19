@@ -9,7 +9,7 @@ import { environment } from 'src/environments/environment';
 import { MessangeContact } from 'src/app/pages/apps/warehouse/messange-contact/messangeContact';
 
 export interface FlowData {
-  date: string; 
+  date: string;
   received: number;
   delivered: number;
 }
@@ -25,7 +25,7 @@ export class WarehouseService {
     private http: HttpClient,
     private toastr: ToastrService,
     private router: Router,
-  ) {}
+  ) { }
 
   getWarehouses() {
     return this.http.get<any>(`${this.baseUrl}/Warehouses`);
@@ -110,6 +110,41 @@ export class WarehouseService {
 
 
   getCompanyFlow(period: 'week' | 'month' = 'week'): Observable<FlowData[]> {
-  return this.http.get<FlowData[]>(`${this.baseUrl}/Warehouses/flow?period=${period}`);
+    return this.http.get<FlowData[]>(`${this.baseUrl}/Warehouses/flow?period=${period}`);
   }
+
+
+
+  getWarehousePerformance(from: string, to: string) {
+    return this.http.get<WarehousePerformance[]>(
+      `${this.baseUrl}/Warehouses/performance?from=${from}&to=${to}`
+    );
+  }
+  getZonePayRules(zoneId: number) {
+    return this.http.get<any[]>(`${this.baseUrl}/zone-pay-rules?zoneId=${zoneId}&activeOnly=true`);
+  }
+
+  addZonePayRule(data: any) {
+    return this.http.post(`${this.baseUrl}/zone-pay-rules`, data);
+  }
+
+  updateZonePayRule(id: number, data: any) {
+    return this.http.put(`${this.baseUrl}/zone-pay-rules/${id}`, data);
+  }
+
+  deleteZonePayRule(id: number) {
+    return this.http.delete(`${this.baseUrl}/zone-pay-rules/${id}`);
+  }
+}
+export interface WarehousePerformance {
+  warehouseId: number;
+  warehouse: string;
+  city: string;
+  volumen: number;
+  delivered: number;
+  stops: number;
+  cantDrivers: number;
+  countRoutes: number;
+  onTimePercent: number;
+  status: string;
 }

@@ -9,7 +9,7 @@ import { ToastrService } from 'ngx-toastr';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDriverDialogComponent } from './confirm-driver-dialog.component';
 import { SelectCompanyDialogComponent, SelectCompanyResult } from './select-company-dialog.component';
-import { of, switchMap } from 'rxjs';
+import { of, switchMap,map } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -26,7 +26,7 @@ export class AppSideLoginComponent {
 
   ngOnInit(): void {
     this.loginForm = this.fb.group({
-      email: new FormControl('', [Validators.required, Validators.minLength(3)]),
+      login: new FormControl('', [Validators.required, Validators.minLength(3)]),
       password: new FormControl('', [Validators.required]),
     })
   }
@@ -39,33 +39,60 @@ export class AppSideLoginComponent {
   }
 
   onLogin() {
-    if (!this.loginForm.valid) return;
+    if (!this.loginForm.valid) {
+      this.loginForm.markAllAsTouched();
+      return;
+    }
 
-    this.settings.login(this.loginForm.value).subscribe({
-      next: () => {
-        // 🔹 Obtener datos del usuario después del login
-        this.settings.getCurrentUser().subscribe((me) => {
-          localStorage.setItem('role', me.role);
-          localStorage.setItem('hasCompany', me.hasCompany);
+    const payload = {
+      login: this.loginForm.value.login,
+      password: this.loginForm.value.password
+    };
 
-          localStorage.setItem('isFirstLogin', me.isFirstLogin);
+    this.settings.login(payload).pipe(
+      switchMap((res: any) => {
+        if (res?.token) {
+          localStorage.setItem('token', res.token);
+        }
 
-          this.toastr.success('Login successful!');
-          // ✅ Aquí decidimos UNA sola vez la navegación
-          if (me.role === 'CompanyOwner' && !me.hasCompany) {
-            this.router.navigate(['/apps/register-company-owner']);
-          } else if (me.isFirstLogin) {
-            this.router.navigate(['/apps/complete-profile']);
-          } else {
-            this.router.navigate(['/dashboards/dashboard2']);
-          }
-        });
+        localStorage.setItem('isFirstLogin', String(res?.isFirstLogin ?? false));
+        localStorage.setItem('requiresEmailUpdate', String(res?.requiresEmailUpdate ?? false));
+
+        return this.settings.getCurrentUser().pipe(
+          map((me: any) => ({ res, me }))
+        );
+      })
+    ).subscribe({
+      next: ({ res, me }) => {
+        localStorage.setItem('role', me.role);
+        localStorage.setItem('hasCompany', String(me.hasCompany ?? false));
+
+        this.toastr.success('Login successful!');
+
+        if (res?.requiresEmailUpdate) {
+          this.router.navigate(['/profile/email']);
+          return;
+        }
+
+        if (me.role === 'CompanyOwner' && !me.hasCompany) {
+          this.router.navigate(['/apps/register-company-owner']);
+          return;
+        }
+
+        if (res?.isFirstLogin || me?.isFirstLogin) {
+          this.router.navigate(['/apps/complete-profile']);
+          return;
+        }
+
+        this.router.navigate(['/dashboards/dashboard2']);
       },
       error: (err) => {
         this.toastr.error(err?.error?.message || 'Login failed!');
       }
     });
   }
+
+
   onCreateCompanyClick(evt: Event) {
     evt.preventDefault();
 

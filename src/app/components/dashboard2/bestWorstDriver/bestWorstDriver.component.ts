@@ -20,7 +20,8 @@ import { TablerIconsModule } from 'angular-tabler-icons';
 import { ReportService } from 'src/app/services/report.service';
 import { WarehouseService } from 'src/app/services/apps/warehouse/warehouse.service';
 import { FormControl } from '@angular/forms';
-
+import { isPlatformBrowser } from '@angular/common';
+import { Inject, PLATFORM_ID } from '@angular/core';
 export interface revenuetwoChart {
   series: ApexAxisChartSeries;
   chart: ApexChart;
@@ -37,19 +38,30 @@ export interface revenuetwoChart {
 }
 
 @Component({
-  selector: 'app-revenue-updates-two',
+  selector: 'app-best-worst-driver',
   imports: [MaterialModule, NgApexchartsModule, TablerIconsModule],
   templateUrl: './bestWorstDriver.component.html',
+  styleUrls: ['./bestWorstDriver.component.scss']
 })
 export class AppRevenueUpdatesTwoComponent implements OnInit {
   selectedDate = new FormControl(new Date(new Date().setDate(new Date().getDate() - 1))); // Fecha de ayer
   driversData: any[] = [];
   revenuetwoChart: any;
   warehousesMap: Map<number, string> = new Map(); // Mapeo de ID → Nombre
-
-  constructor(private reportService: ReportService, private warehouseService: WarehouseService) {
+  isBrowser = false;
+  constructor(private reportService: ReportService, private warehouseService: WarehouseService, @Inject(PLATFORM_ID) private platformId: Object) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
     this.revenuetwoChart = {
-      series: [],
+      series: [
+        {
+          name: 'Best Driver',
+          data: []
+        },
+        {
+          name: 'Worst Driver',
+          data: []
+        }
+      ],
       chart: {
         type: 'bar',
         height: 320,
@@ -144,26 +156,65 @@ export class AppRevenueUpdatesTwoComponent implements OnInit {
 
     this.reportService.getBestWorstDriver(selectedDateFormatted).subscribe({
       next: (res) => {
-        this.driversData = res;
+        const rows = Array.isArray(res) ? res : [];
 
-        const warehouseCategories = [
-          ...new Set(this.driversData.map((item) => item.warehouseId)),
-        ].map((id) => this.getWarehouseName(id));
+        this.driversData = rows
+          .filter(x => !!x)
+          .map((x: any) => ({
+            warehouseId: Number(x.warehouseId ?? 0),
+            bestDriver: {
+              driverName: x.bestDriver?.driverName ?? 'Unknown',
+              score: Number(x.bestDriver?.score ?? 0),
+            },
+            worstDriver: {
+              driverName: x.worstDriver?.driverName ?? 'Unknown',
+              score: Number(x.worstDriver?.score ?? 0),
+            }
+          }))
+          .filter(x => x.warehouseId > 0);
 
-        const bestScores = this.driversData.map((item) => item.bestDriver.score);
-        const worstScores = this.driversData.map((item) => item.worstDriver.score);
+        const warehouseCategories = this.driversData.map(
+          item => this.getWarehouseName(item.warehouseId) || `Warehouse ${item.warehouseId}`
+        );
+
+        const bestScores = this.driversData.map(item => Number(item.bestDriver.score || 0));
+        const worstScores = this.driversData.map(item => Number(item.worstDriver.score || 0));
+
+        const allScores = [...bestScores, ...worstScores].filter(x => Number.isFinite(x));
+
+        const minScore = allScores.length ? Math.min(...allScores) - 5 : 0;
+        const maxScore = allScores.length ? Math.max(...allScores) + 5 : 120;
 
         this.revenuetwoChart = {
           ...this.revenuetwoChart,
           series: [
-            { name: 'Best Driver', data: bestScores, color: '#5D87FF' },
-            { name: 'Worst Driver', data: worstScores, color: '#49BEFF' },
+            { name: 'Best Driver', data: bestScores, color: '#2f6df6' },
+            { name: 'Worst Driver', data: worstScores, color: '#93b7ff' },
           ],
-          xaxis: { categories: warehouseCategories },
-          yaxis: { min: Math.min(...bestScores, ...worstScores) - 5, max: Math.max(...bestScores, ...worstScores) + 5 },
+          xaxis: {
+            ...this.revenuetwoChart.xaxis,
+            categories: warehouseCategories
+          },
+          yaxis: {
+            ...this.revenuetwoChart.yaxis,
+            min: minScore,
+            max: maxScore,
+            tickAmount: 5
+          }
         };
       },
-      error: (err) => console.error('Error fetching driver data'),
+      error: () => {
+        this.driversData = [];
+
+        this.revenuetwoChart = {
+          ...this.revenuetwoChart,
+          series: [],
+          xaxis: {
+            ...this.revenuetwoChart.xaxis,
+            categories: []
+          }
+        };
+      },
     });
   }
 

@@ -31,11 +31,13 @@ import { HiredDialogContentComponent } from './hired-dialog-content/hired-dialog
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { RecruiterService } from 'src/app/services/recruiter.service';
 import { catchError, Observable, of, shareReplay } from 'rxjs';
+import * as XLSX from 'xlsx';
 export type StatusKey = 'Applicant' | 'PreOnboarding' | 'InitialContact' | 'AwaitingResponse';
 
 @Component({
   selector: 'app-applicant',
   templateUrl: './applicant.component.html',
+  styleUrls: ['./applicant.component.scss'],
   standalone: true,
   imports: [
     MaterialModule,
@@ -60,8 +62,7 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
   displayedColumns: string[] = [
     'select',
     'name',
-
-    'email',
+    /*'email',*/
     'vehicle',
     'isActive',     // columna Status (editable)
     'stage',
@@ -80,6 +81,8 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
   expandedElement: any | null = null;
   selectedStatus: string | null = null;
   public baseUrl = environment.apiUrl;
+  bulkWarehouseId: number | null = null;
+  avatarUrl: string;
   // Opciones de status (sin Contracted/Hired)
   statusOptions: { value: StatusKey; label: string }[] = [
     { value: 'Applicant', label: 'Applicant' },
@@ -88,8 +91,11 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
   ];
   notDetailRow = (row: any) => row?.isDetailRow !== true;
   isExpansionDetailRow = (row: any) => row?.isDetailRow === true;
-
-
+  selectedVehicleKey: string | null = null;
+  vehiclesFilterOptions: { key: string; label: string }[] = [];
+  selectedVehicleType: string | null = null;
+  vehicleTypeOptions: string[] = [];
+  canMoveToOnboarding: boolean = false;
   detailColumn: string[] = ['detail'];
   constructor(
     public dialog: MatDialog,
@@ -102,7 +108,18 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
   ) { }
   role: any;
   selectedIds = new Set<number>();
+  kpi = {
+    newApplicants: 0,
+    newApplicantsWeek: 0,
 
+    offersSent: 0,
+    offersSentWeek: 0,
+
+    hired: 0,
+    hiredWeek: 0,
+
+    avgTimeToHire: 0
+  };
   // Ajusta esto al nombre real de tu PK (id, userId, applicantId, etc.)
   getRowId(row: any): number {
     const id = row?.id; // ajusta si es applicantId
@@ -116,15 +133,16 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
   toggleRow(row: any, checked: boolean): void {
     const id = this.getRowId(row);
 
-    // ✅ regla: no seleccionar si no tiene warehouse
-    if (checked && !(Number(row?.warehouseId) > 0)) {
-      this.toastr.info('This applicant has no warehouse assigned.', 'Skipped');
-      this.selectedIds.delete(id);
+    if (!Number.isFinite(id) || id <= 0) {
+      this.toastr.error('Invalid applicant id.', 'Error');
       return;
     }
 
-    if (checked) this.selectedIds.add(id);
-    else this.selectedIds.delete(id);
+    if (checked) {
+      this.selectedIds.add(id);
+    } else {
+      this.selectedIds.delete(id);
+    }
   }
   getCurrentPageRows(): any[] {
     const rendered = (this.dataSource as any)?._renderData?.value as any[] | undefined;
@@ -135,12 +153,15 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
     // filtra solo rows “normales”
     return rows.filter(r => r && r.isDetailRow !== true);
   }
+  availableStatusOptions: { value: StatusKey; label: string }[] = [];
   ngOnInit(): void {
     this.loadApplicants();
     this.loadWarehouses();
     this.role = this.settings.getRole(); // devuelve 'Admin' | 'CompanyOwner' | 'Manager' ... (asegúrate que sea string)
     this.isAdmin = this.role === 'Admin' || this.role === 'CompanyOwner' || this.role === 'Assistant' || this.role === 'Recruiter';
-
+    this.canMoveToOnboarding =
+      this.role === 'Admin' ||
+      this.role === 'CompanyOwner';
 
     // Filtro combinado (texto + warehouse)
     this.dataSource.filterPredicate = (data: any, filter: string) => {
@@ -150,7 +171,8 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
       const text = (parsedFilter.text ?? '').toLowerCase();
       const warehouseId = parsedFilter.warehouseId;
       const status = parsedFilter.status as StatusKey | null;
-
+      const vehicleId = parsedFilter.vehicleId;
+      const vehicleKey = parsedFilter.vehicleKey;
       const identificationNumber = data.identificationNumber?.toString().toLowerCase() ?? '';
       const name = data.name?.toLowerCase() ?? '';
       const phoneNumber = data.phoneNumber?.toLowerCase() ?? '';
@@ -169,14 +191,42 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
       // 👇 filtro por status (usa la propiedad ya derivada o la deriva al vuelo)
       const currentStatus: StatusKey = (data.status as StatusKey) ?? this.getStatus(data);
       const matchesStatus = status == null || currentStatus === status;
+      const vehicleLabel = `${data.vehicle?.make ?? ''} ${data.vehicle?.model ?? ''}`
+        .trim()
+        .toLowerCase();
 
-      return matchesText && matchesWarehouse && matchesStatus;
+      const matchesVehicle = !vehicleKey || vehicleLabel === vehicleKey;
+      const vehicleType = parsedFilter.vehicleType;
+      const currentVehicleType = data.vehicle?.type ?? null;
+      const matchesVehicleType =
+        !vehicleType || currentVehicleType === vehicleType;
+      return matchesText &&
+        matchesWarehouse &&
+        matchesStatus &&
+        matchesVehicleType;
     };
 
 
 
   }
-  avatarUrl: string;
+  onVehicleTypeChange(type: string | null): void {
+    this.selectedVehicleType = type;
+    this.applyCombinedFilter();
+  }
+  buildVehicleTypes(applicants: any[]): void {
+    const types = new Set<string>();
+
+    applicants.forEach((a: any) => {
+      const type = a.vehicle?.type?.trim();
+
+      if (type) {
+        types.add(type);
+      }
+    });
+
+    this.vehicleTypeOptions = Array.from(types).sort();
+  }
+
 
   private avatarCache = new Map<string, Observable<string>>();
 
@@ -212,6 +262,60 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
       sub.unsubscribe();
     }
   }
+  bulkUpdateWarehouse(): void {
+    if (!this.bulkWarehouseId) {
+      this.toastr.info('Please select a warehouse.', 'Warehouse required');
+      return;
+    }
+
+    const applicantIds = Array.from(this.selectedIds)
+      .filter(id => Number.isFinite(id) && id > 0);
+
+    if (applicantIds.length === 0) {
+      this.toastr.info('Please select at least one applicant.', 'No applicants selected');
+      return;
+    }
+
+    const payload = {
+      applicantIds,
+      warehouseId: Number(this.bulkWarehouseId),
+    };
+
+    this.loading = true;
+
+    this.employeeService.bulkUpdateWarehouse(payload).subscribe({
+      next: (res) => {
+        this.toastr.success(
+          res?.message || `Warehouse updated for ${applicantIds.length} applicants.`,
+          'Success'
+        );
+
+        this.selectedIds.clear();
+        this.bulkWarehouseId = null;
+        this.loading = false;
+        this.loadApplicants();
+      },
+      error: (err) => {
+        this.loading = false;
+        this.toastr.error(
+          err?.error?.message || 'Error updating warehouse.',
+          'Error'
+        );
+      },
+    });
+  }
+
+  getInitials(row: any): string {
+    const name = row?.name || '';
+    const lastName = row?.lastName || '';
+
+    return `${name.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  }
+  getStatusLabel(status: any): string {
+    const found = this.statusOptions?.find((x: any) => x.value === status);
+    return found?.label || status || 'New';
+  }
+
 
   ngAfterViewInit(): void {
     if (this.paginator) {
@@ -226,22 +330,25 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
 
   }
   isAllSelectedOnPage(): boolean {
-    const pageRows = this.getCurrentPageRows().filter(r => Number(r?.warehouseId) > 0);
+    const pageRows = this.getCurrentPageRows();
     return pageRows.length > 0 && pageRows.every(r => this.selectedIds.has(this.getRowId(r)));
   }
 
   isIndeterminateOnPage(): boolean {
-    const pageRows = this.getCurrentPageRows().filter(r => Number(r?.warehouseId) > 0);
+    const pageRows = this.getCurrentPageRows();
     const selectedCount = pageRows.filter(r => this.selectedIds.has(this.getRowId(r))).length;
     return selectedCount > 0 && selectedCount < pageRows.length;
   }
-  toggleSelectAllOnPage(checked: boolean) {
+  toggleSelectAllOnPage(checked: boolean): void {
     const pageRows = this.getCurrentPageRows();
+
     pageRows.forEach((r: any) => {
       const id = this.getRowId(r);
 
+      if (!Number.isFinite(id) || id <= 0) return;
+
       if (checked) {
-        if (Number(r?.warehouseId) > 0) this.selectedIds.add(id);
+        this.selectedIds.add(id);
       } else {
         this.selectedIds.delete(id);
       }
@@ -284,6 +391,7 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
 
     this.employeeService.getApplicants().subscribe({
       next: (res) => {
+
         const applicants: any[] = (res || []).map((e: any) => ({
           ...e,
           status: this.getStatus(e),
@@ -292,7 +400,8 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
         }));
 
         this.dataSource.data = applicants;
-
+        this.calculateKpis(applicants);
+        this.buildVehicleTypes(applicants);
         if (this.paginator) this.dataSource.paginator = this.paginator;
         if (this.sort) this.dataSource.sort = this.sort;
 
@@ -314,6 +423,96 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
     { value: 'Rejected', label: 'Rejected' },
 
   ];
+  calculateKpis(applicants: any[]): void {
+
+    const now = new Date();
+
+    const weekAgo = new Date();
+    weekAgo.setDate(now.getDate() - 7);
+
+    this.kpi.newApplicants =
+      applicants.filter(x => x.status === 'Applicant').length;
+
+    this.kpi.offersSent =
+      applicants.filter(x => x.status === 'AwaitingResponse').length;
+
+    this.kpi.hired =
+      applicants.filter(x =>
+        x.status === 'PreOnboarding' ||
+        x.stage === 'Hired'
+      ).length;
+
+    this.kpi.newApplicantsWeek =
+      applicants.filter(x =>
+        x.status === 'Applicant' &&
+        x.createdAt &&
+        new Date(x.createdAt) >= weekAgo
+      ).length;
+
+    this.kpi.offersSentWeek =
+      applicants.filter(x =>
+        x.status === 'AwaitingResponse' &&
+        x.updatedAt &&
+        new Date(x.updatedAt) >= weekAgo
+      ).length;
+
+    this.kpi.hiredWeek =
+      applicants.filter(x =>
+        x.stage === 'Hired' &&
+        x.updatedAt &&
+        new Date(x.updatedAt) >= weekAgo
+      ).length;
+  }
+  exportApplicantsToExcel(): void {
+    const selectedRows = (this.dataSource.data ?? [])
+      .filter((row: any) => this.selectedIds.has(Number(row.id)));
+
+    const filteredRows = this.dataSource.filteredData?.length
+      ? this.dataSource.filteredData
+      : this.dataSource.data;
+
+    const rows = selectedRows.length > 0
+      ? selectedRows
+      : filteredRows;
+
+    if (!rows.length) {
+      this.toastr.info('No applicants to export.', 'Export');
+      return;
+    }
+
+    const exportData = rows.map((row: any) => ({
+      Id: row.id,
+      Name: `${row.name ?? ''} ${row.lastName ?? ''}`.trim(),
+      Email: row.email ?? '',
+      Phone: row.profile?.phoneNumber ?? '',
+      Status: row.status ?? '',
+      Stage: row.stage ?? '',
+      VehicleType: row.vehicle?.type ?? '',
+      VehicleMake: row.vehicle?.make ?? '',
+      VehicleModel: row.vehicle?.model ?? '',
+      Warehouse: row.warehouse
+        ? `${row.warehouse.company ?? ''} - ${row.warehouse.city ?? ''}`
+        : this.getWarehouseInfo(row.warehouseId),
+      Metro: row.metro?.city ?? '',
+      Recruiter: row.recruiter
+        ? `${row.recruiter.firstName ?? ''} ${row.recruiter.lastName ?? ''}`.trim()
+        : '',
+      UpdatedAt: row.updatedAt
+        ? new Date(row.updatedAt).toLocaleDateString()
+        : '',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Applicants');
+
+    const fileName = selectedRows.length > 0
+      ? 'Selected_Applicants.xlsx'
+      : 'Filtered_Applicants.xlsx';
+
+    XLSX.writeFile(workbook, fileName);
+  }
   onStageChange(applicant: any) {
     if (!applicant?.id) {
       this.toastr.error('Invalid applicant id', 'Error');
@@ -383,12 +582,21 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
     const filter = {
       text: this.textFilter.trim().toLowerCase(),
       warehouseId: this.selectedWarehouseId,
-      status: this.selectedStatus ?? null,   // 👈 nuevo
+      status: this.selectedStatus ?? null,
+      vehicleType: this.selectedVehicleType ?? null,
+      vehicleKey: this.selectedVehicleKey ?? null
     };
-    this.dataSource.filter = JSON.stringify(filter);
-    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-  }
 
+    this.dataSource.filter = JSON.stringify(filter);
+
+    if (this.dataSource.paginator) {
+      this.dataSource.paginator.firstPage();
+    }
+  }
+  onVehicleFilterChange(vehicleKey: string | null): void {
+    this.selectedVehicleKey = vehicleKey;
+    this.applyCombinedFilter();
+  }
   onWarehouseChange(warehouseId: number | null): void {
     this.selectedWarehouseId = warehouseId;
     this.applyCombinedFilter();
@@ -449,7 +657,37 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
       }
     });
   }
+  resendPasswordSetup(row: any): void {
+    if (!row?.id) {
+      this.toastr.error('Invalid applicant id', 'Error');
+      return;
+    }
 
+    this.loading = true;
+
+    this.employeeService
+      .resendPasswordSetup(Number(row.id))
+      .subscribe({
+        next: (res: any) => {
+          this.toastr.success(
+            res?.message || 'Password setup email sent successfully!',
+            'Success'
+          );
+
+          this.loading = false;
+        },
+        error: (err) => {
+          console.error(err);
+
+          this.toastr.error(
+            err?.error?.message || 'Error sending password setup email',
+            'Error'
+          );
+
+          this.loading = false;
+        },
+      });
+  }
 
   openDialog(action: string, employee: Employee | any): void {
     if (action === 'View') {
@@ -653,6 +891,7 @@ interface DialogData {
 @Component({
   selector: 'app-applicant-dialog-content',
   templateUrl: './applicant-dialog-content.html',
+  styleUrls: ['./applicant-dialog-content.scss'],
   standalone: true,
   imports: [
     MaterialModule,
@@ -712,11 +951,20 @@ export class AppEmployeeDialogContentComponent implements OnInit {
     { value: 'Driver', viewValue: 'Driver' },
     { value: 'Applicant', viewValue: 'Applicant' },
   ];
+
+  availableRoles: any[] = [];
   ngOnInit(): void {
     this.loadWarehouses();
     const userInfo = this.settings.getUserInfoFromToken();
     const role = this.settings.getRole(); // devuelve 'Admin' | 'CompanyOwner' | 'Manager' ... (asegúrate que sea string)
-    this.isAdmin = role === 'Admin' || role === 'CompanyOwner';
+    this.isAdmin =
+      role === 'Admin' ||
+      role === 'CompanyOwner';
+
+    this.availableRoles =
+      role === 'Manager' || role === 'Assistant'
+        ? this.rolesManager
+        : this.roles;
     const serverRole = this.local_data.userRole; // o donde lo recibas
     const normalized = this.normalizeRoleName(serverRole || '');
     // Si se pudo normalizar, úsalo; si no, deja null (o un default)
@@ -732,35 +980,78 @@ export class AppEmployeeDialogContentComponent implements OnInit {
       complete: () => (this.loading = false),
     });
   }
+  getStatusFromFlags(e: any): StatusKey {
+    if (e.wasContacted && e.isActive && e.isFirstLogin) {
+      return 'AwaitingResponse';
+    }
+
+    if (!e.isFirstLogin && e.isActive && e.wasContacted) {
+      return 'PreOnboarding';
+    }
+
+    return 'Applicant';
+  }
 
   doAction(): void {
     this.loading = true;
 
-    // Convertir antes de enviar
     this.local_data.warehouseId = Number(this.local_data.warehouseId);
-    const name = this.local_data.userRole || '';
 
+    const currentRole = this.settings.getRole();
+    const selectedRole = this.local_data.userRole;
+
+    if (
+      selectedRole === 'Driver' &&
+      currentRole !== 'Admin' &&
+      currentRole !== 'CompanyOwner'
+    ) {
+      const currentStatus =
+        this.local_data.status ?? this.getStatusFromFlags(this.local_data);
+
+      if (currentStatus !== 'PreOnboarding') {
+        this.loading = false;
+        return this.handleError({
+          error: {
+            message: 'This applicant must be in Onboarding before being moved to Driver.'
+          }
+        });
+      }
+    }
+
+    const name = this.local_data.userRole || '';
     const canonical = this.normalizeRoleName(name);
     const roleId = canonical ? this.RoleNameToId[canonical] : undefined;
+
     if (roleId == null) {
       this.loading = false;
-      return this.handleError({ error: { message: 'Invalid role name' } });
+      return this.handleError({
+        error: { message: 'Invalid role name' }
+      });
     }
+
     this.local_data.userRole = roleId;
 
     if (this.action === 'Add') {
       this.employeeService.addEmployee(this.local_data).subscribe({
-        next: () => this.successHandler('Applicant added successfully!', 'Refresh'),
+        next: () =>
+          this.successHandler('Applicant added successfully!', 'Refresh'),
         error: (err) => this.handleError(err),
       });
     } else if (this.action === 'Update') {
+      if (currentRole !== 'Admin' && currentRole !== 'CompanyOwner') {
+        delete this.local_data.name;
+        delete this.local_data.lastName;
+      }
+
       this.employeeService.updateEmployee(this.local_data).subscribe({
-        next: () => this.successHandler('Applicant updated successfully!', 'Update'),
+        next: () =>
+          this.successHandler('Applicant updated successfully!', 'Update'),
         error: (err) => this.handleError(err),
       });
     } else if (this.action === 'Delete') {
       this.employeeService.deleteEmployee(this.local_data.id).subscribe({
-        next: () => this.successHandler('Applicant deleted successfully!', 'Delete'),
+        next: () =>
+          this.successHandler('Applicant deleted successfully!', 'Delete'),
         error: (err) => this.handleError(err),
       });
     }

@@ -16,61 +16,79 @@
 
     <div class="row">
 
-      <!-- Position (Role) -->
       <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Name</mat-label>
         <mat-form-field appearance="outline" class="w-100">
-          <mat-select name="userRole" [(ngModel)]="local_data.userRole" [disabled]="loading">
-            <ng-container *ngIf="!loading; else loadingOptions">
-              <mat-option *ngFor="let role of (isAdmin ? roles : rolesManager)" [value]="role.value">
-                {{ role.viewValue }}
-              </mat-option>
-            </ng-container>
-            <ng-template #loadingOptions>
-              <mat-option disabled>Loading roles...</mat-option>
-            </ng-template>
+          <input matInput [(ngModel)]="local_data.name" name="name" [disabled]="!isAdmin" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Last Name</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput [(ngModel)]="local_data.lastName" name="lastName" [disabled]="!isAdmin" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Email</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput [(ngModel)]="local_data.email" name="email" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Position</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select name="userRole" [(ngModel)]="local_data.userRole" required [disabled]="loading">
+
+            <mat-option *ngFor="let role of availableRoles" [value]="role.value">
+              {{ role.viewValue }}
+            </mat-option>
+
           </mat-select>
         </mat-form-field>
       </div>
 
-      <!-- Active Checkbox -->
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Warehouse</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select required [(ngModel)]="local_data.warehouseId" name="warehouseId" [disabled]="loading">
+
+            <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+              {{ warehouse.company }} - {{ warehouse.city }}
+            </mat-option>
+
+          </mat-select>
+        </mat-form-field>
+      </div>
+
       <div class="col-lg-3">
-        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Active</mat-label>
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Driver #</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput type="text" name="identificationNumber" [(ngModel)]="local_data.identificationNumber"
+            placeholder="Driver #" [disabled]="loading" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-3 d-flex align-items-center">
         <mat-checkbox [(ngModel)]="local_data.isActive" name="isActive" [disabled]="loading">
           Is Active
         </mat-checkbox>
       </div>
 
-      <!-- Driver # -->
-      <div class="col-lg-3">
-        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Driver #</mat-label>
-        <mat-form-field appearance="outline" class="w-100">
-          <input type="text" matInput name="identificationNumber" [(ngModel)]="local_data.identificationNumber"
-            placeholder="Driver #" [disabled]="loading" />
-        </mat-form-field>
-      </div>
-
-      <!-- Warehouse -->
-      <div class="col-lg-6">
-        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Warehouse</mat-label>
-        <mat-form-field appearance="outline" class="w-100">
-          <mat-select required [(ngModel)]="local_data.warehouseId" name="warehouseId" [disabled]="loading">
-            <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
-              {{ warehouse.company }} - {{ warehouse.city }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
     </div>
 
-    <!-- Botones -->
     <div class="d-flex justify-content-end mt-4">
-      <button mat-flat-button (click)="doAction()" [disabled]="!userForm.valid || loading">
+      <button mat-flat-button color="primary" (click)="doAction()" [disabled]="!userForm.valid || loading">
         {{ action }}
       </button>
+
       <button mat-flat-button class="m-l-8 bg-error text-white" (click)="closeDialog()" [disabled]="loading">
         Cancel
       </button>
     </div>
+
   </form>
 </mat-dialog-content>
 
@@ -78,7 +96,7 @@
 <mat-dialog-content *ngIf="action === 'Delete'">
   <div class="p-x-24 m-y-8">
     <p class="f-s-14">
-      Are you sure you want to delete <span class="f-w-600">{{ local_data.name }}</span>?
+      Are you sure you want to delete <span class="f-w-600">{{ local_data.name + " " +local_data.lastName}}</span>?
     </p>
   </div>
   <div mat-dialog-actions class="p-x-24 p-b-24">

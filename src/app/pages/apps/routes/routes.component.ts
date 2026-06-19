@@ -34,20 +34,21 @@ import { RoutesService } from 'src/app/services/apps/routes/routes.service';
 export class RoutesComponent implements OnInit, AfterViewInit {
   @ViewChild(MatTable, { static: true }) table!: MatTable<any>;
   @ViewChild(MatPaginator, { static: true }) paginator!: MatPaginator;
-
-  displayedColumns: string[] = [
+  @ViewChild(MatAutocompleteTrigger)
+  autocomplete!: MatAutocompleteTrigger;
+  displayedColumns = [
     'select',
     'date',
     'routeStatus',
-    'userId',          // 👈 DRIVER editable solo si 'editable' está marcado
+    'userId',
     'cnl',
     'volumen',
     'deliveryStops',
+    'packagePercent',
     'zoneId',
-    'paymentType',
-    'priceRoute',
+   /* 'paymentType',
+    'priceRoute',*/
     'action'
-
   ];
   routeStatuses: string[] = ['Available', 'Assigned', 'In Progress', 'Future', 'Completed', 'Loading', 'PendingCompletion', 'Cancelled'];
   dataSource = new MatTableDataSource<any>([]);
@@ -68,8 +69,10 @@ export class RoutesComponent implements OnInit, AfterViewInit {
   warehouses: any[] = [];
   warehouseId: any;
   isAdmin: boolean = false;
+
   routesLoaded = false;
   driversLoaded = false;
+  filteredDrivers: any[] = [];
   // Conductores
   drivers: Driver[] = [];
   selectedDriverId: number | null = null; // para asignación MASIVA
@@ -146,6 +149,12 @@ export class RoutesComponent implements OnInit, AfterViewInit {
       this.form.get('selectedWarehouse')?.valueChanges.subscribe(value => {
         if (this.isAdmin && value) {
           this.warehouseId = value;
+
+          // limpiar datos anteriores
+          this.drivers = [];
+          this.filteredDrivers = [];
+
+          this.loadUsers();       // <-- RECARGAR DRIVERS
           this.loadRoutesByDate();
           this.loadZones();
         }
@@ -154,7 +163,7 @@ export class RoutesComponent implements OnInit, AfterViewInit {
     else {
       this.warehouseId = this.settings.getUserInfoFromToken()?.WarehouseID;
     }
-
+    this.filteredDrivers = [...this.drivers];
 
     this.loadUsers();
   }
@@ -166,7 +175,26 @@ export class RoutesComponent implements OnInit, AfterViewInit {
   formatDate(date: Date): string {
     return date.toISOString().split('T')[0];
   }
+  filterDrivers(search: string = ''): void {
+    const value = (search || '').toString().toLowerCase().trim();
 
+    if (!value) {
+      this.filteredDrivers = [...this.drivers];
+      return;
+    }
+
+    this.filteredDrivers = this.drivers.filter(d =>
+      `${d.name || ''} ${d.lastName || ''}`.toLowerCase().includes(value) ||
+      `${d.identificationNumber || ''}`.toLowerCase().includes(value)
+    );
+  }
+  getDriverDisplay(userId: number | null): string {
+    const driver = this.drivers.find((d: any) => d.id === userId);
+
+    return driver
+      ? `${driver.name} ${driver.lastName}`
+      : '';
+  }
   editRoute(row: any): void {
     const dialogRef = this.dialog.open(RouteBonusDialogComponent, {
       width: '520px',
@@ -187,27 +215,52 @@ export class RoutesComponent implements OnInit, AfterViewInit {
   /** ✅ Cargar rutas por fecha */
   loadRoutesByDate(): void {
     this.loading = true;
-    const warehouseId = this.isAdmin ? this.form.get('selectedWarehouse')?.value ?? null : null;
+
+    const warehouseId = this.isAdmin
+      ? this.form.get('selectedWarehouse')?.value ?? null
+      : null;
 
     this.routesService.getRoutesByDate(this.selectedDate, warehouseId).subscribe({
       next: (res) => {
-        const filtered = (res || []).filter((r: any) => r.volumen !== 0 || r.deliveryStops !== 0);
+
+        const filtered = (res || []).filter(
+          (r: any) => Number(r.volumen || 0) !== 0 || Number(r.deliveryStops || 0) !== 0
+        );
 
         this.allRoutes = filtered.map((route: any) => {
-          const rawUserId = route.user?.id ?? route.userId ?? route.UserId ?? route.userID ?? null;
+          const rawUserId =
+            route.user?.id ??
+            route.userId ??
+            route.UserId ??
+            route.userID ??
+            null;
+
           return {
             ...route,
             zoneId: route.zone ? Number(route.zone.id) : null,
-            userId: rawUserId != null && Number.isFinite(Number(rawUserId)) ? Number(rawUserId) : null,
-            user: route.user ?? null
+            userId:
+              rawUserId != null && Number.isFinite(Number(rawUserId))
+                ? Number(rawUserId)
+                : null,
+            user: route.user ?? null,
+            volumen: Number(route.volumen || 0),
+            deliveryStops: Number(route.deliveryStops || 0),
+            cnl: Number(route.cnl || 0)
           };
         });
 
         this.updateDataSource(this.allRoutes);
+        this.calculatePackageDistribution();
         this.ensureAssignedDriversInOptions();
+
         this.loading = false;
       },
-      error: () => { this.allRoutes = []; this.updateDataSource([]); this.loading = false; }
+      error: () => {
+        this.allRoutes = [];
+        this.updateDataSource([]);
+        this.calculatePackageDistribution();
+        this.loading = false;
+      }
     });
   }
 
@@ -275,6 +328,29 @@ export class RoutesComponent implements OnInit, AfterViewInit {
       },
       error: (err) => console.error(err)
     });
+  }
+
+  handlePaymentTypeChange(element: any, value: 'PerStop' | 'PerRoute'): void {
+    element.paymentType = value;
+
+    if (value !== 'PerRoute') {
+      element.priceRoute = 0;
+    }
+
+    if (!this.isSelected(element)) {
+      this.selectedRoutes.push(element);
+    }
+
+    this.dataSource.data = [...this.dataSource.data];
+    this.cdRef.detectChanges();
+  }
+
+  handlePriceRouteChange(element: any): void {
+    element.priceRoute = Number(element.priceRoute) || 0;
+
+    if (!this.isSelected(element)) {
+      this.selectedRoutes.push(element);
+    }
   }
 
   mergeAssignedDriversIntoList(): void {
@@ -360,14 +436,35 @@ export class RoutesComponent implements OnInit, AfterViewInit {
   }
 
   getAvailableZones(selectedZoneId: number | null): any[] {
-    if (!this.zones) return [];
+    /* if (!this.zones) return [];
+ 
+     const assignedZones = this.dataSource.data
+       .filter((route: any) => route.zoneId !== null && route.zoneId !== selectedZoneId)
+       .map((route: any) => route.zoneId);
+     return this.zones.filter((zone: any) => !assignedZones.includes(zone.id) || zone.id === selectedZoneId);*/
+    return this.zones || [];
+  }
+  totalPackages = 0;
+  totalStops = 0;
+  activeDrivers = 0;
+  avgPackagesPerDriver = 0;
 
-    const assignedZones = this.dataSource.data
-      .filter((route: any) => route.zoneId !== null && route.zoneId !== selectedZoneId)
-      .map((route: any) => route.zoneId);
-    return this.zones.filter((zone: any) => !assignedZones.includes(zone.id) || zone.id === selectedZoneId);
+  calculatePackageDistribution(): void {
+    const routes = this.dataSource.data || [];
+
+    this.totalPackages = routes.reduce((sum, r) => sum + Number(r.volumen || 0), 0);
+    this.totalStops = routes.reduce((sum, r) => sum + Number(r.deliveryStops || 0), 0);
+
+    this.activeDrivers = routes.filter(r => Number(r.volumen || 0) > 0).length;
+
+    this.avgPackagesPerDriver =
+      this.activeDrivers > 0 ? this.totalPackages / this.activeDrivers : 0;
   }
 
+  getPackagePercent(route: any): number {
+    if (!this.totalPackages) return 0;
+    return (Number(route.volumen || 0) / this.totalPackages) * 100;
+  }
   handleZoneChange(element: any, selectedZoneId: number | null): void {
     const previousZoneId = element.zoneId;
     element.zoneId = selectedZoneId;
@@ -431,7 +528,8 @@ export class RoutesComponent implements OnInit, AfterViewInit {
   }
 
   isRowEditable(row: any): boolean {
-    return row?.routeStatus !== 'Completed';
+    //return row?.routeStatus !== 'Completed';
+    return true;
   }
 
   getEditableRows(): any[] {
@@ -489,7 +587,11 @@ export class RoutesComponent implements OnInit, AfterViewInit {
       zoneId: this.toNumberOrNull(r.zoneId),
       cnl: r.cnl ?? null,
       userId: this.toNumberOrNull(r.userId),
-      routeStatus: r.routeStatus ?? 'Available'   // 👈 como string
+      routeStatus: r.routeStatus ?? 'Available',
+      paymentType: r.paymentType ?? 'PerStop',
+      priceRoute: r.paymentType === 'PerRoute'
+        ? Number(r.priceRoute || 0)
+        : 0
     }));
 
 
@@ -557,6 +659,7 @@ export class RoutesComponent implements OnInit, AfterViewInit {
 /** === Dialog (sin cambios relevantes para esta petición) === */
 import { NgForm } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 @Component({
   selector: 'route-dialog-content',
   imports: [
@@ -652,7 +755,8 @@ export class RouteDialogContentComponent {
       deliveryStops: formValue.deliveryStops || 0,
       // 🔥 FIX
       paymentType: formValue.paymentType ?? 'PerStop',
-      priceRoute: formValue.priceRoute ?? 0
+      priceRoute: formValue.priceRoute ?? 0,
+      warehouseId: this.wid
     };
     this.loading = true;
     this.routeService.addRoute(payload).subscribe({

@@ -1,0 +1,361 @@
+<div class="driver-dashboard">
+
+  <div class="info-alert">
+    <i-tabler name="info-circle" class="icon-18"></i-tabler>
+    Statistics are updated with a 1-day delay. The data shown belongs to yesterday.
+  </div>
+
+  <div *ngIf="loading" class="loading-overlay">
+    Loading dashboard...
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <div class="kpi-grid">
+
+      <div class="kpi-card">
+        <div class="kpi-icon blue">
+          <i-tabler name="route" class="icon-20"></i-tabler>
+        </div>
+        <p>Yesterday's stops</p>
+        <h2>{{ yesterdayStops }}</h2>
+        <span class="positive">▲ Completed route</span>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon green">
+          <i-tabler name="package" class="icon-20"></i-tabler>
+        </div>
+        <p>Packages delivered</p>
+        <h2>{{ packagesDelivered }}</h2>
+        <span class="positive">▲ Previous operational day</span>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon orange">
+          <i-tabler name="cash" class="icon-20"></i-tabler>
+        </div>
+        <p>Estimated earnings</p>
+        <h2>{{ estimatedEarnings | currency:'USD':'symbol':'1.0-0' }}</h2>
+        <span class="positive">▲ Yesterday</span>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon purple">
+          <i-tabler name="chart-bar" class="icon-20"></i-tabler>
+        </div>
+        <p>LOS% yesterday</p>
+        <h2>{{ losYesterday | number:'1.1-1' }}%</h2>
+        <span [class.positive]="losYesterday >= 95" [class.warning]="losYesterday < 95">
+          {{ losYesterday >= 95 ? '▲ Good performance' : '⚠ Needs improvement' }}
+        </span>
+      </div>
+
+    </div>
+
+    <div class="dashboard-grid">
+
+      <div class="dashboard-card large-card">
+        <div class="card-header">
+          <div>
+            <h3>Yesterday's route</h3>
+            <p>Stats based on the previous operational day</p>
+          </div>
+          <span class="status-badge completed">
+            {{ lastRoute?.status || lastRoute?.Status || 'Completed' }}
+          </span>
+        </div>
+
+        <div class="route-box">
+          <div>
+            <span>Operational date</span>
+            <strong>{{ operationalDate | date:'MMM d, y' }}</strong>
+          </div>
+
+          <div>
+            <span>Route</span>
+            <strong>{{ lastRoute?.routeCode || lastRoute?.RouteCode || '-' }}</strong>
+          </div>
+
+          <div>
+            <span>Zone</span>
+            <strong>{{ lastRoute?.zone?.zoneCode || lastRoute?.Zone?.ZoneCode || '-' }}</strong>
+          </div>
+
+          <div>
+            <span>Warehouse</span>
+            <strong>{{ lastRoute?.warehouse?.name || lastRoute?.Warehouse?.Name || '-' }}</strong>
+          </div>
+        </div>
+
+        <div class="route-summary">
+          <div>
+            <span>Stops</span>
+            <strong>{{ lastRoute?.deliveryStops || lastRoute?.DeliveryStops || 0 }}</strong>
+          </div>
+
+          <div>
+            <span>Volume</span>
+            <strong>{{ lastRoute?.volumen || lastRoute?.Volumen || 0 }}</strong>
+          </div>
+
+          <div>
+            <span>Attempts</span>
+            <strong>{{ lastRoute?.attempts || lastRoute?.Attempts || 0 }}</strong>
+          </div>
+
+          <div>
+            <span>CNL</span>
+            <strong>{{ lastRoute?.cnl || lastRoute?.CNL || 0 }}</strong>
+          </div>
+        </div>
+
+        <div class="progress-section">
+          <div class="progress-info">
+            <span>Delivery performance</span>
+            <strong>
+              {{
+              calculateDeliveredPercent(
+              lastRoute?.volumen || lastRoute?.Volumen || 0,
+              lastRoute?.attempts || lastRoute?.Attempts || 0
+              ) | number:'1.0-0'
+              }}%
+            </strong>
+          </div>
+
+          <div class="progress-bar">
+            <div [style.width.%]="calculateDeliveredPercent(
+                lastRoute?.volumen || lastRoute?.Volumen || 0,
+                lastRoute?.attempts || lastRoute?.Attempts || 0
+              )">
+            </div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn-primary" (click)="openRouteDetails()">
+            <i-tabler name="eye" class="icon-18"></i-tabler>
+            View Details
+          </button>
+
+        </div>
+      </div>
+
+      <div class="dashboard-card">
+        <div class="card-header">
+          <div>
+            <h3>Attendance</h3>
+            <p>Your punch record</p>
+          </div>
+        </div>
+
+        <div class="attendance-list">
+          <div>
+            <span>Arrival</span>
+            <strong>{{ attendance.arrival ? (attendance.arrival | date:'hh:mm a') : '-' }}</strong>
+          </div>
+
+          <div>
+            <span>Departure</span>
+            <strong>{{ attendance.departure ? (attendance.departure | date:'hh:mm a') : '-' }}</strong>
+          </div>
+
+          <div>
+            <span>Total time</span>
+            <strong>{{ attendance.totalTime }}</strong>
+          </div>
+        </div>
+
+        <button class="btn-primary full">
+          <i-tabler name="clock" class="icon-18"></i-tabler>
+          View Punch History
+        </button>
+      </div>
+
+    </div>
+
+    <div class="dashboard-grid">
+
+      <div class="dashboard-card">
+        <div class="card-header">
+          <div>
+            <h3>Weekly earnings</h3>
+            <p>Estimated payment for this week</p>
+          </div>
+        </div>
+
+        <div class="earning-total">
+          <span>Total this week</span>
+          <h2>{{ weeklyTotal | currency:'USD':'symbol':'1.0-0' }}</h2>
+        </div>
+
+        <div class="earning-list" *ngIf="weeklyDays.length > 0; else noWeeklyPay">
+          <div *ngFor="let day of weeklyDays">
+            <span>{{ day.day }}</span>
+            <strong>{{ day.amount | currency:'USD':'symbol':'1.0-0' }}</strong>
+          </div>
+        </div>
+
+        <ng-template #noWeeklyPay>
+          <div class="earning-list">
+            <div>
+              <span>No earnings found this week</span>
+              <strong>$0</strong>
+            </div>
+          </div>
+        </ng-template>
+      </div>
+
+      <div class="dashboard-card">
+        <div class="card-header">
+          <div>
+            <h3>Performance</h3>
+            <p>Previous operational day</p>
+          </div>
+        </div>
+
+        <div class="performance-list">
+
+          <div class="performance-item">
+            <div>
+              <span>Delivered</span>
+              <strong>
+                {{
+                calculateDeliveredPercent(
+                lastRoute?.volumen || lastRoute?.Volumen || 0,
+                lastRoute?.attempts || lastRoute?.Attempts || 0
+                ) | number:'1.1-1'
+                }}%
+              </strong>
+            </div>
+            <div class="progress-bar">
+              <div [style.width.%]="calculateDeliveredPercent(
+                  lastRoute?.volumen || lastRoute?.Volumen || 0,
+                  lastRoute?.attempts || lastRoute?.Attempts || 0
+                )">
+              </div>
+            </div>
+          </div>
+
+          <div class="performance-item">
+            <div>
+              <span>LOS</span>
+              <strong>{{ losYesterday | number:'1.1-1' }}%</strong>
+            </div>
+            <div class="progress-bar">
+              <div [style.width.%]="losYesterday"></div>
+            </div>
+          </div>
+
+          <div class="performance-item">
+            <div>
+              <span>Customer On Time</span>
+              <strong>{{ lastRoute?.customerOnTime || lastRoute?.CustomerOnTime || 0 }}%</strong>
+            </div>
+            <div class="progress-bar">
+              <div [style.width.%]="lastRoute?.customerOnTime || lastRoute?.CustomerOnTime || 0"></div>
+            </div>
+          </div>
+
+          <div class="performance-item">
+            <div>
+              <span>CNL</span>
+              <strong>
+                {{
+                calculateCnlPercent(
+                lastRoute?.volumen || lastRoute?.Volumen || 0,
+                lastRoute?.cnl || lastRoute?.CNL || 0
+                ) | number:'1.1-1'
+                }}%
+              </strong>
+            </div>
+            <div class="progress-bar danger">
+              <div [style.width.%]="calculateCnlPercent(
+                  lastRoute?.volumen || lastRoute?.Volumen || 0,
+                  lastRoute?.cnl || lastRoute?.CNL || 0
+                )">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <div class="dashboard-card table-card">
+      <div class="card-header">
+        <div>
+          <h3>Recent routes</h3>
+          <p>Your last completed operational days</p>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Route</th>
+              <th>Zone</th>
+              <th>Stops</th>
+              <th>Volume</th>
+              <th>Attempts</th>
+              <th>CNL</th>
+              <th>LOS%</th>
+              <th>Status</th>
+            
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let route of recentRoutes">
+              <td>{{ route.date || route.Date | date:'MMM d, y' }}</td>
+              <td>{{ route.routeCode || route.RouteCode || '-' }}</td>
+              <td>{{ route.zone?.zoneCode || route.Zone?.ZoneCode || '-' }}</td>
+              <td>{{ route.deliveryStops || route.DeliveryStops || 0 }}</td>
+              <td>{{ route.volumen || route.Volumen || 0 }}</td>
+              <td>{{ route.attempts || route.Attempts || 0 }}</td>
+              <td>{{ route.cnl || route.CNL || 0 }}</td>
+
+              <td [class.success]="calculateLos(
+                  route.volumen || route.Volumen || 0,
+                  route.attempts || route.Attempts || 0,
+                  route.cnl || route.CNL || 0
+                ) >= 95" [class.warning]="calculateLos(
+                  route.volumen || route.Volumen || 0,
+                  route.attempts || route.Attempts || 0,
+                  route.cnl || route.CNL || 0
+                ) < 95">
+
+                {{
+                calculateLos(
+                route.volumen || route.Volumen || 0,
+                route.attempts || route.Attempts || 0,
+                route.cnl || route.CNL || 0
+                ) | number:'1.1-1'
+                }}%
+              </td>
+
+              <td>
+                <span class="status-badge completed">
+                  {{ route.status || route.Status || 'Completed' }}
+                </span>
+              </td>
+
+             
+            </tr>
+
+            <tr *ngIf="recentRoutes.length === 0">
+              <td colspan="10" style="text-align: center;">
+                No completed routes found.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </ng-container>
+
+</div>

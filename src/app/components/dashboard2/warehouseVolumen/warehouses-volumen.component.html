@@ -1,0 +1,9 @@
+<mat-card-content class="volume-content">
+  <apx-chart
+    *ngIf="isBrowser && salesoverviewChart?.chart && salesoverviewChart?.series?.length && salesoverviewChart?.labels?.length"
+    [series]="salesoverviewChart.series" [chart]="salesoverviewChart.chart" [labels]="salesoverviewChart.labels"
+    [colors]="salesoverviewChart.colors" [plotOptions]="salesoverviewChart.plotOptions"
+    [dataLabels]="salesoverviewChart.dataLabels" [legend]="salesoverviewChart.legend"
+    [stroke]="salesoverviewChart.stroke" [tooltip]="salesoverviewChart.tooltip">
+  </apx-chart>
+</mat-card-content>

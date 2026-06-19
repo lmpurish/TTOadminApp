@@ -34,16 +34,17 @@ interface WarehouseStatistics {
 
 
 @Component({
-  selector: 'app-top-projects',
+  selector: 'app-warehouse-ranking',
   imports: [
     NgApexchartsModule,
     MaterialModule,
     TablerIconsModule,
     CommonModule,
   ],
-  templateUrl: './top-projects.component.html',
+  templateUrl: './warehouse-ranking.component.html',
+  styleUrls: ['./warehouse-ranking.component.scss']
 })
-export class AppTopProjectsComponent implements AfterViewInit {
+export class AppWarehouseRankingComponent implements AfterViewInit {
   dataSource = new MatTableDataSource<WarehouseStatistics>([]);
   @ViewChild(MatTable) table!: MatTable<any>;
   @ViewChild(MatSort) sort!: MatSort;
@@ -54,8 +55,8 @@ export class AppTopProjectsComponent implements AfterViewInit {
     'TotalVolume',
     'TotalStops',
     'TotalAttempts',
-    'TotalCNL',
-    'DPOM',
+    /* 'TotalCNL',
+     'DPOM',*/
     'AverageLOSPerDay',
     'averageBranchOnTimePerDay',
     'Ranking'
@@ -94,8 +95,17 @@ export class AppTopProjectsComponent implements AfterViewInit {
     };
 
     // ✅ Definir sort inicial antes de que Angular termine de renderizar
-    this.sort.active = 'Ranking';
-    this.sort.direction = 'desc';
+    setTimeout(() => {
+      this.dataSource.sort = this.sort;
+      this.dataSource.paginator = this.paginator;
+
+      this.sort.active = 'Ranking';
+      this.sort.direction = 'desc';
+      this.sort.sortChange.emit({
+        active: 'Ranking',
+        direction: 'desc'
+      });
+    });
   }
 
 
@@ -265,5 +275,24 @@ export class AppTopProjectsComponent implements AfterViewInit {
       horizontalPosition: 'center',
       verticalPosition: 'top',
     });
+  }
+  getRankingScore(element: any): number {
+    return this.calcularRankingConVolumen(
+      element.ranking,
+      element.totalVolume,
+      element.losPercentage,
+      element.totalVolume > 0
+        ? (element.totalCNL * 1000000) / element.totalVolume
+        : 0
+    );
+  }
+
+  getRankingPercentage(element: any): number {
+    const value = this.getRankingScore(element);
+
+    const scores = this.dataSource.data.map((x: any) => this.getRankingScore(x));
+    const maxRanking = Math.max(...scores);
+
+    return maxRanking > 0 ? (value / maxRanking) * 100 : 0;
   }
 }

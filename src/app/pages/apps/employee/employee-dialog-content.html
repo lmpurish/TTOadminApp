@@ -4,7 +4,7 @@
 </div>
 
 <div class="d-flex align-items-center justify-content-between m-b-16 p-x-20 p-t-16">
-  <h3>{{ action }} Employee</h3>
+  <h3>{{ action }} Contractor</h3>
   <button mat-icon-button mat-dialog-close class="d-flex justify-content-center" [disabled]="loading">
     <i-tabler name="x" class="icon-20 d-flex"></i-tabler>
   </button>
@@ -15,56 +15,80 @@
   <form #userForm="ngForm">
 
     <div class="row">
-      <!-- Position (Role) -->
+
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Name</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput [(ngModel)]="local_data.name" name="name" [disabled]="!isAdmin" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Last Name</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput [(ngModel)]="local_data.lastName" name="lastName" [disabled]="!isAdmin" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Email</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput [(ngModel)]="local_data.email" name="email" />
+        </mat-form-field>
+      </div>
+
       <div class="col-lg-6">
         <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Position</mat-label>
         <mat-form-field appearance="outline" class="w-100">
           <mat-select name="userRole" [(ngModel)]="local_data.userRole" required [disabled]="!isAdmin || loading">
+
             <mat-option *ngFor="let role of roles" [value]="role.value">
               {{ role.viewValue }}
             </mat-option>
+
           </mat-select>
         </mat-form-field>
       </div>
 
-      <!-- Active Checkbox -->
+      <div class="col-lg-6">
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Warehouse</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-select required [(ngModel)]="local_data.warehouseId" name="warehouseId" [disabled]="loading">
+
+            <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
+              {{ warehouse.company }} - {{ warehouse.city }}
+            </mat-option>
+
+          </mat-select>
+        </mat-form-field>
+      </div>
+
       <div class="col-lg-3">
-        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Active</mat-label>
+        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Driver #</mat-label>
+        <mat-form-field appearance="outline" class="w-100">
+          <input matInput type="text" name="identificationNumber" [(ngModel)]="local_data.identificationNumber"
+            placeholder="Driver #" [disabled]="loading" />
+        </mat-form-field>
+      </div>
+
+      <div class="col-lg-3 d-flex align-items-center">
         <mat-checkbox [(ngModel)]="local_data.isActive" name="isActive" [disabled]="loading">
           Is Active
         </mat-checkbox>
       </div>
 
-      <!-- Driver # -->
-      <div class="col-lg-3">
-        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Driver #</mat-label>
-        <mat-form-field appearance="outline" class="w-100">
-          <input type="text" matInput required name="identificationNumber" [(ngModel)]="local_data.identificationNumber" placeholder="Driver #" [disabled]="loading" />
-        </mat-form-field>
-      </div>
-
-      <!-- Warehouse -->
-      <div class="col-lg-6">
-        <mat-label class="f-s-14 f-w-600 m-b-8 d-block">Warehouse</mat-label>
-        <mat-form-field appearance="outline" class="w-100">
-          <mat-select required [(ngModel)]="local_data.warehouseId" name="warehouseId" [disabled]="loading">
-            <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
-              {{ warehouse.company }} - {{ warehouse.city }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
     </div>
 
-    <!-- Botones -->
     <div class="d-flex justify-content-end mt-4">
-      <button mat-flat-button (click)="doAction()" [disabled]="!userForm.valid || loading">
+      <button mat-flat-button color="primary" (click)="doAction()" [disabled]="!userForm.valid || loading">
         {{ action }}
       </button>
+
       <button mat-flat-button class="m-l-8 bg-error text-white" (click)="closeDialog()" [disabled]="loading">
         Cancel
       </button>
     </div>
+
   </form>
 </mat-dialog-content>
 

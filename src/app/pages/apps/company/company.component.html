@@ -1,53 +1,159 @@
-<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-  <div>
-    <label>Company ID</label>
-    <input type="number" formControlName="companyId" min="1" />
+<div class="template-builder">
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+
+    <div class="template-form-grid">
+      <div>
+        <label>Company ID</label>
+        <input type="number" formControlName="companyId" min="1" />
+      </div>
+
+      <div>
+        <label>Título</label>
+        <input type="text" formControlName="title" />
+      </div>
+
+      <div>
+        <label>Versión</label>
+        <input type="text" formControlName="version" />
+      </div>
+
+      <div>
+        <label>PDF</label>
+        <input type="file" accept=".pdf,application/pdf" (change)="onFileChange($event)" />
+      </div>
+    </div>
+
+    <div class="template-actions">
+      <button type="button" (click)="useDemoFields()">
+        Usar campos demo página 6
+      </button>
+
+      <button type="button" (click)="previewStampedPdf()" [disabled]="!pdfPreviewUrl || !fields.length">
+        Preview stamped PDF
+      </button>
+
+      <button type="submit" [disabled]="uploading || form.invalid || !fields.length">
+        Crear plantilla
+      </button>
+    </div>
+
+    <div *ngIf="errorMsg" class="error-box">
+      {{ errorMsg }}
+    </div>
+
+    <div *ngIf="uploading" class="progress-box">
+      <progress [value]="progress" max="100"></progress>
+      <span>{{ progress }}%</span>
+    </div>
+
+    <div *ngIf="previewStampedUrl" class="preview-box">
+      <h4>Preview stamped PDF</h4>
+
+      <iframe [src]="previewStampedUrl" width="100%" height="700">
+      </iframe>
+    </div>
+
+    <!--<app-signature-calibrator *ngIf="pdfPreviewUrl" [pdfUrl]="pdfPreviewUrl" [fields]="fields"
+      (fieldsChange)="onFieldsFromCalibrator($event)">
+    </app-signature-calibrator>-->
+
+    <pre *ngIf="fields?.length">Campos: {{ fields | json }}</pre>
+  </form>
+
+  <hr />
+
+  <div *ngIf="lastResponse as r" class="template-created">
+    <p><strong>Template creado:</strong> #{{ r.templateId }}</p>
+
+    <p>
+      <a [href]="r.fileUrl" target="_blank" rel="noopener noreferrer">
+        Ver PDF base
+      </a>
+    </p>
+
+    <button type="button" (click)="signAndStamp(r.templateId)">
+      Firmar y estampar demo
+    </button>
+
+    <div *ngIf="signedUrl">
+      <p>PDF firmado:</p>
+
+      <a [href]="signedUrl" target="_blank" rel="noopener noreferrer">
+        {{ signedUrl }}
+      </a>
+    </div>
   </div>
 
-  <div>
-    <label>Título</label>
-    <input type="text" formControlName="title" />
-  </div>
+  <div class="fields-editor" *ngIf="fields.length">
 
-  <div>
-    <label>Versión</label>
-    <input type="text" formControlName="version" />
-  </div>
+    <h3>Template Fields</h3>
 
-  <div>
-    <label>PDF</label>
-    <input type="file" accept=".pdf,application/pdf" (change)="onFileChange($event)" />
-  </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Page</th>
+          <th>X</th>
+          <th>Y</th>
+          <th>Width</th>
+          <th>Height</th>
+          <th>Label</th>
+          <th></th>
+        </tr>
+      </thead>
 
-  <div style="margin:8px 0;">
-    <button type="button" (click)="useDemoFields()">Usar campos demo (pág. 3)</button>
-  </div>
+      <tbody>
+        <tr *ngFor="let field of fields; let i = index">
 
-  <div *ngIf="errorMsg" style="color:#b00020">{{ errorMsg }}</div>
+          <td>
+            <select [value]="field.Type" (change)="field.Type = $any($event.target).value">
 
-  <div *ngIf="uploading">
-    <progress [value]="progress" max="100"></progress> {{progress}}%
-  </div>
+              <option value="Text">Text</option>
+              <option value="Date">Date</option>
+              <option value="Signature">Signature</option>
+              <option value="Initials">Initials</option>
+            </select>
+          </td>
 
-  <button type="submit" [disabled]="uploading || form.invalid">Crear plantilla</button>
+          <td>
+            <input type="number" [(ngModel)]="field.Page">
+          </td>
 
-  <!-- ✅ solo cuando ya subimos el PDF -->
-  <app-signature-calibrator *ngIf="lastResponse as r" [pdfUrl]="r.fileUrl"
-    (fieldsChange)="onFieldsFromCalibrator($event)">
-  </app-signature-calibrator>
-  <pre *ngIf="fields?.length">Campos: {{ fields | json }}</pre>
-</form>
+          <td>
+            <input type="number" [(ngModel)]="field.X">
+          </td>
 
-<hr />
+          <td>
+            <input type="number" [(ngModel)]="field.Y">
+          </td>
 
-<div *ngIf="lastResponse as r">
-  <p><strong>Template creado:</strong> #{{ r.templateId }}</p>
-  <p><a [href]="r.fileUrl" target="_blank">Ver PDF base</a></p>
+          <td>
+            <input type="number" [(ngModel)]="field.Width">
+          </td>
 
-  <button (click)="signAndStamp(r.templateId)">Firmar y estampar (demo)</button>
+          <td>
+            <input type="number" [(ngModel)]="field.Height">
+          </td>
 
-  <div *ngIf="signedUrl">
-    <p>PDF firmado:</p>
-    <a [href]="signedUrl" target="_blank">{{ signedUrl }}</a>
+          <td>
+            <input type="text" [(ngModel)]="field.Label">
+          </td>
+
+          <td>
+            <button type="button" class="delete-btn" (click)="removeField(i)">
+              Delete
+            </button>
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="editor-actions">
+      <button type="button" (click)="previewStampedPdf()">
+        Refresh Preview
+      </button>
+    </div>
+
   </div>
 </div>

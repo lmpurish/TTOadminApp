@@ -22,6 +22,7 @@ import { LoanComponent } from './loan/loan.component';
 import { MyLoanComponent } from './loan/my-loan/my-loan.component';
 import { RentalVehiclesComponent } from './rental-vehicle/rental-vehicle.component';
 import { AppContactListComponent } from './contact-list/contact-list.component';
+import { AppMyPaymentsComponent, EmployeePayrollDetailComponent } from './my-payments/my-payments.component';
 
 
 export const AppsRoutes: Routes = [
@@ -43,10 +44,10 @@ export const AppsRoutes: Routes = [
       },
       {
         path: 'myLoans',
-        component: MyLoanComponent, canActivate: [AuthGuard],
-
+        component: MyLoanComponent,
+        canActivate: [AuthGuard],
         data: {
-          role: ['Admin', 'Manager','Driver','Assistans'],
+          role: ['CompanyOwner', 'Admin', 'Manager', 'Driver', 'Assistant'],
           title: 'Loans',
           urls: [
             { title: 'Dashboard', url: '/dashboards/dashboard1' },
@@ -80,7 +81,7 @@ export const AppsRoutes: Routes = [
           ],
         },
       },
-       {
+      {
         path: 'loan',
         component: LoanComponent, canActivate: [AuthGuard],
 
@@ -121,7 +122,7 @@ export const AppsRoutes: Routes = [
           ],
         },
       },
-      
+
       {
         path: 'routes',
         component: RoutesComponent, canActivate: [AuthGuard],
@@ -147,7 +148,7 @@ export const AppsRoutes: Routes = [
           ],
         },
       },
-       {
+      {
         path: 'rentalVehicles',
         component: RentalVehiclesComponent, canActivate: [AuthGuard, RoleGuard],
         data: {
@@ -245,13 +246,13 @@ export const AppsRoutes: Routes = [
       },
       { path: 'email', redirectTo: 'email/inbox', pathMatch: 'full' },
       {
-        path: 'email/:type',
+        path: 'notification/:type',
         component: AppEmailComponent,
         data: {
-          title: 'Email',
+          title: 'Notifications',
           urls: [
             { title: 'Dashboard', url: '/dashboards/dashboard1' },
-            { title: 'Email' },
+            { title: 'Notifications' },
           ],
         },
         children: [
@@ -279,6 +280,30 @@ export const AppsRoutes: Routes = [
           ],
         },
       },
+      {
+        path: 'my-payments',
+        component: AppMyPaymentsComponent,
+        data: {
+          title: 'My Payments',
+          urls: [
+            { title: 'Dashboard', url: '/dashboards/dashboard1' },
+            { title: 'My Payments' },
+          ],
+        },
+      },
+      {
+        path: 'my-payment-details/:id',
+        component: EmployeePayrollDetailComponent,
+        data: {
+          title: 'My Payments',
+          urls: [
+            { title: 'Dashboard', url: '/dashboards/dashboard1' },
+            { title: 'My Payments', url: '/apps/my-payments' },
+            { title: 'My Payments Details' },
+          ],
+        },
+      },
+
     ],
   },
 ];

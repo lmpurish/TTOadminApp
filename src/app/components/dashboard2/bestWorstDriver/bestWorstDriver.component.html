@@ -1,36 +1,37 @@
-<mat-card class="cardWithShadow">
-  <mat-card-header class="d-flex justify-content-between align-items-center">
-    <mat-card-title>Best and Worst Driver</mat-card-title>
+<mat-card class="dashboard-card driver-card">
+  <div class="card-header">
+    <div>
+      <h3>Best & Worst Driver</h3>
+      <p>Performance score by driver</p>
+    </div>
 
-    <!-- Selector de Fecha -->
-    <form class="m-l-16">
-      <mat-form-field class="theme-select" appearance="outline">
-        <mat-label>Select Date</mat-label>
-        <input matInput [matDatepicker]="picker" [formControl]="selectedDate">
-        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-datepicker #picker></mat-datepicker>
-      </mat-form-field>
-    </form>
-  </mat-card-header>
+    <mat-form-field class="date-picker" appearance="outline">
+      <mat-label>Select date</mat-label>
+      <input matInput [matDatepicker]="picker" [formControl]="selectedDate">
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+  </div>
 
-  <mat-card-content>
-    <!-- Leyenda de colores -->
-    <div class="d-flex align-items-center">
-      <div class="d-flex align-items-center">
-        <i-tabler name="circle-filled" class="text-primary icon-12 d-flex"></i-tabler>
-        <div class="m-l-12 d-flex"><span class="f-s-12">Best Driver</span></div>
+  <mat-card-content class="driver-content">
+    <div class="driver-legend">
+      <div class="legend-item">
+        <span class="legend-dot best"></span>
+        <span>Best Driver</span>
       </div>
-      <div class="d-flex m-l-16 align-items-center">
-        <i-tabler name="circle-filled" class="text-secondary icon-12 d-flex"></i-tabler>
-        <div class="m-l-12 d-flex"><span class="f-s-12">Worst Driver</span></div>
+
+      <div class="legend-item">
+        <span class="legend-dot worst"></span>
+        <span>Worst Driver</span>
       </div>
     </div>
 
-    <!-- Gráfico -->
-    <apx-chart [series]="revenuetwoChart.series" [dataLabels]="revenuetwoChart.dataLabels"
-      [chart]="revenuetwoChart.chart" [noData]="revenuetwoChart.noData" [legend]="revenuetwoChart.legend"
-      [xaxis]="revenuetwoChart.xaxis" [yaxis]="revenuetwoChart.yaxis" [grid]="revenuetwoChart.grid"
-      [stroke]="revenuetwoChart.stroke" [tooltip]="revenuetwoChart.tooltip"
-      [plotOptions]="revenuetwoChart.plotOptions"></apx-chart>
+    <apx-chart *ngIf="isBrowser && revenuetwoChart?.chart && revenuetwoChart?.series?.length"
+      [series]="revenuetwoChart.series" [dataLabels]="revenuetwoChart.dataLabels" [chart]="revenuetwoChart.chart"
+      [noData]="revenuetwoChart.noData" [legend]="revenuetwoChart.legend" [xaxis]="revenuetwoChart.xaxis"
+      [yaxis]="revenuetwoChart.yaxis" [grid]="revenuetwoChart.grid" [stroke]="revenuetwoChart.stroke"
+      [tooltip]="revenuetwoChart.tooltip" [plotOptions]="revenuetwoChart.plotOptions">
+    </apx-chart>
+
   </mat-card-content>
 </mat-card>

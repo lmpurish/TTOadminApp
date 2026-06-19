@@ -34,7 +34,7 @@ export class EmployeeService {
     return this.http.get<any[]>(`${this.baseUrl}/User/active-by-warehouse`, { params });
 
   }
-  
+
   getApplicants() {
     return this.http.get<any>(`${this.baseUrl}/User/applicantByRol/`);
   }
@@ -74,11 +74,21 @@ export class EmployeeService {
       payload
     );
   }
-
+  bulkUpdateWarehouse(payload: { applicantIds: number[]; warehouseId: number }) {
+    return this.http.put<any>(`${this.baseUrl}/User/applicants/bulk-warehouse`, payload);
+  }
 
   getSsn(userId: number | string): Observable<SsnResponse> {
     const url = `${this.baseUrl}/User/${userId}/ssn`;
     const headers = new HttpHeaders({ 'Accept': 'application/json' });
     return this.http.get<SsnResponse>(url, { headers });
   }
+  resendPasswordSetup(id: number) {
+    return this.http.post<any>(
+      `${this.baseUrl}/User/resend-password-setup/${id}`,
+      {}
+    );
+  }
+
+  
 }

@@ -174,4 +174,25 @@ export class PayrollService {
     return this.http.delete<any>(`${this.base}/adjustments/${adjustmentId}`);
   }
 
+  getMyPaidSummary(): Observable<any> {
+   
+    return this.http.get<any>(`${this.base}/my-paid-summary`);
+  }
+
+  getMyPaidHistory(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/my-paid-history`);
+  }
+
+  getMyPaidDetail(payRunId: number): Observable<any> {
+    return this.http.get<any>(`${this.base}/my-paid-detail/${payRunId}`);
+  }
+
+  getMyPaidMonthly(year: number, month: number): Observable<any> {
+    const params = new HttpParams()
+      .set('year', year)
+      .set('month', month);
+
+    return this.http.get<any>(`${this.base}/my-paid-monthly`, { params });
+  }
+
 }

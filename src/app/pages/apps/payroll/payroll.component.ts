@@ -12,7 +12,7 @@ import {
 } from 'src/app/models/payroll.models';
 import { PayrollService } from 'src/app/services/payroll.service';
 import { WarehouseService } from 'src/app/services/apps/warehouse/warehouse.service';
-
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { forkJoin, of } from 'rxjs';
 import { map, switchMap, catchError, finalize } from 'rxjs/operators';
 
@@ -35,6 +35,9 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import {
+  NgApexchartsModule
+} from 'ng-apexcharts';
 
 function toYmd(d: Date): string {
   return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
@@ -57,7 +60,8 @@ function toYmd(d: Date): string {
     MatIconModule,
     MatDatepickerModule,
     MatNativeDateModule,
-
+    NgApexchartsModule,
+    MatProgressBarModule,
     TablerIconsModule,
   ],
   templateUrl: './payroll.component.html',
@@ -81,13 +85,10 @@ export class PayrollComponent implements OnInit, AfterViewInit {
     // Inicializa el rango con Date (no strings)
     const wk = this.currentWeekRangeDates();
     this.form.patchValue({ weekStart: wk.start, weekEnd: wk.end });
-    this.searchExistingWarehousesSummary();
-
-    // Cargar warehouses
     this.warehouseService.getWarehouses().subscribe({
       next: (res) => {
         this.warehouses = res;
-
+        this.searchExistingWarehousesSummary();
       },
       error: (err: any) => {
         console.error('Error cargando warehouses', err);
@@ -114,7 +115,16 @@ export class PayrollComponent implements OnInit, AfterViewInit {
   });
 
   // ======= TABLA por ALMACÉN =======
-  displayedColumnsWh: string[] = ['warehouse', 'gross', 'adjustments', 'net', 'action'];
+  displayedColumnsWh = [
+    'warehouse',
+    'drivers',
+    'gross',
+    'adjustments',
+    'net',
+    'avgDriverPay',
+    'percentage',
+    'action'
+  ];
   dataSourceWh = new MatTableDataSource<WarehouseSummaryRow>([]);
   @ViewChild('whPaginator') whPaginator!: MatPaginator;
   @ViewChild('whSort') whSort!: MatSort;
@@ -123,6 +133,21 @@ export class PayrollComponent implements OnInit, AfterViewInit {
   summaryLoaded = false;
   periodId: number | null = null;
   isCurrentPeriodSelected = false;
+  totalGrossWh = 0;
+  totalAdjustmentsWh = 0;
+  totalDriversWh = 0;
+
+  highestPayrollWarehouse: any = null;
+
+  // Charts
+  warehousePayrollChart: any;
+  warehousePayrollDonutChart: any;
+
+  // Weekly
+  weeklySummaryDataSource = new MatTableDataSource<any>([]);
+
+  // Drivers detail
+  selectedWarehouseDriversDataSource = new MatTableDataSource<any>([]);
 
   // ======= DETALLE (último run calculado) opcional =======
   run = signal<PayRunDto | null>(null);
@@ -177,6 +202,8 @@ export class PayrollComponent implements OnInit, AfterViewInit {
 
   onWarehouseChange(warehouseId: number | null): void {
     this.selectedWarehouseId = warehouseId;
+
+    this.searchExistingWarehousesSummary();
   }
 
   // ======= Cargar SUMMARY por ALMACÉN =======
@@ -217,7 +244,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
         userId,
         recalculateAll: true
       };
-
+      console.log("aqui1")
       return this.api.computePeriod(body).pipe(
         map((dto: any) => {
           // ✅ Extrae periodId aunque el backend use otro nombre
@@ -243,6 +270,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
             'Error desconocido';
 
           // 👇 devolvemos el error como item, para mostrarlo en el modal
+          console.log("aquí")
           return of({
             wh,
             periodId: null,
@@ -294,16 +322,31 @@ export class PayrollComponent implements OnInit, AfterViewInit {
 
           this.toast.warning(`Fallaron ${failed.length} warehouses. Revisa el modal.`);
         }
+        console.log('FULL RESULTS:', results);
 
+        const ok = (results || []).filter(r => r && r.dto && !r.error);
+
+        console.log('OK RESULTS:', ok);
         // ✅ OK results (solo los que tienen periodId + dto)
-        const ok = (results || []).filter(r => r && r.periodId != null && r.dto);
+        //const ok = (results || []).filter(r => r && r.periodId != null && r.dto);
 
         const rows: WarehouseSummaryRow[] = ok.map((r: any) => {
-          const drivers = r.dto?.drivers ?? [];
+          const drivers = r.dto?.drivers ?? r.dto?.Drivers ?? [];
 
-          const gross = drivers.reduce((s: number, d: any) => s + (Number(d.gross) || 0), 0);
-          const adjustments = drivers.reduce((s: number, d: any) => s + (Number(d.adjustments) || 0), 0);
-          const net = drivers.reduce((s: number, d: any) => s + (Number(d.net) || 0), 0);
+          const gross = drivers.reduce(
+            (s: number, d: any) => s + Number(d.gross ?? d.Gross ?? d.grossAmount ?? d.GrossAmount ?? 0),
+            0
+          );
+
+          const adjustments = drivers.reduce(
+            (s: number, d: any) => s + Number(d.adjustments ?? d.Adjustments ?? 0),
+            0
+          );
+
+          const net = drivers.reduce(
+            (s: number, d: any) => s + Number(d.net ?? d.Net ?? d.netAmount ?? d.NetAmount ?? 0),
+            0
+          );
 
           let whName = r.wh?.name;
           if (!whName) {
@@ -313,6 +356,9 @@ export class PayrollComponent implements OnInit, AfterViewInit {
             whName = parts.join(' - ') || `Warehouse ${r.wh?.id}`;
           }
           console.log(r.periodId)
+          console.log('DTO:', r.dto);
+          console.log('Drivers:', drivers);
+          console.log('Totals:', { gross, adjustments, net });
           return {
             warehouseId: r.wh.id,
             warehouseName: whName,
@@ -320,7 +366,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
             periodId: r.periodId,
             startDate: r.dto?.startDate ?? start,
             endDate: r.dto?.endDate ?? end,
-            drivers: drivers.length,
+            drivers: drivers?.length ?? 0,
             gross,
             adjustments,
             net
@@ -329,8 +375,20 @@ export class PayrollComponent implements OnInit, AfterViewInit {
 
         this.dataSourceWh.data = rows;
         this.totalNetWh = rows.reduce((s, it) => s + it.net, 0);
+
+        this.totalGrossWh = rows.reduce((s, it) => s + it.gross, 0);
+
+        this.totalAdjustmentsWh = rows.reduce((s, it) => s + it.adjustments, 0);
+
+        this.totalDriversWh = rows.reduce((s, it) => s + it.drivers, 0);
+
+        this.highestPayrollWarehouse =
+          rows.length > 0
+            ? [...rows].sort((a, b) => b.net - a.net)[0]
+            : null;
         this.summaryLoaded = true;
         this.periodId = rows.length === 1 ? rows[0].periodId : null;
+        this.buildCharts(rows);
 
         if (!rows.length) this.toast.info('No hay datos para el rango seleccionado.');
       },
@@ -338,6 +396,60 @@ export class PayrollComponent implements OnInit, AfterViewInit {
         this.toast.error('No se pudo cargar el resumen por almacenes.');
       }
     });
+
+  }
+  buildCharts(rows: WarehouseSummaryRow[]): void {
+
+    this.warehousePayrollChart = {
+      series: [
+        {
+          name: 'Net Payroll',
+          data: rows.map(r => r.net)
+        }
+      ],
+      chart: {
+        type: 'bar',
+        height: 350,
+        toolbar: { show: false }
+      },
+      xaxis: {
+        categories: rows.map(r => r.warehouseName)
+      },
+      dataLabels: {
+        enabled: false
+      },
+      plotOptions: {
+        bar: {
+          borderRadius: 4,
+          horizontal: false
+        }
+      },
+      tooltip: {
+        y: {
+          formatter: (val: number) => `$${val.toFixed(2)}`
+        }
+      }
+    };
+
+    this.warehousePayrollDonutChart = {
+      series: rows.map(r => r.net),
+      chart: {
+        type: 'donut',
+        height: 350
+      },
+      labels: rows.map(r => r.warehouseName),
+      dataLabels: {
+        enabled: true
+      },
+      legend: {
+        position: 'bottom'
+      },
+      tooltip: {
+        y: {
+          formatter: (val: number) => `$${val.toFixed(2)}`
+        }
+      }
+    };
   }
 
   // Acciones por fila
@@ -596,23 +708,25 @@ export class PayrollComponent implements OnInit, AfterViewInit {
     const startCtrl = this.form.value.weekStart as Date | null;
     const endCtrl = this.form.value.weekEnd as Date | null;
 
-    if (!startCtrl || !endCtrl) {
-      return;
-    }
+    if (!startCtrl || !endCtrl) return;
 
     const start = toYmd(startCtrl);
     const end = toYmd(endCtrl);
 
-    const warehousesToLoad =
-      this.selectedWarehouseId
-        ? this.warehouses.filter((w: { id: number }) => w.id === this.selectedWarehouseId)
-        : this.warehouses;
+    const warehousesToLoad = this.selectedWarehouseId
+      ? this.warehouses.filter(w => w.id === this.selectedWarehouseId)
+      : this.warehouses;
 
     if (!warehousesToLoad?.length) {
       this.dataSourceWh.data = [];
       this.totalNetWh = 0;
+      this.totalGrossWh = 0;
+      this.totalAdjustmentsWh = 0;
+      this.totalDriversWh = 0;
+      this.highestPayrollWarehouse = null;
       this.summaryLoaded = false;
       this.periodId = null;
+      this.buildCharts([]);
       return;
     }
 
@@ -624,29 +738,21 @@ export class PayrollComponent implements OnInit, AfterViewInit {
         map((dto: any) => {
           const periodId =
             dto?.payPeriodId ??
+            dto?.PayPeriodId ??
             dto?.periodId ??
+            dto?.PeriodId ??
             dto?.payPeriod?.id ??
+            dto?.PayPeriod?.Id ??
             dto?.period?.id ??
+            dto?.Period?.Id ??
             null;
 
           return { wh, periodId, dto, error: null };
         }),
         catchError((err) => {
-          // Si no existe, no lo tratamos como error grave
           if (err?.status === 404) {
-            return of({
-              wh,
-              periodId: null,
-              dto: null,
-              error: null
-            });
+            return of({ wh, periodId: null, dto: null, error: null });
           }
-
-          const message =
-            err?.error?.error ||
-            err?.error?.message ||
-            err?.message ||
-            'Unknown error';
 
           return of({
             wh,
@@ -654,7 +760,11 @@ export class PayrollComponent implements OnInit, AfterViewInit {
             dto: null,
             error: {
               status: err?.status,
-              message,
+              message:
+                err?.error?.error ||
+                err?.error?.message ||
+                err?.message ||
+                'Unknown error',
               raw: err
             }
           });
@@ -668,47 +778,54 @@ export class PayrollComponent implements OnInit, AfterViewInit {
         next: (results: any[]) => {
           const failed: PayrollErrorRow[] = (results || [])
             .filter(r => r?.error)
-            .map(r => {
-              const whName =
+            .map(r => ({
+              warehouseId: r.wh?.id,
+              warehouseName:
                 r.wh?.name ||
                 `${r.wh?.company ?? ''} ${r.wh?.city ?? ''}`.trim() ||
-                `Warehouse ${r.wh?.id}`;
-
-              return {
-                warehouseId: r.wh?.id,
-                warehouseName: whName,
-                status: r.error?.status,
-                message: r.error?.message ?? 'Error',
-                raw: r.error?.raw
-              } as PayrollErrorRow;
-            });
+                `Warehouse ${r.wh?.id}`,
+              status: r.error?.status,
+              message: r.error?.message ?? 'Error',
+              raw: r.error?.raw
+            }));
 
           this.payrollErrors = failed;
 
-          const ok = (results || []).filter(r => r && r.periodId != null && r.dto);
+          const ok = (results || []).filter(r => r && r.dto && !r.error);
 
           const rows: WarehouseSummaryRow[] = ok.map((r: any) => {
-            const drivers = r.dto?.drivers ?? [];
+            const drivers = r.dto?.drivers ?? r.dto?.Drivers ?? [];
 
-            const gross = drivers.reduce((s: number, d: any) => s + (Number(d.gross) || 0), 0);
-            const adjustments = drivers.reduce((s: number, d: any) => s + (Number(d.adjustments) || 0), 0);
-            const net = drivers.reduce((s: number, d: any) => s + (Number(d.net) || 0), 0);
+            const gross = drivers.reduce(
+              (s: number, d: any) =>
+                s + Number(d.gross ?? d.Gross ?? d.grossAmount ?? d.GrossAmount ?? 0),
+              0
+            );
 
-            let whName = r.wh?.name;
-            if (!whName) {
-              const parts: string[] = [];
-              if (r.wh?.company) parts.push(r.wh.company);
-              if (r.wh?.city) parts.push(r.wh.city);
-              whName = parts.join(' - ') || `Warehouse ${r.wh?.id}`;
-            }
+            const adjustments = drivers.reduce(
+              (s: number, d: any) =>
+                s + Number(d.adjustments ?? d.Adjustments ?? 0),
+              0
+            );
+
+            const net = drivers.reduce(
+              (s: number, d: any) =>
+                s + Number(d.net ?? d.Net ?? d.netAmount ?? d.NetAmount ?? 0),
+              0
+            );
+
+            const whName =
+              r.wh?.name ||
+              [r.wh?.company, r.wh?.city].filter(Boolean).join(' - ') ||
+              `Warehouse ${r.wh?.id}`;
 
             return {
               warehouseId: r.wh.id,
               warehouseName: whName,
               warehouseCompany: r.wh.company,
               periodId: r.periodId,
-              startDate: r.dto?.startDate ?? start,
-              endDate: r.dto?.endDate ?? end,
+              startDate: r.dto?.startDate ?? r.dto?.StartDate ?? start,
+              endDate: r.dto?.endDate ?? r.dto?.EndDate ?? end,
               drivers: drivers.length,
               gross,
               adjustments,
@@ -717,9 +834,21 @@ export class PayrollComponent implements OnInit, AfterViewInit {
           });
 
           this.dataSourceWh.data = rows;
+
           this.totalNetWh = rows.reduce((s, it) => s + it.net, 0);
+          this.totalGrossWh = rows.reduce((s, it) => s + it.gross, 0);
+          this.totalAdjustmentsWh = rows.reduce((s, it) => s + it.adjustments, 0);
+          this.totalDriversWh = rows.reduce((s, it) => s + it.drivers, 0);
+
+          this.highestPayrollWarehouse =
+            rows.length > 0
+              ? [...rows].sort((a, b) => b.net - a.net)[0]
+              : null;
+
           this.summaryLoaded = rows.length > 0;
           this.periodId = rows.length === 1 ? rows[0].periodId : null;
+
+          this.buildCharts(rows);
         },
         error: () => {
           this.toast.error('Could not load existing payrolls.');
@@ -727,7 +856,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
       });
   }
   onDateRangeChanged(): void {
-   // this.onAnyDatePicked();
+    // this.onAnyDatePicked();
 
     const start = this.form.get('weekStart')?.value;
     const end = this.form.get('weekEnd')?.value;
@@ -736,5 +865,24 @@ export class PayrollComponent implements OnInit, AfterViewInit {
       this.searchExistingWarehousesSummary();
     }
   }
+
+
+  displayedColumnsWeekly = [
+    'period',
+    'warehouses',
+    'drivers',
+    'gross',
+    'adjustments',
+    'net'
+  ];
+
+  displayedColumnsDrivers = [
+    'driver',
+    'gross',
+    'adjustments',
+    'net',
+    'status',
+    'approvedAt'
+  ];
 
 }

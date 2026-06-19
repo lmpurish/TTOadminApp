@@ -1,55 +1,97 @@
-<div class="row">
-  <!--<div class="col-lg-4">
-    <app-welcome-card></app-welcome-card>
-  </div> -->
-  <ng-container *ngIf="role != 'Driver' && role != 'Assistant' && role !='Recruiter'">
+<!-- DRIVER -->
+<ng-container *ngIf="isDriver; else normalContent">
+  <app-driver-dashboard></app-driver-dashboard>
 
-    <div class="col-lg-6" *ngIf="role == 'Admin' || role=='CompanyOwner'">
-      <app-employee-salary [rows]="grossByWarehouse"></app-employee-salary>
-    </div>
-    <div class="col-lg-6" *ngIf="role == 'Admin' || role=='CompanyOwner'">
-      <app-payment-gateways></app-payment-gateways>
-    </div>
-    <div class="col-lg-7">
-      <app-revenue-updates-two></app-revenue-updates-two>
-    </div>
-    <div class="col-lg-6">
-      <app-sales-overview></app-sales-overview>
-    </div>
+</ng-container>
+<ng-template #normalContent>
+  <div class="dashboard-page">
 
-    <div class="col-lg-12">
-      <app-top-projects></app-top-projects>
-    </div>
+    <!-- KPI CARDS -->
+    <div class="kpi-grid">
 
-  </ng-container>
+      <div class="kpi-card">
+        <div class="kpi-icon green">$</div>
+        <p>Total gross</p>
+        <h2>{{ totalGross | currency:'USD':'symbol':'1.0-0' }}</h2>
+        <span [class.positive]="grossPercent >= 0" [class.negative]="grossPercent < 0">
+          {{ grossPercent >= 0 ? '▲' : '▼' }} {{ abs(grossPercent) }}% vs last period
+        </span>
+      </div>
 
-  <ng-container *ngIf="role == 'Assistant' || role == 'Recruiter'">
-    <div class="col-lg-5">
-      <app-products></app-products>
+      <div class="kpi-card">
+        <div class="kpi-icon blue">
+          <i-tabler name="home" class="icon-18"></i-tabler>
+        </div>
+        <p>Active warehouses</p>
+        <h2>{{ activeWarehouses }}</h2>
+        <span class="positive">▲ {{ warehousesThisMonth }} this month</span>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon orange">
+          <i-tabler name="truck" class="icon-18"></i-tabler>
+        </div>
+        <p>Stops yesterday</p>
+
+        <h2>{{ stopsToday | number }}</h2>
+
+        <span *ngIf="stopsToday === 0" class="warning">
+          Daily report pending upload
+        </span>
+
+        <span *ngIf="stopsToday > 0" [class.positive]="stopsPercent >= 0" [class.negative]="stopsPercent < 0">
+          {{ stopsPercent >= 0 ? '▲' : '▼' }} {{ abs(stopsPercent) }}% vs yesterday
+        </span>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon blue">
+          <i-tabler name="circle-check" class="icon-18"></i-tabler>
+        </div>
+        <p>Avg LOS% yesterday</p>
+        <h2>{{ avgLos | number:'1.1-1' }}%</h2>
+        <span [class.positive]="losPercent >= 0" [class.negative]="losPercent < 0">
+          {{ losPercent >= 0 ? '▲' : '▼' }} {{ abs(losPercent) }}% vs last week
+        </span>
+      </div>
+
     </div>
-    <div class="col-lg-6">
+    <div *ngIf="isAssistant" class="m-b-24">
       <app-fullcalendar></app-fullcalendar>
     </div>
-  </ng-container>
-  <ng-container *ngIf="role=='Driver'">
-    <div class="col-lg-5">
-      <div class="row">
+    <!-- CHARTS -->
+    <div class="charts-grid">
 
+      <app-employee-salary [rows]="grossByWarehouse">
+      </app-employee-salary>
 
-        <div class="col-sm-12">
-          <app-total-earnings></app-total-earnings>
+      <mat-card class="dashboard-card volume-card">
+        <div class="card-header">
+          <div>
+            <h3>Warehouse volume</h3>
+            <p>This month</p>
+          </div>
         </div>
 
-      </div>
+        <app-warehouse-volumen></app-warehouse-volumen>
+      </mat-card>
+
     </div>
 
-    <div class="col-lg-4">
-      <app-yearly-sales></app-yearly-sales>
+    <!-- OPERATIONS -->
+    <div class="operations-grid">
+
+      <app-best-worst-driver>
+      </app-best-worst-driver>
+
+      <app-driver-punches>
+      </app-driver-punches>
+
     </div>
-    <div class="col-lg-8" *ngIf="role != 'Driver'">
-      <app-top-projects></app-top-projects>
-    </div>
-    <div class="col-lg-8" *ngIf="role == 'Driver'">
-      <app-driver-routes></app-driver-routes>
-    </div>
-  </ng-container>
+
+    <!-- WAREHOUSE RANKING -->
+    <app-warehouse-ranking>
+    </app-warehouse-ranking>
+
+  </div>
+</ng-template>

@@ -4,16 +4,18 @@ import { RouterModule } from '@angular/router';
 import { Router, NavigationEnd, ActivatedRoute, Data } from '@angular/router';
 import { filter, map, mergeMap } from 'rxjs/operators';
 import { TablerIconsModule } from 'angular-tabler-icons';
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'app-breadcrumb',
-    imports: [RouterModule, TablerIconsModule],
+    imports: [RouterModule, TablerIconsModule,CommonModule],
     templateUrl: './breadcrumb.component.html',
-    styleUrls: []
+    styleUrls: ['./breadcrumb.component.scss'],
 })
 export class AppBreadcrumbComponent {
   // @Input() layout;
   pageInfo: Data | any = Object.create(null);
+  today = new Date();
   myurl: any = this.router.url.slice(1).split('/');
   constructor(
     private router: Router,

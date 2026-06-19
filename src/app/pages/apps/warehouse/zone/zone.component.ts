@@ -22,6 +22,7 @@ import { Zone } from './zone';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
+import { forkJoin } from 'rxjs';
 
 @Component({
   templateUrl: './zone.component.html',
@@ -32,14 +33,22 @@ import { COMMA, ENTER } from '@angular/cdk/keycodes';
     CommonModule,
     RouterModule
   ],
+  styleUrls: ['./zone.component.scss'],
 })
 export class ZoneComponent implements AfterViewInit {
   @ViewChild(MatTable, { static: true }) table: MatTable<any> | null = null;
   @ViewChild(MatPaginator, { static: true }) paginator!: MatPaginator;
 
   searchText: string = '';
-
-  displayedColumns: string[] = ['id', 'zoneCode', 'priceStops', 'warehouseId', 'area', 'action'];
+  warehouseId!: number;
+  displayedColumns: string[] = [
+    'id',
+    'zoneCode',
+    'paymentType',
+    'payAmount',
+    'area',
+    'action',
+  ];
   dataSource = new MatTableDataSource<Zone>([]);
   warehousesMap: Map<number, string> = new Map(); // Mapeo de ID → Nombre
   warehouses: any[] = [];
@@ -53,6 +62,9 @@ export class ZoneComponent implements AfterViewInit {
 
   ngOnInit(): void {
     this.id = this.route.snapshot.paramMap.get('id');
+    this.warehouseId = this.id;
+    console.log(this.warehouseId)
+
     this.loadWarehouses();
 
     if (this.id !== null && this.id !== undefined && this.id.trim() !== '') {
@@ -68,20 +80,24 @@ export class ZoneComponent implements AfterViewInit {
       next: (res) => {
         if (Array.isArray(res) && res.length) {
           this.warehouses = res;
-          // Crear un mapa con ID como clave y nombre como valor
-          this.warehousesMap = new Map(res.map(warehouse => [warehouse.id, warehouse.city]));
+
+          this.warehousesMap = new Map(
+            res.map(warehouse => [
+              warehouse.id,
+              `${warehouse.company} (${warehouse.city})`
+            ])
+          );
         }
       },
       error: (err) => {
-        console.error("Error fetching warehouses:", err);
+        console.error('Error fetching warehouses:', err);
       }
     });
   }
 
   loadZones(id: number): void {
-    this.warehouseService.getZonesByWarehouse(this.id).subscribe({
+    this.warehouseService.getZonesByWarehouse(id).subscribe({
       next: (res) => {
-        console.log(res)
         this.dataSource.data = res;
         if (this.paginator) {
           this.dataSource.paginator = this.paginator;
@@ -93,8 +109,13 @@ export class ZoneComponent implements AfterViewInit {
     });
   }
 
-  getWarehouseName(id: number): string {
-    return this.warehousesMap.get(id) || "Unknown";
+  getWarehouseName(id: number | null | undefined): string {
+
+    if (id === null || id === undefined) {
+      return '';
+    }
+
+    return this.warehousesMap.get(id) ?? '';
   }
 
   ngAfterViewInit(): void {
@@ -104,12 +125,24 @@ export class ZoneComponent implements AfterViewInit {
   applyFilter(filterValue: string): void {
     this.dataSource.filter = filterValue.trim().toLowerCase();
   }
+  get activeRulesCount(): number {
+    return this.dataSource?.data?.filter((x: any) => !!x.payRule).length ?? 0;
+  }
+
+  get totalZonesCount(): number {
+    return this.dataSource?.data?.length ?? 0;
+  }
 
   openDialog(action: string, zone: Zone | any): void {
     const dialogRef = this.dialog.open(AppZoneDialogContentComponent, {
-      data: { action, local_data: { ...zone }, warehouseId: this.id },
+      data: {
+        action,
+        local_data: { ...zone },
+        warehouseId: this.id
+      },
       autoFocus: false,
-
+      width: '1000px',
+      maxWidth: '95vw'
     });
 
     dialogRef.afterClosed().subscribe((result) => {
@@ -118,6 +151,59 @@ export class ZoneComponent implements AfterViewInit {
       }
     });
   }
+  getPaymentTypeLabel(paymentType: string | null | undefined): string {
+    switch (paymentType) {
+      case 'PerRoute':
+        return 'Per Route';
+      case 'PerStop':
+        return 'Per Stop';
+      case 'PerPackage':
+        return 'Per Package';
+      case 'PerMile':
+        return 'Per Mile';
+      case 'Hourly':
+        return 'Hourly';
+      case 'PerBlock':
+        return 'Per Block';
+      case 'PerStopPlusAdditionalPackage':
+        return 'Stop + Additional Package';
+      case 'Mixed':
+        return 'Mixed';
+      default:
+        return 'Pay per Stop';
+    }
+  }
+  getZonePayAmount(element: any): string {
+    const rule = element.payRule;
+
+    if (!rule) {
+      return `$${Number(element.priceStop ?? 0).toFixed(2)}`;
+    }
+
+    switch (rule.paymentType) {
+      case 'PerBlock':
+        return `$${Number(rule.baseAmount ?? 0).toFixed(2)}`;
+
+      case 'PerStopPlusAdditionalPackage':
+        return `Stop $${Number(rule.baseAmount ?? 0).toFixed(2)} / Extra $${Number(rule.extraAmount ?? 0).toFixed(2)}`;
+
+      case 'PerStop':
+        return `$${Number(rule.baseAmount ?? element.priceStop ?? 0).toFixed(2)} / stop`;
+
+      case 'PerRoute':
+        return `$${Number(rule.baseAmount ?? 0).toFixed(2)} / route`;
+
+      default:
+        return `$${Number(rule.baseAmount ?? element.priceStop ?? 0).toFixed(2)}`;
+    }
+  }
+
+  getMaxPackages(element: any): string {
+    return element.payRule?.maxPackages
+      ? `${element.payRule.maxPackages}`
+      : '-';
+  }
+
 }
 
 @Component({
@@ -172,8 +258,20 @@ export class AppZoneDialogContentComponent {
         .map(z => z.trim())
         .filter(Boolean);
     }
-  }
+    if (this.action === 'Update' && this.local_data?.id) {
+      this.loadPayRules();
+    }
 
+  }
+  displayedColumnsRules: string[] = [
+    'paymentType',
+    'baseAmount',
+    'extraAmount',
+    'packages',
+    'version',
+    'status',
+    'actions'
+  ];
   constructor(
     public dialogRef: MatDialogRef<AppZoneDialogContentComponent>,
     private warehouseService: WarehouseService,
@@ -212,50 +310,81 @@ export class AppZoneDialogContentComponent {
     this.local_data.zipCodesSerialized = this.zipCodes.join(',');
   }
   doAction(): void {
-  // 👇 ADD: construir CSV desde los chips y evitar cadena vacía
-  const _z = (this.zipCodes ?? [])
-    .map(z => (z ?? '').toString().trim())
-    .filter(z => z.length > 0);
-  this.local_data.zipCodesSerialized = _z.length ? _z.join(',') : null;
+    // 👇 ADD: construir CSV desde los chips y evitar cadena vacía
+    const _z = (this.zipCodes ?? [])
+      .map(z => (z ?? '').toString().trim())
+      .filter(z => z.length > 0);
+    this.local_data.zipCodesSerialized = _z.length ? _z.join(',') : null;
 
-  // (opcional recomendado) normalizar numéricos sin tocar tu flujo
-  // this.local_data.priceStop = Number(this.local_data?.priceStop ?? 0);
-  // this.local_data.idWarehouse = Number(this.local_data?.idWarehouse ?? this.local_data?.warehouseId ?? 0);
+    // (opcional recomendado) normalizar numéricos sin tocar tu flujo
+    // this.local_data.priceStop = Number(this.local_data?.priceStop ?? 0);
+    // this.local_data.idWarehouse = Number(this.local_data?.idWarehouse ?? this.local_data?.warehouseId ?? 0);
 
-  if (this.action === 'Add') {
-    console.log(this.local_data)
-    this.warehouseService.addZone(this.local_data).subscribe({
-      next: () => {
-        this.dialogRef.close({ event: 'Refresh' });
-        this.openSnackBar('Zone added successfully!', 'Close');
-      },
-      error: (err) => {
-        this.openSnackBar(`Error: ${err.message}`, 'Close');
-      }
-    });
-  } else if (this.action === 'Update') {
-    console.log(this.local_data)
-    this.warehouseService.updateZone(this.local_data).subscribe({
-      next: () => {
-        this.dialogRef.close({ event: 'Update' });
-        this.openSnackBar('Zone updated successfully!', 'Close');
-      },
-      error: (err) => {
-        this.openSnackBar(`Error: ${err.message}`, 'Close');
-      }
-    });
-  } else if (this.action === 'Delete') {
-    this.warehouseService.deleteZones(this.local_data.id).subscribe({
-      next: () => {
-        this.dialogRef.close({ event: 'Delete' });
-        this.openSnackBar('Zone deleted successfully!', 'Close');
-      },
-      error: (err) => {
-        this.openSnackBar(`Error: ${err.message}`, 'Close');
-      }
-    });
+    if (this.action === 'Add') {
+      this.warehouseService.addZone(this.local_data).subscribe({
+        next: (zoneCreated) => {
+          const zoneId = zoneCreated?.id;
+
+          if (!zoneId) {
+            this.openSnackBar('Zone created, but zone id was not returned.', 'Close');
+            this.dialogRef.close({ event: 'Refresh' });
+            return;
+          }
+
+          const requests = this.payRules.map(rule =>
+            this.warehouseService.addZonePayRule({
+              ...rule,
+              zoneId,
+              useDriverRateForExtra:
+                rule.paymentType === 3 ? false : rule.useDriverRateForExtra
+            })
+          );
+
+          if (!requests.length) {
+            this.dialogRef.close({ event: 'Refresh' });
+            this.openSnackBar('Zone added successfully!', 'Close');
+            return;
+          }
+
+          forkJoin(requests).subscribe({
+            next: () => {
+              this.dialogRef.close({ event: 'Refresh' });
+              this.openSnackBar('Zone and pay rules added successfully!', 'Close');
+            },
+            error: (err) => {
+              this.openSnackBar(err?.error?.message || 'Zone created but error adding pay rules.', 'Close');
+            }
+          });
+        },
+        error: (err) => {
+          this.openSnackBar(`Error: ${err.message}`, 'Close');
+        }
+      });
+
+      return;
+    } else if (this.action === 'Update') {
+      console.log(this.local_data)
+      this.warehouseService.updateZone(this.local_data).subscribe({
+        next: () => {
+          this.dialogRef.close({ event: 'Update' });
+          this.openSnackBar('Zone updated successfully!', 'Close');
+        },
+        error: (err) => {
+          this.openSnackBar(`Error: ${err.message}`, 'Close');
+        }
+      });
+    } else if (this.action === 'Delete') {
+      this.warehouseService.deleteZones(this.local_data.id).subscribe({
+        next: () => {
+          this.dialogRef.close({ event: 'Delete' });
+          this.openSnackBar('Zone deleted successfully!', 'Close');
+        },
+        error: (err) => {
+          this.openSnackBar(`Error: ${err.message}`, 'Close');
+        }
+      });
+    }
   }
-}
 
 
   openSnackBar(message: string, action: string) {
@@ -268,6 +397,89 @@ export class AppZoneDialogContentComponent {
 
   closeDialog(): void {
     this.dialogRef.close({ event: 'Cancel' });
+  }
+
+  payRules: any[] = [];
+
+  newRule: any = {
+    paymentType: 0,
+    baseAmount: null,
+    extraAmount: null,
+    minPackages: null,
+    maxPackages: null,
+    useDriverRateForExtra: true,
+    version: 1,
+    isActive: true
+  };
+
+  loadPayRules(): void {
+    if (!this.local_data?.id) return;
+
+    this.warehouseService.getZonePayRules(this.local_data.id).subscribe({
+      next: (res) => {
+        console.log(res);
+        this.payRules = res || [];
+      },
+      error: () => {
+        this.payRules = [];
+      }
+    });
+  }
+
+  addPayRule(): void {
+    const payload = {
+      ...this.newRule,
+      useDriverRateForExtra:
+        this.newRule.paymentType === 3 ? false : this.newRule.useDriverRateForExtra
+    };
+
+    if (this.action === 'Add') {
+      this.payRules = [...this.payRules, payload];
+
+      this.resetNewRule();
+      this.openSnackBar('Pay rule added locally. Save zone to create it.', 'Close');
+      return;
+    }
+
+    if (!this.local_data?.id) {
+      this.openSnackBar('Save the zone first, then add pay rules.', 'Close');
+      return;
+    }
+
+    this.warehouseService.addZonePayRule({
+      ...payload,
+      zoneId: this.local_data.id
+    }).subscribe({
+      next: () => {
+        this.openSnackBar('Pay rule added successfully!', 'Close');
+        this.loadPayRules();
+        this.resetNewRule();
+      },
+      error: (err) => {
+        this.openSnackBar(err?.error?.message || 'Error adding pay rule', 'Close');
+      }
+    });
+  }
+  resetNewRule(): void {
+    this.newRule = {
+      paymentType: 0,
+      baseAmount: null,
+      extraAmount: null,
+      minPackages: null,
+      maxPackages: null,
+      useDriverRateForExtra: true,
+      version: 1,
+      isActive: true
+    };
+  }
+  deletePayRule(id: number): void {
+    this.warehouseService.deleteZonePayRule(id).subscribe({
+      next: () => {
+        this.openSnackBar('Pay rule deleted successfully!', 'Close');
+        this.loadPayRules();
+      },
+      error: () => this.openSnackBar('Error deleting pay rule', 'Close')
+    });
   }
 }
 
