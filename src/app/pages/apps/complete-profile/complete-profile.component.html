@@ -41,21 +41,32 @@
             <mat-label class="f-s-14 f-w-600 d-block m-b-16">
               Social Security
             </mat-label>
+<mat-form-field appearance="outline" class="w-100">
 
-            <mat-form-field appearance="outline" class="w-100">
+  <!-- Oculto -->
+  <input
+    *ngIf="!showSsn"
+    matInput
+    [value]="'XXX-XX-' + ssnLast4"
+    readonly
+  />
 
-              <!-- MODO OCULTO -->
-              <input matInput formControlName="SocialSecurityNumber" mask="000-00-0000"
-                [dropSpecialCharacters]="false" />
+  <!-- Visible -->
+  <input
+    *ngIf="showSsn"
+    matInput
+    formControlName="SocialSecurityNumber"
+    mask="000-00-0000"
+    [dropSpecialCharacters]="false"
+  />
 
-              <button mat-icon-button matSuffix type="button" (click)="toggleSsn()">
-                <mat-icon>
-                  {{ showSsn ? 'visibility_off' : 'visibility' }}
-                </mat-icon>
-              </button>
+  <button mat-icon-button matSuffix type="button" (click)="toggleSsn()">
+    <mat-icon>
+      {{ showSsn ? 'visibility_off' : 'visibility' }}
+    </mat-icon>
+  </button>
 
-            </mat-form-field>
-          </div>
+</mat-form-field>   </div>
           <div class="col-lg-4">
             <mat-label class="f-s-14 f-w-600 d-block m-b-16">Address</mat-label>
             <mat-form-field appearance="outline" class="w-100">

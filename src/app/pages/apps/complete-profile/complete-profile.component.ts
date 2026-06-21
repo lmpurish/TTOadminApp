@@ -52,6 +52,7 @@ export class CompleteProfileComponent implements OnInit, AfterViewInit {
   signerFullName = '';
   signerEmail = '';
 
+ssnLast4 = '';
   hasDriverLicenseFile = false;
   hasInsuranceFile = false;
   hasProfilePhoto = false;
@@ -206,6 +207,7 @@ export class CompleteProfileComponent implements OnInit, AfterViewInit {
   loadSavedProfile(): void {
     this.settings.getCurrentUser().subscribe({
       next: (res) => {
+        console.log(res)
         this.currentUserId = res.id;
 
         this.hasDriverLicenseFile = !!res.driverUrl;
@@ -220,13 +222,20 @@ export class CompleteProfileComponent implements OnInit, AfterViewInit {
           ZipCode: res.zipCode || '',
           DateOfBirth: res.dateOfBirth ? new Date(res.dateOfBirth) : ''
         });
-        if (res.ssnn) {
-          this.showSsn = false;
+      if (res.ssnn) {
+  this.ssnLast4 = String(res.ssnn).replace(/\D/g, '').slice(-4);
 
-          this.firstFormGroup.patchValue({
-            SocialSecurityNumber: `XXX-XX-${res.ssnn}`
-          });
-        }
+  const ssnControl = this.firstFormGroup.get('SocialSecurityNumber');
+  ssnControl?.clearValidators();
+  ssnControl?.updateValueAndValidity();
+} else {
+  const ssnControl = this.firstFormGroup.get('SocialSecurityNumber');
+  ssnControl?.setValidators([
+    Validators.required,
+    Validators.pattern(/^\d{3}-\d{2}-\d{4}$/)
+  ]);
+  ssnControl?.updateValueAndValidity();
+}
 
         this.documentForm.patchValue({
           DriverLicenseNumber: res.driverLicenseNumber || '',
@@ -269,39 +278,50 @@ export class CompleteProfileComponent implements OnInit, AfterViewInit {
       'application/pdf'
     ]);
   }
+toggleSsn(): void {
+  const ssnControl = this.firstFormGroup.get('SocialSecurityNumber');
 
-  toggleSsn(): void {
+  if (!ssnControl) return;
 
-    if (this.showSsn) {
-      this.showSsn = false;
-
-      this.firstFormGroup.patchValue({
-        SocialSecurityNumber: `XXX-XX-${this.last4Ssn}`
-      });
-
-      return;
-    }
-
-    this.employeeService.getSsn(this.currentUserId).subscribe({
-      next: (res) => {
-
-        if (!res?.ssn) {
-          this.toastr.error('SSN not found');
-          return;
-        }
-
-        this.last4Ssn = res.ssn.replace(/\D/g, '').slice(-4);
-
-        this.firstFormGroup.patchValue({
-          SocialSecurityNumber: res.ssn
-        });
-
-        this.showSsn = true;
-      }
-    });
+  // Ocultar
+  if (this.showSsn) {
+    this.showSsn = false;
+    return;
   }
 
-  async saveSectionAndNext(stepper: any, section: string): Promise<void> {
+  // Mostrar
+  if (!this.currentUserId) {
+    this.toastr.error('User not found.');
+    return;
+  }
+
+  this.employeeService.getSsn(this.currentUserId).subscribe({
+    next: (res) => {
+      const digits = String(res?.ssn || '').replace(/\D/g, '');
+
+      if (digits.length !== 9) {
+        this.toastr.error('Invalid SSN.');
+        return;
+      }
+
+      const formatted = `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`;
+
+      ssnControl.setValidators([
+        Validators.required,
+        Validators.pattern(/^\d{3}-\d{2}-\d{4}$/)
+      ]);
+
+      ssnControl.patchValue(formatted);
+      ssnControl.updateValueAndValidity();
+
+      this.ssnLast4 = digits.slice(-4);
+      this.showSsn = true;
+    },
+    error: () => {
+      this.toastr.error('Unable to load SSN.');
+    }
+  });
+}  async saveSectionAndNext(stepper: any, section: string): Promise<void> {
     const saved = await this.saveCurrentSection(section);
 
     if (saved) {
@@ -334,17 +354,14 @@ export class CompleteProfileComponent implements OnInit, AfterViewInit {
           formData.append('DateOfBirth', this.toYmd(first.DateOfBirth));
         }
 
-        const ssn = String(first.SocialSecurityNumber || '').trim();
+     const ssn = String(first.SocialSecurityNumber || '').trim();
 
-        if (
-          ssn &&
-          !ssn.startsWith('XXX-XX-')
-        ) {
-          formData.append(
-            'SocialSecurityNumber',
-            ssn.replace(/\D/g, '')
-          );
-        }
+if (ssn) {
+  formData.append(
+    'SocialSecurityNumber',
+    ssn.replace(/\D/g, '')
+  );
+}
       }
 
       if (section === 'documents') {
