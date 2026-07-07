@@ -122,3 +122,38 @@ export interface WarehouseSummaryRow {
   adjustments: number;
   net: number;
 }
+export interface PayrollInsightsDto {
+  payPeriodId: number;
+  startDate: string;
+  endDate: string;
+
+  activeDrivers: number;
+  previousActiveDrivers: number;
+  newDrivers: number;
+  lostDrivers: number;
+  retainedDrivers: number;
+
+  retentionRate: number;
+  churnRate: number;
+
+  totalNet: number;
+  averagePay: number;
+
+  driversAtRisk: number;
+  riskDrivers: DriverStoppedWorkingDto[];
+  averageDriverLifetimeWeeks: number;
+seniority: DriverSeniorityDto;
+}
+
+export interface DriverStoppedWorkingDto {
+  driverId: number;
+  driverName: string;
+  lastRouteDate: string;
+  daysSinceLastRoute: number;
+}
+export interface DriverSeniorityDto {
+  weeks0To2: number;
+  weeks3To8: number;
+  months2To6: number;
+  months6Plus: number;
+}

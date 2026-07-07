@@ -43,30 +43,36 @@
             </mat-label>
 <mat-form-field appearance="outline" class="w-100">
 
-  <!-- Oculto -->
+  <!-- MASCARA SOLO SI EXISTE SSN -->
   <input
-    *ngIf="!showSsn"
+    *ngIf="!showSsn && ssnLast4"
     matInput
     [value]="'XXX-XX-' + ssnLast4"
     readonly
   />
 
-  <!-- Visible -->
+  <!-- INPUT EDITABLE -->
   <input
-    *ngIf="showSsn"
+    *ngIf="showSsn || !ssnLast4"
     matInput
     formControlName="SocialSecurityNumber"
     mask="000-00-0000"
     [dropSpecialCharacters]="false"
   />
 
-  <button mat-icon-button matSuffix type="button" (click)="toggleSsn()">
+  <button
+    *ngIf="ssnLast4"
+    mat-icon-button
+    matSuffix
+    type="button"
+    (click)="toggleSsn()">
     <mat-icon>
       {{ showSsn ? 'visibility_off' : 'visibility' }}
     </mat-icon>
   </button>
 
-</mat-form-field>   </div>
+</mat-form-field>
+</div>
           <div class="col-lg-4">
             <mat-label class="f-s-14 f-w-600 d-block m-b-16">Address</mat-label>
             <mat-form-field appearance="outline" class="w-100">

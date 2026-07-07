@@ -207,7 +207,7 @@ ssnLast4 = '';
   loadSavedProfile(): void {
     this.settings.getCurrentUser().subscribe({
       next: (res) => {
-        console.log(res)
+       
         this.currentUserId = res.id;
 
         this.hasDriverLicenseFile = !!res.driverUrl;
@@ -225,9 +225,15 @@ ssnLast4 = '';
       if (res.ssnn) {
   this.ssnLast4 = String(res.ssnn).replace(/\D/g, '').slice(-4);
 
-  const ssnControl = this.firstFormGroup.get('SocialSecurityNumber');
-  ssnControl?.clearValidators();
-  ssnControl?.updateValueAndValidity();
+  this.firstFormGroup.patchValue({
+    SocialSecurityNumber: `XXX-XX-${this.ssnLast4}`
+  });
+
+  this.firstFormGroup.get('SocialSecurityNumber')?.setValidators([
+    Validators.required
+  ]);
+
+  this.firstFormGroup.get('SocialSecurityNumber')?.updateValueAndValidity();
 } else {
   const ssnControl = this.firstFormGroup.get('SocialSecurityNumber');
   ssnControl?.setValidators([
@@ -280,18 +286,11 @@ ssnLast4 = '';
   }
 toggleSsn(): void {
   const ssnControl = this.firstFormGroup.get('SocialSecurityNumber');
-
   if (!ssnControl) return;
 
-  // Ocultar
   if (this.showSsn) {
     this.showSsn = false;
-    return;
-  }
-
-  // Mostrar
-  if (!this.currentUserId) {
-    this.toastr.error('User not found.');
+    ssnControl.setValue(`XXX-XX-${this.ssnLast4}`);
     return;
   }
 
@@ -306,12 +305,11 @@ toggleSsn(): void {
 
       const formatted = `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`;
 
+      ssnControl.setValue(formatted);
       ssnControl.setValidators([
         Validators.required,
         Validators.pattern(/^\d{3}-\d{2}-\d{4}$/)
       ]);
-
-      ssnControl.patchValue(formatted);
       ssnControl.updateValueAndValidity();
 
       this.ssnLast4 = digits.slice(-4);
@@ -321,7 +319,9 @@ toggleSsn(): void {
       this.toastr.error('Unable to load SSN.');
     }
   });
-}  async saveSectionAndNext(stepper: any, section: string): Promise<void> {
+}
+
+async saveSectionAndNext(stepper: any, section: string): Promise<void> {
     const saved = await this.saveCurrentSection(section);
 
     if (saved) {

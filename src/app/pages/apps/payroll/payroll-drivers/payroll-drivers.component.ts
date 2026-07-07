@@ -32,6 +32,7 @@ export class PayrollDriversComponent implements OnInit {
   private api = inject(PayrollService);
   private toast = inject(ToastrService);
   private dialog = inject(MatDialog);
+  driversWhoStoppedWorking: any[] = [];
 
   /** ENTRADAS desde el padre (p.ej. desde la vista por almacén) */
   @Input() companyId = 1;
@@ -48,7 +49,7 @@ export class PayrollDriversComponent implements OnInit {
   filterCtrl = new FormControl<string>('', { nonNullable: true });
 
   displayedColumns = ['driver', 'gross', 'adjustments', 'net', 'action'];
-  dataSource = new MatTableDataSource<{ driverId: number; driverName: string; gross: number; adjustments: number; net: number, run: number, status: string }>([]);
+  dataSource = new MatTableDataSource<any>([]);
   totalNet = 0;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -66,7 +67,9 @@ export class PayrollDriversComponent implements OnInit {
       this.warehouseId = dialogData.warehouseId ?? null;
       this.zoneId = dialogData.zoneId ?? null;
       this.userId = dialogData.userId ?? 0;
+      this.driversWhoStoppedWorking = dialogData.driversWhoStoppedWorking ?? [];
     }
+    
   }
   ngOnInit(): void {
     if (!this.periodId) {
@@ -97,15 +100,27 @@ export class PayrollDriversComponent implements OnInit {
         this.startDateYmd = dto.startDate;
         this.endDateYmd = dto.endDate;
         const rows = dto.drivers || [];
-        this.dataSource.data = rows.map(d => ({
-          driverId: d.driverId as unknown as number,
-          driverName: d.driverName ?? '',
-          gross: d.gross as unknown as number,
-          adjustments: d.adjustments as unknown as number,
-          net: d.net as unknown as number,
-          run: d.run as unknown as number,
-          status: d.status ?? '',
-        }));
+        this.dataSource.data = rows.map(d => {
+  const driverId = Number(d.driverId);
+
+  const stoppedInfo = this.driversWhoStoppedWorking.find(
+    x => Number(x.driverId) === driverId
+  );
+
+  return {
+    driverId,
+    driverName: d.driverName ?? '',
+    gross: Number(d.gross ?? 0),
+    adjustments: Number(d.adjustments ?? 0),
+    net: Number(d.net ?? 0),
+    run: Number(d.run ?? 0),
+    status: d.status ?? '',
+
+    hasStoppedWarning: !!stoppedInfo,
+    daysSinceLastRoute: stoppedInfo?.daysSinceLastRoute ?? 0,
+    lastRouteDate: stoppedInfo?.lastRouteDate ?? null,
+  };
+});
 
         this.totalNet = this.dataSource.data.reduce((s, it) => s + (it.net || 0), 0);
 
@@ -141,6 +156,9 @@ export class PayrollDriversComponent implements OnInit {
       }
     });
   }
+  get warningDriversCount(): number {
+  return this.dataSource.data.filter(row => row.hasStoppedWarning).length;
+}
 
   /** Aprobar el PayRun del driver (se obtiene al vuelo con compute) */
   approve(row: { driverId: number }): void {

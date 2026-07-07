@@ -38,7 +38,7 @@ import { MatIconModule } from '@angular/material/icon';
 import {
   NgApexchartsModule
 } from 'ng-apexcharts';
-
+import { PayrollInsightsDto } from 'src/app/models/payroll.models';
 function toYmd(d: Date): string {
   return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
     .toISOString()
@@ -75,6 +75,13 @@ export class PayrollComponent implements OnInit, AfterViewInit {
   loading = false;
   debugResults: any[] = [];
   payrollErrors: PayrollErrorRow[] = [];
+  payrollWarnings = {
+  usersWithOutRate: [] as any[],
+  driversWhoStoppedWorking: [] as any[],
+  roleExceptionByWarehouse: [] as any[],
+};
+payrollInsights: PayrollInsightsDto | null = null;
+driverSeniorityChart: any = null;
   // Warehouses
   isAdmin = true; // ajusta a tu lógica real
   selectedWarehouseId: number | null = null;
@@ -244,7 +251,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
         userId,
         recalculateAll: true
       };
-      console.log("aqui1")
+      
       return this.api.computePeriod(body).pipe(
         map((dto: any) => {
           // ✅ Extrae periodId aunque el backend use otro nombre
@@ -269,8 +276,6 @@ export class PayrollComponent implements OnInit, AfterViewInit {
             err?.message ||
             'Error desconocido';
 
-          // 👇 devolvemos el error como item, para mostrarlo en el modal
-          console.log("aquí")
           return of({
             wh,
             periodId: null,
@@ -322,13 +327,11 @@ export class PayrollComponent implements OnInit, AfterViewInit {
 
           this.toast.warning(`Fallaron ${failed.length} warehouses. Revisa el modal.`);
         }
-        console.log('FULL RESULTS:', results);
+     
 
         const ok = (results || []).filter(r => r && r.dto && !r.error);
 
-        console.log('OK RESULTS:', ok);
-        // ✅ OK results (solo los que tienen periodId + dto)
-        //const ok = (results || []).filter(r => r && r.periodId != null && r.dto);
+        this.setPayrollWarningsFromResults(results);
 
         const rows: WarehouseSummaryRow[] = ok.map((r: any) => {
           const drivers = r.dto?.drivers ?? r.dto?.Drivers ?? [];
@@ -388,6 +391,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
             : null;
         this.summaryLoaded = true;
         this.periodId = rows.length === 1 ? rows[0].periodId : null;
+        this.loadPayrollInsights(this.periodId);
         this.buildCharts(rows);
 
         if (!rows.length) this.toast.info('No hay datos para el rango seleccionado.');
@@ -455,25 +459,27 @@ export class PayrollComponent implements OnInit, AfterViewInit {
   // Acciones por fila
   viewWarehouseDrivers(row: WarehouseSummaryRow): void {
     const data = {
-      companyId: this.form.value.companyId!,
-      periodId: row.periodId,
-      warehouseId: row.warehouseId,
-      zoneId: this.form.value.zoneId ?? null,
-      userId: this.userActive.id,
-      title: `Drivers · ${row.warehouseName || ('Warehouse ' + row.warehouseId)}`
-    };
+  companyId: this.form.value.companyId!,
+  periodId: row.periodId,
+  warehouseId: row.warehouseId,
+  zoneId: this.form.value.zoneId ?? null,
+  userId: this.userActive.id,
+  title: `Drivers · ${row.warehouseName || ('Warehouse ' + row.warehouseId)}`,
+
+  driversWhoStoppedWorking: this.payrollWarnings.driversWhoStoppedWorking
+    .filter((x: any) => Number(x.warehouseId) === Number(row.warehouseId))
+};
 
     this.dialog.open(PayrollDriversComponent, {
-      data,
-      width: '1100px',
-      maxWidth: '95vw',
-      height: '85vh',
-      autoFocus: false,
-      restoreFocus: false
-    }).afterClosed().subscribe(() => {
-      // opcional: refrescar summary por almacén si aprobaste/cambiaste algo
-      // this.loadWarehousesSummary();
-    });
+  data,
+  width: '1150px',
+  maxWidth: '96vw',
+  height: '88vh',
+  maxHeight: '88vh',
+  panelClass: 'payroll-drivers-dialog',
+  autoFocus: false,
+  restoreFocus: false
+});
   }
 
   lockWarehousePeriod(row: WarehouseSummaryRow): void {
@@ -702,6 +708,15 @@ export class PayrollComponent implements OnInit, AfterViewInit {
       restoreFocus: false
     });
   }
+  getWarehouseName(id: number): string {
+  const wh = this.warehouses.find(w => w.id === id);
+
+  if (!wh) {
+    return `Warehouse ${id}`;
+  }
+
+  return wh.name || `${wh.company} - ${wh.city}`;
+}
 
   searchExistingWarehousesSummary(): void {
     const companyId = this.userActive.companyId;
@@ -792,6 +807,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
           this.payrollErrors = failed;
 
           const ok = (results || []).filter(r => r && r.dto && !r.error);
+          this.setPayrollWarningsFromResults(results);
 
           const rows: WarehouseSummaryRow[] = ok.map((r: any) => {
             const drivers = r.dto?.drivers ?? r.dto?.Drivers ?? [];
@@ -847,7 +863,7 @@ export class PayrollComponent implements OnInit, AfterViewInit {
 
           this.summaryLoaded = rows.length > 0;
           this.periodId = rows.length === 1 ? rows[0].periodId : null;
-
+          this.loadPayrollInsights(this.periodId);
           this.buildCharts(rows);
         },
         error: () => {
@@ -866,6 +882,96 @@ export class PayrollComponent implements OnInit, AfterViewInit {
     }
   }
 
+  private setPayrollWarningsFromResults(results: any[]): void {
+  const ok = (results || []).filter(r => r && r.dto && !r.error);
+
+  this.payrollWarnings = {
+    usersWithOutRate: ok.flatMap(r =>
+      (r.dto?.usersWithOutRate ?? r.dto?.UsersWithOutRate ?? []).map((x: any) => ({
+        ...x,
+        warehouseId: r.wh?.id,
+        warehouseName:
+          r.wh?.name ||
+          [r.wh?.company, r.wh?.city].filter(Boolean).join(' - ') ||
+          `Warehouse ${r.wh?.id}`
+      }))
+    ),
+
+    driversWhoStoppedWorking: ok.flatMap(r =>
+      (r.dto?.driversWhoStoppedWorking ?? r.dto?.DriversWhoStoppedWorking ?? []).map((x: any) => ({
+        ...x,
+        warehouseId: r.wh?.id,
+        warehouseName:
+          r.wh?.name ||
+          [r.wh?.company, r.wh?.city].filter(Boolean).join(' - ') ||
+          `Warehouse ${r.wh?.id}`
+      }))
+    ),
+
+    roleExceptionByWarehouse: ok.flatMap(r =>
+      r.dto?.roleExceptionByWarehouse ?? r.dto?.RoleExceptionByWarehouse ?? []
+    )
+  };
+}
+private loadPayrollInsights(periodId: number | null): void {
+  if (!periodId) {
+    this.payrollInsights = null;
+    this.driverSeniorityChart = null;
+    return;
+  }
+
+  this.api.getPayrollInsights(periodId).subscribe({
+    next: (res) => {
+      this.payrollInsights = res;
+      this.buildDriverSeniorityChart(res);
+    },
+    error: (err) => {
+      console.error('Error loading payroll insights', err);
+      this.payrollInsights = null;
+      this.driverSeniorityChart = null;
+    }
+  });
+}
+private buildDriverSeniorityChart(insights: PayrollInsightsDto): void {
+  const s = insights.seniority;
+
+  this.driverSeniorityChart = {
+    series: [
+      s?.weeks0To2 ?? 0,
+      s?.weeks3To8 ?? 0,
+      s?.months2To6 ?? 0,
+      s?.months6Plus ?? 0
+    ],
+    chart: {
+      type: 'donut',
+      height: 290
+    },
+    labels: [
+      '0-2 weeks',
+      '3-8 weeks',
+      '2-6 months',
+      '6+ months'
+    ],
+    legend: {
+      position: 'bottom'
+    },
+    dataLabels: {
+      enabled: true
+    },
+    tooltip: {
+      y: {
+        formatter: (val: number) => `${val} driver(s)`
+      }
+    }
+  };
+}
+get isAllWarehousesView(): boolean {
+  return !this.selectedWarehouseId;
+}
+
+get isSingleWarehouseView(): boolean {
+  return !!this.selectedWarehouseId;
+}
 
   displayedColumnsWeekly = [
     'period',

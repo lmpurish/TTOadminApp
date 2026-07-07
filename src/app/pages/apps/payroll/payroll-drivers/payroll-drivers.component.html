@@ -1,107 +1,168 @@
-<mat-card class="cardWithShadow">
-    <mat-card-content>
-        <div class="header-row">
+<div class="payroll-driver-modal">
+
+  <!-- Header -->
+  <div class="modal-header">
+    <div>
+      <h2>Payroll by Driver</h2>
+      <p>Period: {{ startDateYmd }} → {{ endDateYmd }}</p>
+    </div>
+
+    <button mat-icon-button mat-dialog-close>
+      <i-tabler name="x" class="icon-20"></i-tabler>
+    </button>
+  </div>
+
+  <!-- Summary -->
+  <div class="modal-summary">
+    <div class="summary-card">
+      <span>Total Net</span>
+      <strong>{{ totalNet | currency }}</strong>
+    </div>
+
+    <div class="summary-card">
+      <span>Drivers</span>
+      <strong>{{ dataSource.data.length }}</strong>
+    </div>
+
+    <div class="summary-card warning">
+      <span>Warnings</span>
+      <strong>
+        {{ warningDriversCount }}
+      </strong>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="modal-toolbar">
+    <mat-form-field appearance="outline" class="filter-field">
+      <mat-label>Search driver</mat-label>
+      <input matInput [formControl]="filterCtrl" placeholder="Search by name or ID" />
+      <mat-icon matSuffix>search</mat-icon>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" (click)="exportWarehouseReport()">
+      <i-tabler name="file-download" class="icon-18 m-r-8"></i-tabler>
+      Export Warehouse PDF
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="modal-table-wrap">
+    <table mat-table [dataSource]="dataSource" class="w-100 driver-payroll-table" matSort>
+
+      <ng-container matColumnDef="driver">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Driver</th>
+
+        <td mat-cell *matCellDef="let row">
+          <div class="driver-cell">
+            <img src="assets/default-user.png" class="driver-avatar" />
+
             <div>
-                <h3 class="m-0">Payroll por Driver</h3>
-                <small class="text-muted">Periodo: {{ startDateYmd }} → {{ endDateYmd }}</small>
+              <div class="driver-name">
+                {{ row.driverName }}
+
+                <span
+                  *ngIf="row.hasStoppedWarning"
+                  class="driver-warning-pill"
+                  [ngClass]="{
+                    'warning': row.daysSinceLastRoute < 3,
+                    'danger': row.daysSinceLastRoute >= 3
+                  }">
+                  {{ row.daysSinceLastRoute }} day(s)
+                </span>
+              </div>
+
+              <small *ngIf="!row.hasStoppedWarning">
+                Driver ID: {{ row.driverId }}
+              </small>
+
+              <small *ngIf="row.hasStoppedWarning" class="driver-warning-text">
+                Last route: {{ row.lastRouteDate | date:'MM/dd/yyyy' }}
+              </small>
             </div>
+          </div>
+        </td>
+      </ng-container>
 
-            <div class="actions">
-                <mat-form-field appearance="outline" class="filter-field">
-                    <mat-label>Search driver</mat-label>
-                    <input matInput [formControl]="filterCtrl" placeholder="Por ID de driver" />
-                    <mat-icon matSuffix>search</mat-icon>
-                </mat-form-field>
+      <ng-container matColumnDef="gross">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-h">Gross</th>
+        <td mat-cell *matCellDef="let row" class="num">{{ row.gross | currency }}</td>
+      </ng-container>
 
-                <button mat-raised-button color="primary" (click)="exportWarehouseReport()">
-                    <i-tabler name="file-download" class="icon-18 m-r-8"></i-tabler>
-                    Export Warehouse PDF
-                </button>
-            </div>
-        </div>
+      <ng-container matColumnDef="adjustments">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-h">Adjustments</th>
+        <td mat-cell *matCellDef="let row" class="num text-warn">
+          {{ row.adjustments | currency }}
+        </td>
+      </ng-container>
 
-        <div class="table-responsive">
-            <table mat-table [dataSource]="dataSource" class="w-100 fixed-table" matSort>
+      <ng-container matColumnDef="net">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-h">Net</th>
+        <td mat-cell *matCellDef="let row" class="num f-w-700">
+          <span [ngClass]="{'text-success': row.net >= 0, 'text-warn': row.net < 0}">
+            {{ row.net | currency }}
+          </span>
+        </td>
+      </ng-container>
 
-                <colgroup>
-                    <col class="col-driver">
-                    <col class="col-number">
-                    <col class="col-number">
-                    <col class="col-number">
-                    <col class="col-action">
-                </colgroup>
+      <ng-container matColumnDef="action">
+        <th mat-header-cell *matHeaderCellDef class="text-center">Actions</th>
 
-                <!-- DRIVER -->
-                <ng-container matColumnDef="driver">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Driver</th>
-                    <td mat-cell *matCellDef="let row">
-                        <div class="d-flex align-items-center gap-16">
-                            <img src="assets/default-user.png" width="36" class="rounded-circle" />
-                            <div>
-                                <div class="f-w-600">{{ row.driverName }}</div>
-                                <!-- Si quieres, aquí puedes interpolar nombre real del empleado -->
-                            </div>
-                        </div>
-                    </td>
-                </ng-container>
+        <td mat-cell *matCellDef="let row" class="text-center">
+          <div class="row-actions">
+            <button mat-icon-button (click)="viewRun(row)" matTooltip="View detail">
+              <i-tabler name="eye" class="icon-18"></i-tabler>
+            </button>
 
-                <!-- GROSS -->
-                <ng-container matColumnDef="gross">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-h">Gross</th>
-                    <td mat-cell *matCellDef="let row" class="num">{{ row.gross | currency }}</td>
-                </ng-container>
+            <button
+              mat-icon-button
+              (click)="approve(row)"
+              matTooltip="Approve run"
+              [disabled]="row.status === 'Approved'">
+              <i-tabler
+                [name]="row.status === 'Approved' ? 'circle-check' : 'check'"
+                [class.text-success]="row.status === 'Approved'"
+                class="icon-18">
+              </i-tabler>
+            </button>
 
-                <!-- ADJUSTMENTS -->
-                <ng-container matColumnDef="adjustments">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-h">Adjustments</th>
-                    <td mat-cell *matCellDef="let row" class="num">{{ row.adjustments | currency }}</td>
-                </ng-container>
+            <button
+              mat-icon-button
+              color="accent"
+              (click)="openAdjustmentDialog(row)"
+              matTooltip="Add adjustment">
+              <i-tabler name="receipt-2" class="icon-18"></i-tabler>
+            </button>
 
-                <!-- NET -->
-                <ng-container matColumnDef="net">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-h">Net</th>
-                    <td mat-cell *matCellDef="let row" class="num">
-                        <span [ngClass]="{'text-success': row.net >= 0, 'text-warn': row.net < 0}">
-                            {{ row.net | currency }}
-                        </span>
-                    </td>
-                </ng-container>
+            <button mat-icon-button (click)="exportRun(row)" matTooltip="Export PDF">
+              <i-tabler name="file-download" class="icon-18"></i-tabler>
+            </button>
+          </div>
+        </td>
+      </ng-container>
 
-                <!-- ACTION -->
-                <ng-container matColumnDef="action">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header class="num-h">Action</th>
-                    <td mat-cell *matCellDef="let row" class="text-center">
-                        <button mat-icon-button (click)="viewRun(row)" matTooltip="Ver detalle">
-                            <i-tabler name="eye" class="icon-18"></i-tabler>
-                        </button>
-                        <button mat-icon-button (click)="approve(row)" matTooltip="Aprobar run"
-                            [disabled]="row.status === 'Approved'">
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr
+        mat-row
+        *matRowDef="let row; columns: displayedColumns"
+        [ngClass]="{ 'warning-row': row.hasStoppedWarning }">
+      </tr>
 
-                            <i-tabler [name]="row.status === 'Approved' ? 'circle-check' : 'check'"
-                                [class.text-success]="row.status === 'Approved'" class="icon-18">
-                            </i-tabler>
+    </table>
+  </div>
 
-                        </button>
-                        <button mat-icon-button color="accent" (click)="openAdjustmentDialog(row)"
-                            matTooltip="Add adjustment">
-                            <i-tabler name="receipt-2" class="icon-18"></i-tabler>
-                        </button>
-                        <button mat-icon-button (click)="exportRun(row)" matTooltip="Exportar PDF">
-                            <i-tabler name="file-download" class="icon-18"></i-tabler>
-                        </button>
+  <!-- Footer -->
+  <div class="modal-footer">
+    <div>
+      <span>Total Net</span>
+      <strong>{{ totalNet | currency }}</strong>
+    </div>
 
-                    </td>
-                </ng-container>
+    <mat-paginator
+      [pageSizeOptions]="[5,10,20,50]"
+      [pageSize]="10"
+      showFirstLastButtons>
+    </mat-paginator>
+  </div>
 
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-            </table>
-
-            <div class="text-right f-w-600 m-t-12">
-                Total Net: {{ totalNet | currency }}
-            </div>
-
-            <mat-paginator [pageSizeOptions]="[5,10,20,50]" [pageSize]="10" showFirstLastButtons></mat-paginator>
-        </div>
-    </mat-card-content>
-</mat-card>
+</div>

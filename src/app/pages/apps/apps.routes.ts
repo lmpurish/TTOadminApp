@@ -35,10 +35,10 @@ export const AppsRoutes: Routes = [
 
         data: {
           role: ['Admin', 'Manager'],
-          title: 'Employees',
+          title: 'Contractors ',
           urls: [
             { title: 'Dashboard', url: '/dashboards/dashboard1' },
-            { title: 'Employee' },
+            { title: 'Contractors' },
           ],
         },
       },
@@ -74,7 +74,7 @@ export const AppsRoutes: Routes = [
 
         data: {
           role: ['Admin', 'Assistant'],
-          title: 'Payroll',
+          title: 'Payroll Summary',
           urls: [
             { title: 'Dashboard', url: '/dashboards/dashboard1' },
             { title: 'Payroll' },

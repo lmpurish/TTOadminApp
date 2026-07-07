@@ -11,6 +11,7 @@ import {
   PayRunDto,
   PeriodSummaryDto,
   PayPeriod,
+  PayrollInsightsDto,
 } from 'src/app/models/payroll.models';
 import { RateType, UserRate } from '../pages/apps/user-rate/user-rate';
 import { PayrollConf } from '../pages/apps/payroll/payroll-conf/payrollConf';
@@ -195,4 +196,9 @@ export class PayrollService {
     return this.http.get<any>(`${this.base}/my-paid-monthly`, { params });
   }
 
+  getPayrollInsights(periodId: number) {
+  return this.http.get<PayrollInsightsDto>(
+    `${this.base}/periods/${periodId}/insights`
+  );
+}
 }
