@@ -1,3 +1,4 @@
+
 <h2 mat-dialog-title>
   Route Details
 </h2>
@@ -8,32 +9,44 @@
 
     <div class="card">
       <span>Route</span>
-      <strong>{{ data.route?.routeCode || data.route?.RouteCode || '-' }}</strong>
+      <strong>
+        {{ data.route?.routeCode || data.route?.RouteCode || '-' }}
+      </strong>
     </div>
 
     <div class="card">
       <span>Date</span>
-      <strong>{{ data.route?.date || data.route?.Date }}</strong>
+      <strong>
+        {{ data.route?.date || data.route?.Date | date:'MM/dd/yyyy' }}
+      </strong>
     </div>
 
     <div class="card">
       <span>Stops</span>
-      <strong>{{ data.route?.deliveryStops || data.route?.DeliveryStops || 0 }}</strong>
+      <strong>
+        {{ data.route?.deliveryStops ?? data.route?.DeliveryStops ?? 0 }}
+      </strong>
     </div>
 
     <div class="card">
       <span>Volume</span>
-      <strong>{{ data.route?.volumen || data.route?.Volumen || 0 }}</strong>
+      <strong>
+        {{ data.route?.volumen ?? data.route?.Volumen ?? 0 }}
+      </strong>
     </div>
 
     <div class="card">
       <span>Attempts</span>
-      <strong>{{ data.route?.attempts || data.route?.Attempts || 0 }}</strong>
+      <strong>
+        {{ data.route?.attempts ?? data.route?.Attempts ?? 0 }}
+      </strong>
     </div>
 
     <div class="card">
       <span>CNL</span>
-      <strong>{{ data.route?.cnl || data.route?.CNL || 0 }}</strong>
+      <strong>
+        {{ data.route?.cnl ?? data.route?.CNL ?? 0 }}
+      </strong>
     </div>
 
   </div>
@@ -43,26 +56,37 @@
     <div class="card">
       <span>Zone</span>
       <strong>
-        {{ data.route?.zone?.zoneCode || data.route?.Zone?.ZoneCode || '-' }}
+        {{
+          data.route?.zone?.zoneCode ||
+          data.route?.Zone?.ZoneCode ||
+          '-'
+        }}
       </strong>
     </div>
 
     <div class="card">
       <span>Warehouse</span>
       <strong>
-        {{ data.route?.warehouse?.name || data.route?.Warehouse?.Name || '-' }}
+        {{
+          data.route?.warehouse?.name ||
+          data.route?.Warehouse?.Name ||
+          '-'
+        }}
       </strong>
     </div>
 
     <div class="card">
       <span>Packages</span>
-      <strong>{{ data.packages?.length || 0 }}</strong>
+      <strong>
+        {{ data.packages?.length || 0 }}
+      </strong>
     </div>
 
   </div>
 
   <div class="package-count">
     <h4>Package List</h4>
+
     <span class="badge">
       {{ data.packages?.length || 0 }}
     </span>
@@ -91,65 +115,64 @@
 
           <tr *ngFor="let pkg of data.packages">
 
-            <td>
+            <td data-label="Tracking">
               <strong>
-                {{ pkg.tracking || pkg.Tracking }}
+                {{ pkg.tracking || pkg.Tracking || '-' }}
               </strong>
             </td>
 
-            <td>
+            <td data-label="Status">
 
-              <span *ngIf="(pkg.status || pkg.Status) === 'Delivered'" class="status-delivered">
-
+              <span
+                *ngIf="(pkg.status || pkg.Status) === 'Delivered'"
+                class="status-delivered">
                 Delivered
-
               </span>
 
-              <span *ngIf="(pkg.status || pkg.Status) === 'Attempt'" class="status-attempt">
-
+              <span
+                *ngIf="(pkg.status || pkg.Status) === 'Attempt'"
+                class="status-attempt">
                 Attempt
-
               </span>
 
-              <span *ngIf="(pkg.status || pkg.Status) === 'CNL'" class="status-cnl">
-
+              <span
+                *ngIf="(pkg.status || pkg.Status) === 'CNL'"
+                class="status-cnl">
                 CNL
-
               </span>
 
-              <span *ngIf="
+              <span
+                *ngIf="
                   (pkg.status || pkg.Status) !== 'Delivered' &&
                   (pkg.status || pkg.Status) !== 'Attempt' &&
                   (pkg.status || pkg.Status) !== 'CNL'
                 ">
-
-                {{ pkg.status || pkg.Status }}
-
+                {{ pkg.status || pkg.Status || '-' }}
               </span>
 
             </td>
 
-            <td>
-              {{ pkg.address || pkg.Address }}
+            <td data-label="Address">
+              {{ pkg.address || pkg.Address || '-' }}
             </td>
 
-            <td>
-              {{ pkg.city || pkg.City }}
+            <td data-label="City">
+              {{ pkg.city || pkg.City || '-' }}
             </td>
 
-            <td>
-              {{ pkg.state || pkg.State }}
+            <td data-label="State">
+              {{ pkg.state || pkg.State || '-' }}
             </td>
 
-            <td>
-              {{ pkg.zipCode || pkg.ZipCode }}
+            <td data-label="Zip">
+              {{ pkg.zipCode || pkg.ZipCode || '-' }}
             </td>
 
-            <td>
-              {{ pkg.weight || pkg.Weight || '-' }}
+            <td data-label="Weight">
+              {{ pkg.weight ?? pkg.Weight ?? '-' }}
             </td>
 
-            <td>
+            <td data-label="RSP">
               {{ pkg.rsp || pkg.RSP || '-' }}
             </td>
 
@@ -166,13 +189,11 @@
   <ng-template #noPackages>
 
     <div class="empty-state">
-
       <h3>No packages found</h3>
 
       <p>
         No package information was returned for this route.
       </p>
-
     </div>
 
   </ng-template>
@@ -181,10 +202,11 @@
 
 <mat-dialog-actions align="end">
 
-  <button mat-raised-button color="primary" mat-dialog-close>
-
+  <button
+    mat-raised-button
+    color="primary"
+    mat-dialog-close>
     Close
-
   </button>
 
 </mat-dialog-actions>

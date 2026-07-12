@@ -1,7 +1,7 @@
 <div class="driver-payroll-dashboard">
 
   <div class="loading-overlay" *ngIf="loading">
-    <mat-spinner></mat-spinner>
+    <mat-spinner diameter="42"></mat-spinner>
   </div>
 
   <div class="page-header">
@@ -10,7 +10,7 @@
       <p>Payments already processed and collected</p>
     </div>
 
-    <button class="btn-primary">
+    <button type="button" class="btn-primary">
       <i-tabler name="download" class="icon-18"></i-tabler>
       Download Statement
     </button>
@@ -22,39 +22,54 @@
       <div class="kpi-icon green">
         <i-tabler name="cash" class="icon-20"></i-tabler>
       </div>
-      <p>Total collected</p>
-      <h2>{{ totalCollected | currency:'USD':'symbol':'1.0-0' }}</h2>
-      <span class="positive">Paid payrolls</span>
+
+      <div class="kpi-content">
+        <p>Total collected</p>
+        <h2>{{ totalCollected | currency:'USD':'symbol':'1.0-0' }}</h2>
+        <span class="positive">Paid payrolls</span>
+      </div>
     </div>
 
     <div class="kpi-card">
       <div class="kpi-icon blue">
         <i-tabler name="calendar-dollar" class="icon-20"></i-tabler>
       </div>
-      <p>Last payment</p>
-      <h2>{{ lastPayment?.netAmount || 0 | currency:'USD':'symbol':'1.0-0' }}</h2>
-      <span>
-        {{ lastPayment?.startDate | date:'MMM d' }} -
-        {{ lastPayment?.endDate | date:'MMM d' }}
-      </span>
+
+      <div class="kpi-content">
+        <p>Last payment</p>
+        <h2>
+          {{ (lastPayment?.netAmount || 0) | currency:'USD':'symbol':'1.0-0' }}
+        </h2>
+
+        <span>
+          {{ lastPayment?.startDate | date:'MMM d' }} -
+          {{ lastPayment?.endDate | date:'MMM d' }}
+        </span>
+      </div>
     </div>
 
     <div class="kpi-card">
       <div class="kpi-icon orange">
         <i-tabler name="receipt-tax" class="icon-20"></i-tabler>
       </div>
-      <p>Total deductions</p>
-      <h2>{{ totalDeductions | currency:'USD':'symbol':'1.0-0' }}</h2>
-      <span class="negative">Loans / fines / adjustments</span>
+
+      <div class="kpi-content">
+        <p>Total deductions</p>
+        <h2>{{ totalDeductions | currency:'USD':'symbol':'1.0-0' }}</h2>
+        <span class="negative">Loans / fines / adjustments</span>
+      </div>
     </div>
 
     <div class="kpi-card">
       <div class="kpi-icon purple">
         <i-tabler name="checks" class="icon-20"></i-tabler>
       </div>
-      <p>Paid periods</p>
-      <h2>{{ paidPeriods }}</h2>
-      <span class="positive">Completed payments</span>
+
+      <div class="kpi-content">
+        <p>Paid periods</p>
+        <h2>{{ paidPeriods }}</h2>
+        <span class="positive">Completed payments</span>
+      </div>
     </div>
 
   </div>
@@ -62,19 +77,23 @@
   <div class="dashboard-grid">
 
     <div class="dashboard-card large-card">
+
       <div class="card-header">
         <div>
           <h3>Last collected payroll</h3>
           <p>Your most recent paid period</p>
         </div>
 
-        <span class="status-badge paid" *ngIf="lastPayment">Paid</span>
+        <span class="status-badge paid" *ngIf="lastPayment">
+          Paid
+        </span>
       </div>
 
       <ng-container *ngIf="lastPayment; else noLastPayment">
 
         <div class="payroll-summary">
-          <div>
+
+          <div class="summary-item">
             <span>Period</span>
             <strong>
               {{ lastPayment.startDate | date:'MMM d' }} -
@@ -82,41 +101,46 @@
             </strong>
           </div>
 
-          <div>
+          <div class="summary-item">
             <span>Payment date</span>
             <strong>{{ lastPayment.paidDate | date:'MMM d, y' }}</strong>
           </div>
 
-          <div>
+          <div class="summary-item">
             <span>Status</span>
             <strong>{{ lastPayment.status }}</strong>
           </div>
 
-          <div>
+          <div class="summary-item">
             <span>PayRun ID</span>
             <strong>#{{ lastPayment.payRunId }}</strong>
           </div>
+
         </div>
 
         <div class="money-breakdown">
-          <div>
+
+          <div class="money-item">
             <span>Gross pay</span>
-            <strong>{{ lastPayment.grossAmount | currency:'USD':'symbol':'1.0-0' }}</strong>
+            <strong>
+              {{ lastPayment.grossAmount | currency:'USD':'symbol':'1.0-0' }}
+            </strong>
           </div>
 
-          <div>
+          <div class="money-item">
             <span>Deductions</span>
             <strong class="danger-text">
               -{{ lastPayment.adjustments | currency:'USD':'symbol':'1.0-0' }}
             </strong>
           </div>
 
-          <div>
+          <div class="money-item">
             <span>Net paid</span>
             <strong class="success-text">
               {{ lastPayment.netAmount | currency:'USD':'symbol':'1.0-0' }}
             </strong>
           </div>
+
         </div>
 
         <div class="progress-section">
@@ -131,15 +155,23 @@
         </div>
 
         <div class="action-row">
-          <button class="btn-primary" (click)="viewDetails(lastPayment.payRunId)">
+
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="viewDetails(lastPayment.payRunId)">
             <i-tabler name="eye" class="icon-18"></i-tabler>
             View Details
           </button>
 
-          <button class="btn-outline" (click)="downloadReceipt(lastPayment.payRunId)">
+          <button
+            type="button"
+            class="btn-outline"
+            (click)="downloadReceipt(lastPayment.payRunId)">
             <i-tabler name="file-invoice" class="icon-18"></i-tabler>
             Download Receipt
           </button>
+
         </div>
 
       </ng-container>
@@ -151,9 +183,11 @@
           <p>You don't have approved payroll payments yet.</p>
         </div>
       </ng-template>
+
     </div>
 
     <div class="dashboard-card">
+
       <div class="card-header">
         <div>
           <h3>Payment summary</h3>
@@ -173,25 +207,28 @@
       </div>
 
       <div class="payment-list">
-        <div>
+
+        <div class="payment-item">
           <span>Total gross</span>
           <strong>{{ totalGross | currency:'USD':'symbol':'1.0-0' }}</strong>
         </div>
 
-        <div>
+        <div class="payment-item">
           <span>Total deductions</span>
           <strong class="danger-text">
             -{{ totalDeductions | currency:'USD':'symbol':'1.0-0' }}
           </strong>
         </div>
 
-        <div>
+        <div class="payment-item">
           <span>Total net paid</span>
           <strong class="success-text">
             {{ totalCollected | currency:'USD':'symbol':'1.0-0' }}
           </strong>
         </div>
+
       </div>
+
     </div>
 
   </div>
@@ -199,6 +236,7 @@
   <div class="dashboard-grid">
 
     <div class="dashboard-card">
+
       <div class="card-header">
         <div>
           <h3>Collected by month</h3>
@@ -211,19 +249,31 @@
         <h2>{{ monthlyTotal | currency:'USD':'symbol':'1.0-0' }}</h2>
       </div>
 
-      <div class="earning-list" *ngIf="monthlyPayments.length > 0; else noMonthly">
-        <div *ngFor="let payment of monthlyPayments; let i = index">
+      <div
+        class="earning-list"
+        *ngIf="monthlyPayments.length > 0; else noMonthly">
+
+        <div
+          class="earning-item"
+          *ngFor="let payment of monthlyPayments; let i = index">
           <span>Payment {{ i + 1 }}</span>
-          <strong>{{ payment.netAmount | currency:'USD':'symbol':'1.0-0' }}</strong>
+          <strong>
+            {{ payment.netAmount | currency:'USD':'symbol':'1.0-0' }}
+          </strong>
         </div>
+
       </div>
 
       <ng-template #noMonthly>
-        <div class="empty-small">No payments this month.</div>
+        <div class="empty-small">
+          No payments this month.
+        </div>
       </ng-template>
+
     </div>
 
     <div class="dashboard-card">
+
       <div class="card-header">
         <div>
           <h3>Deductions summary</h3>
@@ -236,29 +286,49 @@
         <div class="deduction-item">
           <div>
             <span>Total deductions</span>
-            <strong>{{ totalDeductions | currency:'USD':'symbol':'1.0-0' }}</strong>
+            <strong>
+              {{ totalDeductions | currency:'USD':'symbol':'1.0-0' }}
+            </strong>
           </div>
+
           <div class="progress-bar danger">
-            <div [style.width.%]="totalGross > 0 ? (totalDeductions / totalGross) * 100 : 0"></div>
+            <div
+              [style.width.%]="
+                totalGross > 0
+                  ? (totalDeductions / totalGross) * 100
+                  : 0
+              ">
+            </div>
           </div>
         </div>
 
         <div class="deduction-item">
           <div>
             <span>Net collected</span>
-            <strong>{{ totalCollected | currency:'USD':'symbol':'1.0-0' }}</strong>
+            <strong>
+              {{ totalCollected | currency:'USD':'symbol':'1.0-0' }}
+            </strong>
           </div>
+
           <div class="progress-bar">
-            <div [style.width.%]="totalGross > 0 ? (totalCollected / totalGross) * 100 : 0"></div>
+            <div
+              [style.width.%]="
+                totalGross > 0
+                  ? (totalCollected / totalGross) * 100
+                  : 0
+              ">
+            </div>
           </div>
         </div>
 
       </div>
+
     </div>
 
   </div>
 
   <div class="dashboard-card table-card">
+
     <div class="card-header">
       <div>
         <h3>Payroll history</h3>
@@ -267,7 +337,9 @@
     </div>
 
     <div class="table-wrapper">
+
       <table>
+
         <thead>
           <tr>
             <th>Period</th>
@@ -279,54 +351,88 @@
             <th>Net paid</th>
             <th>Status</th>
             <th>Receipt</th>
-           
           </tr>
         </thead>
 
         <tbody>
+
           <tr *ngFor="let item of history">
-            <td>
+
+            <td data-label="Period">
               {{ item.startDate | date:'MMM d' }} -
               {{ item.endDate | date:'MMM d' }}
             </td>
 
-            <td>{{ item.paidDate | date:'MMM d, y' }}</td>
-            <td>{{ item.routes }}</td>
-            <td>{{ item.stops }}</td>
-            <td>{{ item.grossAmount | currency:'USD':'symbol':'1.0-0' }}</td>
+            <td data-label="Paid date">
+              {{ item.paidDate | date:'MMM d, y' }}
+            </td>
 
-            <td class="danger-text">
+            <td data-label="Routes">
+              {{ item.routes }}
+            </td>
+
+            <td data-label="Stops">
+              {{ item.stops }}
+            </td>
+
+            <td data-label="Gross">
+              {{ item.grossAmount | currency:'USD':'symbol':'1.0-0' }}
+            </td>
+
+            <td data-label="Deductions" class="danger-text">
               -{{ item.adjustments | currency:'USD':'symbol':'1.0-0' }}
             </td>
 
-            <td>
-              <strong>{{ item.netAmount | currency:'USD':'symbol':'1.0-0' }}</strong>
+            <td data-label="Net paid">
+              <strong>
+                {{ item.netAmount | currency:'USD':'symbol':'1.0-0' }}
+              </strong>
             </td>
 
-            <td>
-              <span class="status-badge paid">Paid</span>
+            <td data-label="Status">
+              <span class="status-badge paid">
+                Paid
+              </span>
             </td>
 
-            <td>
-          <button class="table-btn" (click)="viewDetails(item.payRunId)">
-            <i-tabler name="eye" class="icon-16"></i-tabler>
-          </button>
+            <td data-label="Receipt">
+              <div class="table-actions">
 
-          <button class="table-btn" (click)="downloadReceipt(item.payRunId)">
-            <i-tabler name="download" class="icon-16"></i-tabler>
-          </button>
-        </td>
+                <button
+                  type="button"
+                  class="table-btn"
+                  aria-label="View payroll details"
+                  (click)="viewDetails(item.payRunId)">
+                  <i-tabler name="eye" class="icon-16"></i-tabler>
+                </button>
+
+                <button
+                  type="button"
+                  class="table-btn"
+                  aria-label="Download payroll receipt"
+                  (click)="downloadReceipt(item.payRunId)">
+                  <i-tabler name="download" class="icon-16"></i-tabler>
+                </button>
+
+              </div>
+            </td>
+
           </tr>
 
-          <tr *ngIf="history.length === 0 && !loading">
+          <tr class="empty-table-row" *ngIf="history.length === 0 && !loading">
             <td colspan="9">
-              <div class="empty-small">No paid payroll history found.</div>
+              <div class="empty-small">
+                No paid payroll history found.
+              </div>
             </td>
           </tr>
 
         </tbody>
+
       </table>
+
     </div>
+
   </div>
 
 </div>

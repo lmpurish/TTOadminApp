@@ -1,6 +1,7 @@
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSpinner } from '@angular/material/progress-spinner';
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { DriverDashboardService } from 'src/app/services/driver-dashboard.service';
 
@@ -12,7 +13,9 @@ import { DriverDashboardService } from 'src/app/services/driver-dashboard.servic
     CommonModule,
     CurrencyPipe,
     DatePipe,
-    TablerIconsModule
+    TablerIconsModule,
+    MatSpinner,
+    MatDialogModule
 
   ],
   styleUrls: ['./driver-dashboard.component.scss']
@@ -210,7 +213,7 @@ export class DriverDashboardComponent implements OnInit {
     MatDialogModule
   ],
   templateUrl: './driver-dashboard-dialog.component.html',
-  styleUrls: ['./driver-dashboard.component.scss']
+  styleUrls: [ './driver-dashboard-dialog.component.scss']
 })
 export class RouteDetailsDialogComponent {
 

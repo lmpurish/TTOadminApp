@@ -1,14 +1,15 @@
 <div class="payroll-detail-page">
 
   <div class="loading-overlay" *ngIf="loading">
-    <mat-spinner></mat-spinner>
+    <mat-spinner diameter="42"></mat-spinner>
   </div>
 
   <ng-container *ngIf="payRun">
 
+    <!-- HEADER -->
     <div class="header-card">
 
-      <div>
+      <div class="header-content">
         <h2>Payroll #{{ payRun.payRunId }}</h2>
 
         <p>
@@ -37,7 +38,7 @@
       <div class="kpi-card">
         <span>Adjustments</span>
         <h2 class="danger">
-          -{{ payRun.adjustments | currency }}
+          {{ payRun.adjustments | currency }}
         </h2>
       </div>
 
@@ -58,7 +59,6 @@
     </div>
 
     <!-- SUMMARY -->
-
     <div class="summary-grid">
 
       <div class="summary-card">
@@ -84,7 +84,6 @@
     </div>
 
     <!-- PAYROLL LINES -->
-
     <mat-card class="table-card">
 
       <mat-card-header>
@@ -95,68 +94,109 @@
 
       <mat-card-content>
 
-        <table mat-table
-               [dataSource]="payRun.lines"
-               class="w-100">
+        <div class="table-wrapper">
 
-          <ng-container matColumnDef="routeDate">
-            <th mat-header-cell *matHeaderCellDef>Date</th>
-            <td mat-cell *matCellDef="let row">
-              {{ row.routeDate | date:'MM/dd/yyyy' }}
-            </td>
-          </ng-container>
+          <table
+            mat-table
+            [dataSource]="payRun.lines"
+            class="w-100 payroll-table">
 
-          <ng-container matColumnDef="sourceType">
-            <th mat-header-cell *matHeaderCellDef>Type</th>
-            <td mat-cell *matCellDef="let row">
-              {{ row.sourceType }}
-            </td>
-          </ng-container>
+            <ng-container matColumnDef="routeDate">
+              <th mat-header-cell *matHeaderCellDef>Date</th>
 
-          <ng-container matColumnDef="description">
-            <th mat-header-cell *matHeaderCellDef>Description</th>
-            <td mat-cell *matCellDef="let row">
-              {{ row.description }}
-            </td>
-          </ng-container>
+              <td
+                mat-cell
+                *matCellDef="let row"
+                data-label="Date">
+                {{ row.routeDate | date:'MM/dd/yyyy' }}
+              </td>
+            </ng-container>
 
-          <ng-container matColumnDef="qty">
-            <th mat-header-cell *matHeaderCellDef>Qty</th>
-            <td mat-cell *matCellDef="let row">
-              {{ row.qty }}
-            </td>
-          </ng-container>
+            <ng-container matColumnDef="sourceType">
+              <th mat-header-cell *matHeaderCellDef>Type</th>
 
-          <ng-container matColumnDef="rate">
-            <th mat-header-cell *matHeaderCellDef>Rate</th>
-            <td mat-cell *matCellDef="let row">
-              {{ row.rate | currency }}
-            </td>
-          </ng-container>
+              <td
+                mat-cell
+                *matCellDef="let row"
+                data-label="Type">
+                {{ row.sourceType }}
+              </td>
+            </ng-container>
 
-          <ng-container matColumnDef="amount">
-            <th mat-header-cell *matHeaderCellDef>Amount</th>
-            <td mat-cell *matCellDef="let row">
-              <strong>
-                {{ row.amount | currency }}
-              </strong>
-            </td>
-          </ng-container>
+            <ng-container matColumnDef="description">
+              <th mat-header-cell *matHeaderCellDef>Description</th>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              <td
+                mat-cell
+                *matCellDef="let row"
+                data-label="Description">
+                {{ row.description }}
+              </td>
+            </ng-container>
 
-        </table>
+            <ng-container matColumnDef="qty">
+              <th mat-header-cell *matHeaderCellDef>Qty</th>
+
+              <td
+                mat-cell
+                *matCellDef="let row"
+                data-label="Qty">
+                {{ row.qty }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="rate">
+              <th mat-header-cell *matHeaderCellDef>Rate</th>
+
+              <td
+                mat-cell
+                *matCellDef="let row"
+                data-label="Rate">
+                {{ row.rate | currency }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef>Amount</th>
+
+              <td
+                mat-cell
+                *matCellDef="let row"
+                data-label="Amount">
+                <strong>
+                  {{ row.amount | currency }}
+                </strong>
+              </td>
+            </ng-container>
+
+            <tr
+              mat-header-row
+              *matHeaderRowDef="displayedColumns">
+            </tr>
+
+            <tr
+              mat-row
+              *matRowDef="let row; columns: displayedColumns;">
+            </tr>
+
+          </table>
+
+        </div>
+
+        <div
+          class="empty-small"
+          *ngIf="!payRun.lines?.length">
+          No payroll details found.
+        </div>
 
       </mat-card-content>
 
     </mat-card>
 
     <!-- ADJUSTMENTS -->
-
     <mat-card
       *ngIf="payRun.adjustmentsList?.length"
-      class="table-card">
+      class="table-card adjustments-card">
 
       <mat-card-header>
         <mat-card-title>
@@ -166,22 +206,26 @@
 
       <mat-card-content>
 
-        <div
-          *ngFor="let adj of payRun.adjustmentsList"
-          class="adjustment-row">
+        <div class="adjustment-list">
 
-          <div>
-            <strong>
-              {{ adj.description }}
-            </strong>
+          <div
+            *ngFor="let adj of payRun.adjustmentsList"
+            class="adjustment-row">
 
-            <div>
-              {{ adj.createdAt | date:'MMM d, y' }}
+            <div class="adjustment-info">
+              <strong>
+                {{ adj.description }}
+              </strong>
+
+              <span>
+                {{ adj.createdAt | date:'MMM d, y' }}
+              </span>
             </div>
-          </div>
 
-          <div class="danger">
-            {{ adj.amount | currency }}
+            <div class="danger adjustment-amount">
+              {{ adj.amount | currency }}
+            </div>
+
           </div>
 
         </div>

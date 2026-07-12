@@ -1,0 +1,541 @@
+
+:host {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   DIALOG TITLE
+========================================================= */
+
+.mat-mdc-dialog-title {
+  margin: 0;
+  padding: 22px 24px 16px;
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+/* =========================================================
+   DIALOG CONTENT
+========================================================= */
+
+.mat-mdc-dialog-content {
+  width: 100%;
+  max-width: 100%;
+  max-height: 72vh;
+  padding: 22px 24px !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+/* =========================================================
+   ROUTE SUMMARY
+========================================================= */
+
+.route-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.route-summary .card {
+  min-width: 0;
+  padding: 16px 14px;
+  text-align: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.04);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.route-summary .card:hover {
+  transform: translateY(-2px);
+  border-color: #cbd5e1;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.route-summary .card span {
+  display: block;
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.route-summary .card strong {
+  display: block;
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+/* =========================================================
+   PACKAGE LIST HEADER
+========================================================= */
+
+.package-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 24px 0 14px;
+}
+
+.package-count h4 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.package-count .badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 30px;
+  padding: 0 11px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  background: #2563eb;
+  border-radius: 999px;
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.2);
+}
+
+/* =========================================================
+   TABLE CONTAINER
+========================================================= */
+
+.table-responsive {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+
+/* =========================================================
+   DESKTOP TABLE
+========================================================= */
+
+.table {
+  width: 100%;
+  min-width: 950px;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.table thead {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.table thead tr {
+  background: #0f172a;
+}
+
+.table thead th {
+  padding: 14px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  border: none;
+}
+
+.table tbody tr {
+  background: #ffffff;
+  transition: background-color 0.15s ease;
+}
+
+.table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.table tbody tr:hover {
+  background: #eff6ff;
+}
+
+.table tbody td {
+  padding: 13px 14px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  vertical-align: middle;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody td strong {
+  color: #1d4ed8;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   STATUS BADGES
+========================================================= */
+
+.status-delivered,
+.status-attempt,
+.status-cnl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+
+.status-delivered {
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+}
+
+.status-attempt {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+}
+
+.status-cnl {
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+}
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px;
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   DIALOG ACTIONS
+========================================================= */
+
+.mat-mdc-dialog-actions {
+  min-height: auto;
+  padding: 16px 24px 20px !important;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.mat-mdc-dialog-actions button {
+  min-width: 120px;
+  height: 42px;
+  border-radius: 10px !important;
+  font-weight: 700;
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+  .mat-mdc-dialog-title {
+    padding: 20px 20px 14px;
+    font-size: 21px;
+  }
+
+  .mat-mdc-dialog-content {
+    padding: 18px 20px !important;
+  }
+
+  .route-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .route-summary .card {
+    padding: 13px 10px;
+  }
+
+  .route-summary .card strong {
+    font-size: 17px;
+  }
+
+  .package-count {
+    margin-top: 20px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+  :host {
+    width: 100%;
+    height: 100%;
+  }
+
+  .mat-mdc-dialog-title {
+    padding: 17px 16px 12px;
+    font-size: 19px;
+  }
+
+  .mat-mdc-dialog-content {
+    max-height: calc(100dvh - 136px);
+    padding: 16px !important;
+    overflow-x: hidden;
+  }
+
+  /* Route summary in compact cards */
+  .route-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .route-summary .card {
+    min-height: 74px;
+    padding: 10px 6px;
+    border-radius: 10px;
+    box-shadow: none;
+  }
+
+  .route-summary .card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .route-summary .card span {
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+
+  .route-summary .card strong {
+    font-size: 14px;
+  }
+
+  .package-count {
+    margin: 20px 0 12px;
+  }
+
+  .package-count h4 {
+    font-size: 16px;
+  }
+
+  .package-count .badge {
+    min-width: 31px;
+    height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  /* Remove desktop table container appearance */
+  .table-responsive {
+    overflow: visible;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+  }
+
+  /* Convert table into cards */
+  .table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    display: grid;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .table tbody tr,
+  .table tbody tr:nth-child(even) {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  }
+
+  .table tbody tr:hover {
+    background: #ffffff;
+  }
+
+  .table tbody td {
+    display: grid;
+    grid-template-columns: minmax(88px, 36%) minmax(0, 64%);
+    align-items: start;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 13px;
+    color: #334155;
+    font-size: 13px;
+    text-align: right;
+    word-break: break-word;
+    border: none;
+    border-bottom: 1px solid #eef2f7;
+    box-sizing: border-box;
+  }
+
+  .table tbody td:last-child {
+    border-bottom: none;
+  }
+
+  .table tbody td::before {
+    content: attr(data-label);
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .table tbody td:first-child {
+    padding-top: 14px;
+    background: #f8fafc;
+  }
+
+  .table tbody td:last-child {
+    padding-bottom: 14px;
+  }
+
+  .table tbody td strong {
+    color: #1d4ed8;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .status-delivered,
+  .status-attempt,
+  .status-cnl {
+    justify-self: end;
+  }
+
+  .empty-state {
+    padding: 34px 18px;
+  }
+
+  .empty-state h3 {
+    font-size: 17px;
+  }
+
+  .empty-state p {
+    font-size: 13px;
+  }
+
+  .mat-mdc-dialog-actions {
+    padding: 12px 16px 16px !important;
+  }
+
+  .mat-mdc-dialog-actions button {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 390px) {
+  .route-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .route-summary .card {
+    min-height: 70px;
+  }
+
+  .table tbody td {
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 8px;
+    padding-inline: 11px;
+  }
+}
+
+/* =========================================================
+   CUSTOM SCROLLBAR
+========================================================= */
+
+.mat-mdc-dialog-content::-webkit-scrollbar,
+.table-responsive::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.mat-mdc-dialog-content::-webkit-scrollbar-track,
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.mat-mdc-dialog-content::-webkit-scrollbar-thumb,
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.mat-mdc-dialog-content::-webkit-scrollbar-thumb:hover,
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+

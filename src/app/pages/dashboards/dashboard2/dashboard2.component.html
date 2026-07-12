@@ -1,8 +1,15 @@
 <!-- DRIVER -->
-<ng-container *ngIf="isDriver; else normalContent">
+<ng-container *ngIf="isDriver; else companyOrNormal">
   <app-driver-dashboard></app-driver-dashboard>
 
 </ng-container>
+<ng-template #companyOrNormal>
+
+  <ng-container *ngIf="isCompanyOwner; else normalContent">
+    <app-owner-dashboard></app-owner-dashboard>
+  </ng-container>
+
+</ng-template>
 <ng-template #normalContent>
   <div class="dashboard-page">
 

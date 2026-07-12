@@ -1,0 +1,1217 @@
+<div class="owner-dashboard">
+
+  <!-- ===================================================== -->
+  <!-- HEADER -->
+  <!-- ===================================================== -->
+
+
+
+
+  <!-- ===================================================== -->
+  <!-- FILTER CARD -->
+  <!-- ===================================================== -->
+
+  <div class="dashboard-filter-card">
+
+    <div class="filter-top">
+
+      <p class="filter-description">
+        Review revenue, payroll, expenses and warehouse profitability.
+      </p>
+
+      <div class="top-actions">
+
+        <button
+          type="button"
+          class="outline-action-button"
+        >
+          <i-tabler name="building-warehouse"></i-tabler>
+
+          Manage Warehouses
+        </button>
+
+        <button
+          type="button"
+          class="outline-action-button"
+        >
+          <i-tabler name="settings"></i-tabler>
+
+          Financial Settings
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- QUICK PERIODS -->
+
+    <div class="quick-periods">
+
+      <button
+        type="button"
+        class="period-button"
+        [class.active]="selectedPeriod === 'currentWeek'"
+        (click)="selectPeriod('currentWeek')"
+      >
+        This Week
+      </button>
+
+      <button
+        type="button"
+        class="period-button"
+        [class.active]="selectedPeriod === 'lastWeek'"
+        (click)="selectPeriod('lastWeek')"
+      >
+        Last Week
+      </button>
+
+      <button
+        type="button"
+        class="period-button"
+        [class.active]="selectedPeriod === 'last4Weeks'"
+        (click)="selectPeriod('last4Weeks')"
+      >
+        Last 4 Weeks
+      </button>
+
+      <button
+        type="button"
+        class="period-button"
+        [class.active]="selectedPeriod === 'month'"
+        (click)="selectPeriod('month')"
+      >
+        This Month
+      </button>
+
+      <button
+        type="button"
+        class="period-button"
+        [class.active]="selectedPeriod === 'custom'"
+        (click)="selectedPeriod = 'custom'"
+      >
+        <i-tabler name="calendar"></i-tabler>
+
+        Custom
+      </button>
+
+    </div>
+
+
+    <!-- FILTER ROW -->
+
+    <div class="filter-row">
+
+      <!-- SEARCH WAREHOUSE -->
+
+      <div class="search-control">
+
+        <input
+          type="text"
+          placeholder="Search Warehouse"
+          [(ngModel)]="warehouseSearch"
+        />
+
+        <i-tabler name="search"></i-tabler>
+
+      </div>
+
+
+      <!-- WAREHOUSE SELECTOR -->
+
+      <div class="select-control">
+
+        <select
+          [(ngModel)]="warehouseId"
+          (change)="onWarehouseChange()"
+        >
+          <option [ngValue]="undefined">
+            All Warehouses
+          </option>
+
+          <option
+            *ngFor="
+              let warehouse of warehouseOptions
+            "
+            [ngValue]="warehouse.id"
+          >
+            {{ warehouse.name }}
+          </option>
+        </select>
+
+        <i-tabler name="chevron-down"></i-tabler>
+
+      </div>
+
+
+      <!-- DATE RANGE PICKER -->
+
+      <mat-form-field
+        appearance="outline"
+        class="financial-date-range"
+      >
+        <mat-label>
+          Financial Period
+        </mat-label>
+
+        <mat-date-range-input
+          [rangePicker]="financialPicker"
+        >
+
+          <input
+            matStartDate
+            placeholder="Start date"
+            [(ngModel)]="startDateObj"
+          />
+
+          <input
+            matEndDate
+            placeholder="End date"
+            [(ngModel)]="endDateObj"
+          />
+
+        </mat-date-range-input>
+
+        <mat-datepicker-toggle
+          matIconSuffix
+          [for]="financialPicker"
+        ></mat-datepicker-toggle>
+
+        <mat-date-range-picker
+          #financialPicker
+          (closed)="applyCustomDateRange()"
+        ></mat-date-range-picker>
+
+      </mat-form-field>
+
+
+      
+
+      <!-- EXPORT -->
+
+      <button
+        type="button"
+        class="export-button"
+        (click)="exportDashboard()"
+      >
+        <i-tabler name="file-export"></i-tabler>
+
+        Export
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- ERROR -->
+  <!-- ===================================================== -->
+
+  <div
+    class="dashboard-error"
+    *ngIf="errorMessage"
+  >
+    <i-tabler name="alert-circle"></i-tabler>
+
+    {{ errorMessage }}
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- LOADING -->
+  <!-- ===================================================== -->
+
+  <div
+    class="dashboard-loading"
+    *ngIf="loading"
+  >
+    <i-tabler
+      name="loader-2"
+      class="spin"
+    ></i-tabler>
+
+    Loading financial dashboard...
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- MAIN KPIs -->
+  <!-- ===================================================== -->
+
+  <div class="financial-kpi-grid">
+
+    <!-- TOTAL REVENUE -->
+
+    <div class="financial-kpi-card">
+
+      <div class="kpi-content">
+
+        <span>
+          Total Revenue
+        </span>
+
+        <h2>
+          {{
+            totalRevenue
+              | currency:'USD':'symbol':'1.2-2'
+          }}
+        </h2>
+
+        <small>
+          {{ periodLabel }}
+        </small>
+
+      </div>
+
+      <div class="kpi-modern-icon green">
+        <i-tabler name="cash"></i-tabler>
+      </div>
+
+    </div>
+
+
+    <!-- TOTAL PAYROLL -->
+
+    <div class="financial-kpi-card">
+
+      <div class="kpi-content">
+
+        <span>
+          Total Payroll
+        </span>
+
+        <h2>
+          {{
+            totalPayroll
+              | currency:'USD':'symbol':'1.2-2'
+          }}
+        </h2>
+
+        <small>
+          Paid during selected period
+        </small>
+
+      </div>
+
+      <div class="kpi-modern-icon blue">
+        <i-tabler name="receipt-dollar"></i-tabler>
+      </div>
+
+    </div>
+
+
+    <!-- TOTAL EXPENSES -->
+
+    <div class="financial-kpi-card">
+
+      <div class="kpi-content">
+
+        <span>
+          Total Expenses
+        </span>
+
+        <h2>
+          {{
+            totalExpenses
+              | currency:'USD':'symbol':'1.2-2'
+          }}
+        </h2>
+
+        <small>
+          Operational expenses
+        </small>
+
+      </div>
+
+      <div class="kpi-modern-icon orange">
+        <i-tabler name="adjustments-dollar"></i-tabler>
+      </div>
+
+    </div>
+
+
+    <!-- NET PROFIT -->
+
+    <div class="financial-kpi-card">
+
+      <div class="kpi-content">
+
+        <span>
+          Net Profit
+        </span>
+
+        <h2
+          [class.positive]="netProfit >= 0"
+          [class.negative]="netProfit < 0"
+        >
+          {{
+            netProfit
+              | currency:'USD':'symbol':'1.2-2'
+          }}
+        </h2>
+
+        <small>
+          Revenue − Payroll − Expenses
+        </small>
+
+      </div>
+
+      <div
+        class="kpi-modern-icon"
+        [class.green]="netProfit >= 0"
+        [class.red]="netProfit < 0"
+      >
+        <i-tabler
+          [name]="
+            netProfit >= 0
+              ? 'trending-up'
+              : 'trending-down'
+          "
+        ></i-tabler>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- SECONDARY KPIs -->
+  <!-- ===================================================== -->
+
+  <div class="secondary-kpi-row">
+
+    <!-- PROFIT MARGIN -->
+
+    <div class="secondary-kpi">
+
+      <div>
+
+        <span>
+          Profit Margin
+        </span>
+
+        <strong
+          [class.positive]="margin >= 0"
+          [class.negative]="margin < 0"
+        >
+          {{ margin | number:'1.1-1' }}%
+        </strong>
+
+        <small>
+          Net margin
+        </small>
+
+      </div>
+
+      <div class="secondary-icon blue">
+        <i-tabler name="percentage"></i-tabler>
+      </div>
+
+    </div>
+
+
+    <!-- TOTAL PACKAGES -->
+
+    <div class="secondary-kpi">
+
+      <div>
+
+        <span>
+          Total Packages
+        </span>
+
+        <strong>
+          {{ totalPackages | number }}
+        </strong>
+
+        <small>
+          Selected period
+        </small>
+
+      </div>
+
+      <div class="secondary-icon purple">
+        <i-tabler name="packages"></i-tabler>
+      </div>
+
+    </div>
+
+
+    <!-- BEST WAREHOUSE -->
+
+    <div class="secondary-kpi wide">
+
+      <div>
+
+        <span>
+          Highest Profit Warehouse
+        </span>
+
+        <strong>
+          {{
+            bestWarehouse?.warehouse
+              || 'No data'
+          }}
+        </strong>
+
+        <small>
+          {{
+            (bestWarehouse?.profit || 0)
+              | currency:'USD':'symbol':'1.2-2'
+          }}
+        </small>
+
+      </div>
+
+      <div class="secondary-icon green">
+        <i-tabler name="building-warehouse"></i-tabler>
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- TOP CONTENT -->
+  <!-- ===================================================== -->
+
+  <div class="top-grid">
+
+    <!-- PROFIT BY WAREHOUSE -->
+
+    <div class="dashboard-card profit-card">
+
+      <div class="card-title">
+
+        <div>
+
+          <h3>
+            Profit by Warehouse
+          </h3>
+
+          <p>
+            Net Profit = Revenue − Payroll − Expenses
+          </p>
+
+        </div>
+
+        <span class="period-badge">
+          {{ periodLabel }}
+        </span>
+
+      </div>
+
+
+      <div
+        class="fake-chart"
+        *ngIf="
+          warehousePerformance.length > 0;
+          else noChartData
+        "
+      >
+
+        <div
+          class="bar"
+          *ngFor="
+            let row of warehousePerformance;
+            trackBy: trackByWarehouseId
+          "
+          [class.positive-bar]="row.profit >= 0"
+          [class.negative-bar]="row.profit < 0"
+          [style.height.px]="getBarHeight(row.profit)"
+        >
+
+          <span>
+            {{
+              row.profit
+                | currency:'USD':'symbol':'1.0-0'
+            }}
+          </span>
+
+          <small>
+            {{ row.warehouse }}
+          </small>
+
+        </div>
+
+      </div>
+
+
+      <ng-template #noChartData>
+
+        <div class="empty-state">
+          No warehouse data was found for this date range.
+        </div>
+
+      </ng-template>
+
+    </div>
+
+
+    <!-- REVENUE VS PAYROLL -->
+
+    <div class="dashboard-card donut-card">
+
+      <div class="card-title">
+
+        <div>
+
+          <h3>
+            Revenue Distribution
+          </h3>
+
+          <p>
+            Revenue, payroll and expenses
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="donut-wrap">
+
+        <div class="donut">
+
+          <div>
+
+            <strong>
+              {{
+                totalRevenue
+                  | currency:'USD':'symbol':'1.0-0'
+              }}
+            </strong>
+
+            <span>
+              Total Revenue
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <div class="legend">
+
+          <p>
+
+            <span class="dot green-dot"></span>
+
+            Revenue
+
+            <strong>
+              {{
+                totalRevenue
+                  | currency:'USD':'symbol':'1.0-0'
+              }}
+            </strong>
+
+          </p>
+
+
+          <p>
+
+            <span class="dot blue-dot"></span>
+
+            Payroll
+
+            <strong>
+              {{
+                totalPayroll
+                  | currency:'USD':'symbol':'1.0-0'
+              }}
+            </strong>
+
+          </p>
+
+
+          <p>
+
+            <span class="dot orange-dot"></span>
+
+            Expenses
+
+            <strong>
+              {{
+                totalExpenses
+                  | currency:'USD':'symbol':'1.0-0'
+              }}
+            </strong>
+
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="donut-footer">
+
+        <span>
+          Net Profit
+        </span>
+
+        <strong
+          [class.positive]="netProfit >= 0"
+          [class.negative]="netProfit < 0"
+        >
+          {{
+            netProfit
+              | currency:'USD':'symbol':'1.2-2'
+          }}
+
+          ·
+
+          {{ margin | number:'1.1-1' }}%
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <!-- FINANCIAL SUMMARY -->
+
+    <div class="dashboard-card summary-card">
+
+      <div class="card-title">
+
+        <div>
+
+          <h3>
+            Financial Summary
+          </h3>
+
+          <p>
+            {{ periodLabel }}
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="summary-row">
+
+        <span>
+          Total Revenue
+        </span>
+
+        <strong>
+          {{
+            totalRevenue
+              | currency:'USD':'symbol':'1.2-2'
+          }}
+        </strong>
+
+      </div>
+
+
+      <div class="summary-row">
+
+        <span>
+          Total Payroll
+        </span>
+
+        <strong>
+          {{
+            totalPayroll
+              | currency:'USD':'symbol':'1.2-2'
+          }}
+        </strong>
+
+      </div>
+
+
+      <div class="summary-row">
+
+        <span>
+          Total Expenses
+        </span>
+
+        <strong>
+          {{
+            totalExpenses
+              | currency:'USD':'symbol':'1.2-2'
+          }}
+        </strong>
+
+      </div>
+
+
+      <div class="summary-row">
+
+        <span>
+          Net Profit
+        </span>
+
+        <strong
+          [class.positive]="netProfit >= 0"
+          [class.negative]="netProfit < 0"
+        >
+          {{
+            netProfit
+              | currency:'USD':'symbol':'1.2-2'
+          }}
+        </strong>
+
+      </div>
+
+
+      <div class="summary-row">
+
+        <span>
+          Profit Margin
+        </span>
+
+        <strong
+          [class.positive]="margin >= 0"
+          [class.negative]="margin < 0"
+        >
+          {{ margin | number:'1.1-1' }}%
+        </strong>
+
+      </div>
+
+
+      <div class="summary-row">
+
+        <span>
+          Profit per Package
+        </span>
+
+        <strong
+          [class.positive]="profitPerPackage >= 0"
+          [class.negative]="profitPerPackage < 0"
+        >
+          {{
+            profitPerPackage
+              | currency:'USD':'symbol':'1.2-2'
+          }}
+        </strong>
+
+      </div>
+
+
+      <div class="summary-row">
+
+        <span>
+          Avg Paid per Package
+        </span>
+
+        <strong>
+          {{
+            avgPaidPerPackage
+              | currency:'USD':'symbol':'1.2-2'
+          }}
+        </strong>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- TABLE AND SIDE COLUMN -->
+  <!-- ===================================================== -->
+
+  <div class="content-grid">
+
+    <!-- WAREHOUSE PERFORMANCE TABLE -->
+
+    <div class="dashboard-card table-card">
+
+      <div class="card-title">
+
+        <div>
+
+          <h3>
+            Warehouse Performance
+          </h3>
+
+          <p>
+            {{ warehousePerformance.length }}
+
+            warehouse{{
+              warehousePerformance.length === 1
+                ? ''
+                : 's'
+            }}
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+
+            <tr>
+              <th>Warehouse</th>
+              <th>Revenue</th>
+              <th>Payroll</th>
+              <th>Expenses</th>
+              <th>Profit</th>
+              <th>Margin</th>
+              <th>Packages</th>
+              <th>Avg Paid / Pkg</th>
+              <th>Profit / Pkg</th>
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            <tr
+              *ngFor="
+                let row of warehousePerformance;
+                trackBy: trackByWarehouseId
+              "
+            >
+
+              <td>
+
+                <span
+                  class="status"
+                  [class.green]="row.profit > 0"
+                  [class.red]="row.profit < 0"
+                  [class.yellow]="row.profit === 0"
+                ></span>
+
+                {{ row.warehouse }}
+
+              </td>
+
+
+              <td>
+                {{
+                  row.revenue
+                    | currency:'USD':'symbol':'1.0-0'
+                }}
+              </td>
+
+
+              <td>
+                {{
+                  row.payroll
+                    | currency:'USD':'symbol':'1.0-0'
+                }}
+              </td>
+
+
+              <td>
+                {{
+                  row.expenses
+                    | currency:'USD':'symbol':'1.0-0'
+                }}
+              </td>
+
+
+              <td
+                [class.positive]="row.profit >= 0"
+                [class.negative]="row.profit < 0"
+              >
+                {{
+                  row.profit
+                    | currency:'USD':'symbol':'1.0-0'
+                }}
+              </td>
+
+
+              <td
+                [class.positive]="row.margin >= 0"
+                [class.negative]="row.margin < 0"
+              >
+                {{ row.margin | number:'1.1-1' }}%
+              </td>
+
+
+              <td>
+                {{ row.packages | number }}
+              </td>
+
+
+              <td>
+                {{
+                  row.avgPaidPerPackage
+                    | currency:'USD':'symbol':'1.2-2'
+                }}
+              </td>
+
+
+              <td
+                [class.positive]="
+                  row.profitPerPackage >= 0
+                "
+                [class.negative]="
+                  row.profitPerPackage < 0
+                "
+              >
+                {{
+                  row.profitPerPackage
+                    | currency:'USD':'symbol':'1.2-2'
+                }}
+              </td>
+
+            </tr>
+
+
+            <tr
+              *ngIf="
+                warehousePerformance.length === 0
+                && !loading
+              "
+            >
+
+              <td
+                colspan="9"
+                class="empty-table"
+              >
+                No financial data was found for the selected range.
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+
+    <!-- SIDE COLUMN -->
+
+    <div class="side-column">
+
+      <!-- KEY INSIGHTS -->
+
+      <div class="dashboard-card insights-card">
+
+        <div class="card-title">
+
+          <div>
+
+            <h3>
+              Key Insights
+            </h3>
+
+            <p>
+              Financial performance summary
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          class="insight"
+          *ngIf="bestWarehouse"
+        >
+
+          <div class="icon success">
+            <i-tabler name="trending-up"></i-tabler>
+          </div>
+
+          <p>
+
+            <strong>
+              {{ bestWarehouse.warehouse }}
+            </strong>
+
+            is your most profitable warehouse.
+
+            <br />
+
+            <span class="positive">
+              {{
+                bestWarehouse.profit
+                  | currency:'USD':'symbol':'1.2-2'
+              }}
+              profit
+            </span>
+
+          </p>
+
+        </div>
+
+
+        <div
+          class="insight"
+          *ngIf="worstWarehouse"
+        >
+
+          <div class="icon danger">
+            <i-tabler name="trending-down"></i-tabler>
+          </div>
+
+          <p>
+
+            <strong>
+              {{ worstWarehouse.warehouse }}
+            </strong>
+
+            has the lowest profit.
+
+            <br />
+
+            <span
+              [class.positive]="
+                worstWarehouse.profit >= 0
+              "
+              [class.negative]="
+                worstWarehouse.profit < 0
+              "
+            >
+              {{
+                worstWarehouse.profit
+                  | currency:'USD':'symbol':'1.2-2'
+              }}
+            </span>
+
+          </p>
+
+        </div>
+
+
+        <div class="insight">
+
+          <div class="icon blue">
+            <i-tabler name="package"></i-tabler>
+          </div>
+
+          <p>
+
+            Average payroll per package
+
+            <br />
+
+            <strong>
+              {{
+                avgPaidPerPackage
+                  | currency:'USD':'symbol':'1.2-2'
+              }}
+            </strong>
+
+          </p>
+
+        </div>
+
+
+        <div class="insight">
+
+          <div class="icon purple">
+            <i-tabler name="percentage"></i-tabler>
+          </div>
+
+          <p>
+
+            Current profit margin
+
+            <br />
+
+            <strong
+              [class.positive]="margin >= 0"
+              [class.negative]="margin < 0"
+            >
+              {{ margin | number:'1.1-1' }}%
+            </strong>
+
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- QUICK ACTIONS -->
+
+      <div class="dashboard-card actions-card">
+
+        <div class="card-title">
+
+          <div>
+
+            <h3>
+              Quick Actions
+            </h3>
+
+            <p>
+              Financial management
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <button type="button">
+
+          <i-tabler name="building-warehouse"></i-tabler>
+
+          <span>
+            Manage Warehouses
+          </span>
+
+          <i-tabler name="chevron-right"></i-tabler>
+
+        </button>
+
+
+        <button type="button">
+
+          <i-tabler name="receipt-dollar"></i-tabler>
+
+          <span>
+            Review Payroll
+          </span>
+
+          <i-tabler name="chevron-right"></i-tabler>
+
+        </button>
+
+
+        <button type="button">
+
+          <i-tabler name="chart-bar"></i-tabler>
+
+          <span>
+            Revenue by Warehouse
+          </span>
+
+          <i-tabler name="chevron-right"></i-tabler>
+
+        </button>
+
+
+        <button type="button">
+
+          <i-tabler name="report"></i-tabler>
+
+          <span>
+            Operational Reports
+          </span>
+
+          <i-tabler name="chevron-right"></i-tabler>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

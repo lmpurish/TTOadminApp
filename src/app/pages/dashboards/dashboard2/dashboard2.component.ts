@@ -22,6 +22,7 @@ import { AppEmployeeSalaryComponent } from 'src/app/components/dashboard2/employ
 import { TablerIconsModule } from 'angular-tabler-icons';
 import { MaterialModule } from 'src/app/material.module';
 import { ReportService } from 'src/app/services/report.service';
+import { OwnerDashboardComponent } from 'src/app/components/dashboard2/owner-dashboard/owner-dashboard.component';
 
 @Component({
   selector: 'app-dashboard2',
@@ -33,6 +34,7 @@ import { ReportService } from 'src/app/services/report.service';
     AppFullcalendarComponent,
     AppPunchesSummary,
     AppEmployeeSalaryComponent,
+    OwnerDashboardComponent,
     /*AppSalesProfitComponent,
     AppMonthlyEarningsTwoComponent,
    AppWeeklyStatsComponent,
@@ -64,6 +66,7 @@ export class AppDashboard2Component {
   losPercent = 0;
   isAssistant: boolean = false;
   isDriver: boolean = false;
+  isCompanyOwner: boolean = false;
 
   abs(value: number): number {
     return Math.abs(Number(value || 0));
@@ -74,15 +77,27 @@ export class AppDashboard2Component {
 
   ngOnInit(): void {
     this.role = this.core.getRole();
-    this.isAssistant = localStorage.getItem('role') === 'Assistant';
-    this.isDriver = localStorage.getItem('role') === 'Driver';
-    
-    
-    this.core.latestGrossAmountByWarehouse().subscribe({
-      next: (rows) => (this.grossByWarehouse = rows ?? []),
-      error: (err) => console.error('latestGrossAmountByWarehouse failed', err),
-    });
-    this.loadDashboardKpis();
+
+    const role = (this.role || localStorage.getItem('role') || '')
+      .toString()
+      .trim()
+      .toLowerCase();
+
+    this.isAssistant = role === 'assistant';
+    this.isDriver = role === 'driver';
+    this.isCompanyOwner = role === 'companyowner';
+
+    console.log('ROLE:', role);
+    console.log('isCompanyOwner:', this.isCompanyOwner);
+
+    if (!this.isCompanyOwner) {
+      this.core.latestGrossAmountByWarehouse().subscribe({
+        next: (rows) => (this.grossByWarehouse = rows ?? []),
+        error: (err) => console.error('latestGrossAmountByWarehouse failed', err),
+      });
+
+      this.loadDashboardKpis();
+    }
   }
 
 

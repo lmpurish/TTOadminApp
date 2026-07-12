@@ -149,7 +149,7 @@ export class AppMyPaymentsComponent implements OnInit {
     DatePipe
   ],
   templateUrl: './payroll-detail-dialog.component.html',
-  styleUrls: ['./my-payments.component.scss']
+  styleUrls: ['./my-payments-details.component.scss']
 })
 export class EmployeePayrollDetailComponent implements OnInit {
 
