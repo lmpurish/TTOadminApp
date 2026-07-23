@@ -1,108 +1,1162 @@
-.owner-hero {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  padding: clamp(24px, 5vw, 64px);
+:host {
+  display: block;
+  min-height: 100vh;
 }
 
-.owner-hero--center {
+* {
+  box-sizing: border-box;
+}
+
+.company-signup-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(430px, 0.75fr);
+  background: #f5f5f5;
+}
+
+/* =====================================================
+   PANEL VISUAL IZQUIERDO
+===================================================== */
+
+.signup-visual {
+  position: relative;
+  min-width: 0;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 78% 18%,
+      rgba(255, 255, 255, 0.95),
+      transparent 32%
+    ),
+    linear-gradient(
+      145deg,
+      #fafafa 0%,
+      #f4f4f5 48%,
+      #e9e9eb 100%
+    );
+}
+
+.signup-visual::before {
+  content: '';
+  position: absolute;
+  width: 640px;
+  height: 640px;
+  top: -250px;
+  right: -190px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 40px 100px rgba(0, 0, 0, 0.025),
+    inset 0 0 70px rgba(255, 255, 255, 0.85);
+}
+
+.signup-visual::after {
+  content: '';
+  position: absolute;
+  width: 460px;
+  height: 460px;
+  left: -170px;
+  bottom: -150px;
+  border: 1px solid rgba(0, 0, 0, 0.025);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.018);
+}
+
+.visual-decoration {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.14),
+      transparent 55%
+    );
+  pointer-events: none;
+}
+
+.visual-content {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  min-height: 100vh;
+  padding: 30px 48px;
   display: flex;
   flex-direction: column;
-  align-items: center; // centrado horizontal
-  justify-content: center; // centrado vertical
-  gap: 12px;
-  text-align: center;
+}
+
+/* =====================================================
+   BRANDING
+===================================================== */
+
+.brand-container {
+  position: relative;
+  z-index: 5;
+  width: fit-content;
+  min-height: 62px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+
+  ::ng-deep app-branding {
+    display: block;
+    width: auto;
+  }
+
+  ::ng-deep .branding-container {
+    width: auto;
+    min-height: 62px;
+    padding: 0;
+    justify-content: flex-start;
+  }
+
+  ::ng-deep .branding-link {
+    width: auto;
+    height: 62px;
+    justify-content: flex-start;
+  }
+
+  ::ng-deep .branding-logo {
+    width: auto !important;
+    max-width: 290px !important;
+    height: 62px !important;
+    max-height: 62px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    object-fit: contain;
+    object-position: left center;
+    transform: none;
+  }
+
+  ::ng-deep .logo-edit-button {
+    display: none;
+  }
+}
+
+/* =====================================================
+   CONTENIDO CENTRAL
+===================================================== */
+
+.signup-visual-main {
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(370px, 0.95fr) minmax(310px, 1.05fr);
+  align-items: center;
+  gap: 24px;
+  padding: 24px 0;
+}
+
+/* =====================================================
+   HERO
+===================================================== */
+
+.owner-hero {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
 }
 
 .owner-chip {
+  width: fit-content;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  margin-bottom: 20px;
+  padding: 8px 14px;
+  border: 1px solid #dedee1;
   border-radius: 999px;
-  background: rgba(239, 68, 68, 0.10); // rojo claro
-  color: #b91c1c; // rojo intenso
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  font-weight: 700;
-}
+  background: rgba(255, 255, 255, 0.84);
+  color: #52525b;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(12px);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 
-.pulse {
-  animation: pulse 2.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, .35);
-  }
-
-  50% {
-    box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
   }
 }
 
-.hero-title.xl {
+.owner-hero h1 {
+  max-width: 590px;
   margin: 0;
-  font-size: clamp(28px, 3.2vw, 44px);
-  line-height: 1.1;
-  font-weight: 900;
-  letter-spacing: -0.02em;
+  color: #18181b;
+  font-size: clamp(35px, 3.3vw, 54px);
+  line-height: 1.06;
+  font-weight: 850;
+  letter-spacing: -0.045em;
 }
 
-.hero-sub {
-  margin: 4px 0 8px;
-  font-size: clamp(16px, 1.2vw, 20px);
-  color: #334155;
-  max-width: 780px;
+.hero-description {
+  max-width: 540px;
+  margin: 20px 0 26px;
+  color: #71717a;
+  font-size: 15px;
+  line-height: 1.7;
 }
 
-.hero-list {
-  list-style: none;
-  padding: 0;
-  margin: 8px 0 16px;
+.hero-features {
   display: grid;
-  gap: 10px;
-  font-size: clamp(15px, 1.1vw, 18px);
+  gap: 9px;
+  max-width: 530px;
 }
 
-.hero-list li {
-  display: inline-flex;
+.hero-feature {
+  display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
+  padding: 11px 14px;
+  border: 1px solid #e4e4e7;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.03);
+  backdrop-filter: blur(10px);
   opacity: 0;
-  transform: translateY(6px);
-  animation: fadeUp .6s ease forwards;
-  animation-delay: calc(var(--i) * 120ms + 200ms);
+  transform: translateY(8px);
+  animation: featureFade 0.55s ease forwards;
+  animation-delay: calc(var(--i) * 100ms + 150ms);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: #d4d4d8;
+    background: #ffffff;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.05);
+  }
 }
 
-@keyframes fadeUp {
+@keyframes featureFade {
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.hero-cta {
-  margin-top: 4px;
+.feature-icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #2563eb;
+
+  mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
 }
 
-/* Sube ligeramente el bloque hero en pantallas grandes */
-.owner-hero--lift {
-  transform: translateY(-15vh);
-  /* súbelo ~7% de la altura de la ventana */
+.hero-feature strong,
+.hero-feature span {
+  display: block;
 }
 
-@media (max-height: 820px) {
-  .owner-hero--lift {
-    transform: translateY(-5vh);
+.hero-feature strong {
+  margin-bottom: 3px;
+  color: #27272a;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.hero-feature span {
+  color: #85858e;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* =====================================================
+   ILUSTRACIÓN
+===================================================== */
+
+.signup-logistics-illustration {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: min(620px, 70vh);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  isolation: isolate;
+}
+
+.signup-illustration-glow {
+  position: absolute;
+  z-index: -1;
+  width: 86%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(37, 99, 235, 0.12) 0%,
+      rgba(37, 99, 235, 0.05) 42%,
+      transparent 72%
+    );
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.signup-logistics-image {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 115%;
+  max-width: 720px;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center;
+  transform: translateX(2%);
+  filter:
+    drop-shadow(0 28px 38px rgba(15, 23, 42, 0.12))
+    drop-shadow(0 8px 14px rgba(37, 99, 235, 0.07));
+}
+
+/* =====================================================
+   TARJETAS FLOTANTES
+===================================================== */
+
+.signup-floating-card {
+  position: absolute;
+  z-index: 3;
+  min-width: 185px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 14px;
+  border: 1px solid rgba(228, 228, 231, 0.92);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 16px 35px rgba(15, 23, 42, 0.1),
+    0 3px 8px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(14px);
+  animation: signupFloat 4.5s ease-in-out infinite;
+
+  strong,
+  span {
+    display: block;
   }
 
-  /* menos subida en pantallas bajas */
+  strong {
+    margin-bottom: 2px;
+    color: #27272a;
+    font-size: 12px;
+    font-weight: 750;
+  }
+
+  span {
+    color: #85858e;
+    font-size: 10px;
+  }
 }
 
-@media (max-height: 700px) {
-  .owner-hero--lift {
-    transform: translateY(-3vh);
+.signup-floating-icon {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #dbeafe;
+  border-radius: 11px;
+  background: #eff6ff;
+  color: #2563eb;
+
+  mat-icon {
+    width: 19px;
+    height: 19px;
+    font-size: 19px;
+  }
+}
+
+.signup-floating-warehouses {
+  top: 17%;
+  right: -2%;
+}
+
+.signup-floating-drivers {
+  left: -4%;
+  bottom: 17%;
+  animation-delay: 0.9s;
+}
+
+@keyframes signupFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+/* =====================================================
+   FOOTER VISUAL
+===================================================== */
+
+.visual-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  color: #a1a1aa;
+  font-size: 11px;
+}
+
+/* =====================================================
+   PANEL DERECHO
+===================================================== */
+
+.signup-form-section {
+  position: relative;
+  min-width: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 38px 34px;
+  background:
+    radial-gradient(
+      circle at 100% 0,
+      rgba(0, 0, 0, 0.025),
+      transparent 28%
+    ),
+    #f7f7f8;
+}
+
+.signup-form-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.45),
+      transparent 32%
+    );
+  pointer-events: none;
+}
+
+.mobile-brand {
+  display: none;
+}
+
+.signup-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 510px;
+  padding: 34px;
+  border: 1px solid #e4e4e7;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow:
+    0 26px 72px rgba(0, 0, 0, 0.065),
+    0 4px 12px rgba(0, 0, 0, 0.025);
+  backdrop-filter: blur(12px);
+}
+
+/* =====================================================
+   HEADER FORMULARIO
+===================================================== */
+
+.signup-header {
+  margin-bottom: 22px;
+}
+
+.signup-eyebrow {
+  display: block;
+  margin-bottom: 9px;
+  color: #71717a;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.signup-header h2 {
+  margin: 0;
+  color: #18181b;
+  font-size: 31px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.signup-header p {
+  margin: 10px 0 0;
+  color: #7a7a83;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* =====================================================
+   WARNING
+===================================================== */
+
+.owner-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 22px;
+  padding: 13px 14px;
+  border: 1px solid #e4e4e7;
+  border-radius: 13px;
+  background: #fafafa;
+
+  > mat-icon {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #dbeafe;
+    border-radius: 9px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 18px;
+  }
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    margin-bottom: 3px;
+    color: #3f3f46;
+    font-size: 12px;
+  }
+
+  span {
+    color: #8a8a92;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+}
+
+/* =====================================================
+   FORM
+===================================================== */
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.name-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.form-control-group {
+  min-width: 0;
+  margin-bottom: 2px;
+}
+
+.form-control-group > mat-label,
+.label-row mat-label {
+  display: block;
+  margin-bottom: 7px;
+  color: #3f3f46;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.professional-field {
+  width: 100%;
+  margin-bottom: 6px;
+
+  mat-icon[matPrefix] {
+    margin-right: 9px;
+    color: #a1a1aa;
+  }
+
+  .password-toggle {
+    color: #71717a;
+  }
+}
+
+::ng-deep .professional-field {
+  .mat-mdc-text-field-wrapper {
+    min-height: 54px;
+    border-radius: 12px;
+    background: #fafafa;
+  }
+
+  .mat-mdc-form-field-flex {
+    min-height: 54px;
+    align-items: center;
+  }
+
+  .mdc-notched-outline__leading {
+    border-radius: 12px 0 0 12px !important;
+  }
+
+  .mdc-notched-outline__trailing {
+    border-radius: 0 12px 12px 0 !important;
+  }
+
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__notch,
+  .mdc-notched-outline__trailing {
+    border-color: #dddddf !important;
+  }
+
+  &:hover {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #c7c7cb !important;
+    }
+  }
+
+  &.mat-focused {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-width: 1.5px !important;
+      border-color: #2563eb !important;
+    }
+
+    mat-icon[matPrefix] {
+      color: #2563eb;
+    }
+  }
+
+  .mat-mdc-form-field-error-wrapper {
+    padding: 0;
+  }
+
+  input {
+    color: #18181b;
+    font-size: 13px;
+  }
+
+  input::placeholder {
+    color: #a1a1aa;
+  }
+
+  .mat-mdc-form-field-error {
+    color: #b91c1c;
+    font-size: 11px;
+  }
+}
+
+/* =====================================================
+   REFERRAL
+===================================================== */
+
+.referral-group {
+  margin-bottom: 4px;
+}
+
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label-row span {
+  color: #a1a1aa;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.field-description {
+  display: block;
+  margin: -3px 2px 16px;
+  color: #a1a1aa;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+/* =====================================================
+   TERMS
+===================================================== */
+
+.terms-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 12px 13px;
+  border: 1px solid #ececef;
+  border-radius: 12px;
+  background: #fbfbfb;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    color: #2563eb;
+    font-size: 18px;
+  }
+
+  p {
+    margin: 0;
+    color: #85858e;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+}
+
+/* =====================================================
+   BOTÓN
+===================================================== */
+
+.signup-button {
+  width: 100%;
+  height: 52px;
+  border-radius: 12px !important;
+  background: #2563eb !important;
+  color: #ffffff !important;
+  font-size: 13px;
+  font-weight: 750;
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.24);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    background: #1d4ed8 !important;
+    box-shadow: 0 16px 32px rgba(37, 99, 235, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    background: #1e40af !important;
+  }
+
+  &:disabled {
+    background: #cbd5e1 !important;
+    color: #94a3b8 !important;
+    box-shadow: none;
+  }
+
+  mat-icon {
+    margin-left: 8px;
+  }
+
+  mat-spinner {
+    margin-right: 10px;
+  }
+}
+
+::ng-deep .signup-button {
+  .mdc-button__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mat-mdc-progress-spinner circle {
+    stroke: #ffffff !important;
+  }
+}
+
+/* =====================================================
+   SIGN IN
+===================================================== */
+
+.signin-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 23px;
+  color: #8a8a92;
+  font-size: 12px;
+
+  a {
+    color: #2563eb;
+    font-weight: 750;
+    text-decoration: none;
+
+    &:hover {
+      color: #1d4ed8;
+      text-decoration: underline;
+    }
+  }
+}
+
+.mobile-footer {
+  display: none;
+  margin-top: 24px;
+  color: #a1a1aa;
+  font-size: 10px;
+  text-align: center;
+}
+
+/* =====================================================
+   PANTALLAS GRANDES
+===================================================== */
+
+@media (min-width: 1500px) {
+  .visual-content {
+    padding-left: 64px;
+    padding-right: 64px;
+  }
+
+  .signup-visual-main {
+    gap: 40px;
+  }
+
+  .signup-logistics-image {
+    width: 120%;
+    max-width: 800px;
+  }
+
+  .signup-card {
+    max-width: 530px;
+    padding: 38px;
+  }
+}
+
+/* =====================================================
+   LAPTOPS
+===================================================== */
+
+@media (max-width: 1250px) {
+  .company-signup-page {
+    grid-template-columns: minmax(0, 1fr) 440px;
+  }
+
+  .visual-content {
+    padding: 30px 36px;
+  }
+
+  .signup-visual-main {
+    grid-template-columns: minmax(340px, 1fr) minmax(270px, 0.9fr);
+    gap: 18px;
+  }
+
+  .owner-hero h1 {
+    font-size: 43px;
+  }
+
+  .signup-logistics-illustration {
+    height: min(510px, 64vh);
+  }
+
+  .signup-logistics-image {
+    width: 118%;
+  }
+
+  .signup-floating-card {
+    display: none;
+  }
+
+  .signup-form-section {
+    padding: 30px 26px;
+  }
+
+  .signup-card {
+    padding: 30px;
+  }
+}
+
+/* =====================================================
+   LAPTOPS PEQUEÑAS
+===================================================== */
+
+@media (max-width: 1050px) {
+  .signup-visual-main {
+    grid-template-columns: minmax(330px, 1.1fr) minmax(250px, 0.9fr);
+  }
+
+  .owner-hero h1 {
+    font-size: 39px;
+  }
+
+  .hero-description {
+    font-size: 14px;
+  }
+
+  .signup-logistics-image {
+    width: 126%;
+  }
+}
+
+/* =====================================================
+   TABLETS
+===================================================== */
+
+@media (max-width: 900px) {
+  .company-signup-page {
+    display: block;
+    min-height: 100vh;
+  }
+
+  .signup-visual {
+    display: none;
+  }
+
+  .signup-form-section {
+    min-height: 100vh;
+    align-items: flex-start;
+    padding: 24px;
+    background:
+      radial-gradient(
+        circle at 100% 0,
+        rgba(0, 0, 0, 0.03),
+        transparent 26%
+      ),
+      linear-gradient(
+        180deg,
+        #f4f4f5 0,
+        #fafafa 290px,
+        #f7f7f8 100%
+      );
+  }
+
+  .mobile-brand {
+    position: absolute;
+    z-index: 3;
+    top: 18px;
+    left: 18px;
+    display: block;
+    width: fit-content;
+
+    ::ng-deep app-branding {
+      display: block;
+      width: auto;
+    }
+
+    ::ng-deep .branding-container {
+      width: auto;
+      min-height: 58px;
+      padding: 0;
+      justify-content: flex-start;
+    }
+
+    ::ng-deep .branding-link {
+      width: auto;
+      height: 58px;
+      justify-content: flex-start;
+    }
+
+    ::ng-deep .branding-logo {
+      width: auto !important;
+      max-width: 230px !important;
+      height: 58px !important;
+      max-height: 58px !important;
+      object-fit: contain;
+      object-position: left center;
+      transform: none;
+    }
+
+    ::ng-deep .logo-edit-button {
+      display: none;
+    }
+  }
+
+  .signup-card {
+    max-width: 540px;
+    margin-top: 78px;
+    padding: 30px;
+  }
+
+  .mobile-footer {
+    display: block;
+  }
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 600px) {
+  .signup-form-section {
+    padding: 16px;
+  }
+
+  .mobile-brand {
+    top: 14px;
+    left: 14px;
+
+    ::ng-deep .branding-container {
+      min-height: 54px;
+    }
+
+    ::ng-deep .branding-link {
+      height: 54px;
+    }
+
+    ::ng-deep .branding-logo {
+      max-width: 205px !important;
+      height: 54px !important;
+      max-height: 54px !important;
+    }
+  }
+
+  .signup-card {
+    margin-top: 68px;
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+
+  .signup-header h2 {
+    font-size: 27px;
+  }
+
+  .name-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .owner-warning {
+    margin-bottom: 20px;
+  }
+}
+
+/* =====================================================
+   MOBILE PEQUEÑO
+===================================================== */
+
+@media (max-width: 420px) {
+  .signup-form-section {
+    padding: 10px;
+  }
+
+  .mobile-brand {
+    top: 11px;
+    left: 11px;
+
+    ::ng-deep .branding-logo {
+      max-width: 185px !important;
+      height: 50px !important;
+      max-height: 50px !important;
+    }
+  }
+
+  .signup-card {
+    margin-top: 63px;
+    padding: 22px 16px;
+    border-radius: 16px;
+  }
+
+  .signup-header h2 {
+    font-size: 25px;
+  }
+
+  .signup-header p {
+    font-size: 12px;
+  }
+
+  .signin-row {
+    flex-wrap: wrap;
+  }
+}
+
+/* =====================================================
+   PANTALLAS BAJAS
+===================================================== */
+
+@media (max-height: 830px) and (min-width: 901px) {
+  .visual-content {
+    padding-top: 22px;
+    padding-bottom: 22px;
+  }
+
+  .brand-container {
+    min-height: 54px;
+
+    ::ng-deep .branding-link {
+      height: 54px;
+    }
+
+    ::ng-deep .branding-logo {
+      height: 54px !important;
+      max-height: 54px !important;
+      max-width: 250px !important;
+    }
+  }
+
+  .signup-visual-main {
+    padding: 10px 0;
+  }
+
+  .owner-hero h1 {
+    font-size: 39px;
+  }
+
+  .hero-description {
+    margin-top: 14px;
+    margin-bottom: 18px;
+  }
+
+  .hero-features {
+    gap: 7px;
+  }
+
+  .hero-feature {
+    padding: 9px 12px;
+  }
+
+  .feature-icon {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+
+  .signup-logistics-illustration {
+    height: 460px;
+  }
+
+  .signup-logistics-image {
+    max-height: 440px;
+  }
+
+  .signup-floating-card {
+    display: none;
+  }
+
+  .signup-form-section {
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+
+  .signup-card {
+    padding: 26px 28px;
+  }
+
+  .signup-header {
+    margin-bottom: 17px;
+  }
+
+  .owner-warning {
+    margin-bottom: 17px;
+    padding: 10px 12px;
+  }
+
+  .professional-field {
+    margin-bottom: 2px;
+  }
+
+  .terms-notice {
+    margin-bottom: 13px;
   }
 }

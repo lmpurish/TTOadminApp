@@ -24,7 +24,12 @@ export class SetPasswordComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private auth = inject(CoreService);
   private router = inject(Router);
+  hidePassword = true;
+hideConfirmPassword = true;
+currentYear = new Date().getFullYear();
 
+showPassword = false;
+showConfirmPassword = false;
   loading = false;
   token = '';
   passwordMismatch = false;
@@ -80,4 +85,24 @@ export class SetPasswordComponent implements OnInit {
       },
     });
   }
+  get hasMinimumLength(): boolean {
+  const password =
+    this.form.get('password')?.value ?? '';
+
+  return password.length >= 6;
+}
+
+get passwordsMatch(): boolean {
+  const password =
+    this.form.get('password')?.value ?? '';
+
+  const confirmPassword =
+    this.form.get('confirmPassword')?.value ?? '';
+
+  return (
+    password.length > 0 &&
+    confirmPassword.length > 0 &&
+    password === confirmPassword
+  );
+}
 }

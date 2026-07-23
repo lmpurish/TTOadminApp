@@ -1,226 +1,476 @@
 <div class="applicants-page">
 
-  <!-- KPI CARDS -->
+  <!-- =====================================================
+       KPI CARDS
+  ====================================================== -->
   <div class="stats-grid">
+
     <div class="stat-card">
       <span>New applicants</span>
       <h2>{{ kpi.newApplicants }}</h2>
-      <p class="up">▲ {{ kpi.newApplicantsWeek }} this week</p>
+      <p class="up">
+        ▲ {{ kpi.newApplicantsWeek }} this week
+      </p>
     </div>
 
     <div class="stat-card">
       <span>Offers sent</span>
       <h2>{{ kpi.offersSent }}</h2>
-      <p class="up">▲ {{ kpi.offersSentWeek }} this week</p>
+      <p class="up">
+        ▲ {{ kpi.offersSentWeek }} this week
+      </p>
     </div>
 
     <div class="stat-card">
       <span>Hired</span>
       <h2>{{ kpi.hired }}</h2>
-      <p class="up">▲ {{ kpi.hiredWeek }} this week</p>
+      <p class="up">
+        ▲ {{ kpi.hiredWeek }} this week
+      </p>
     </div>
 
     <div class="stat-card">
       <span>Avg time to hire</span>
       <h2>{{ kpi.avgTimeToHire }}d</h2>
-      <p class="down">▼ 0.8d faster</p>
+      <p class="down">
+        ▼ 0.8d faster
+      </p>
     </div>
+
   </div>
 
-  <!-- FILTER BAR -->
+  <!-- =====================================================
+       FILTER BAR
+  ====================================================== -->
   <div class="filter-bar">
-    <mat-form-field appearance="outline" class="search-box">
-      <mat-icon matPrefix>search</mat-icon>
-      <input matInput placeholder="Search applicants..." (keyup)="applyFilter($any($event.target).value)" />
+
+    <mat-form-field
+      appearance="outline"
+      class="search-box">
+
+      <mat-icon matPrefix>
+        search
+      </mat-icon>
+
+      <input
+        matInput
+        placeholder="Search applicants..."
+        (keyup)="applyFilter($any($event.target).value)" />
+
     </mat-form-field>
 
-    <mat-form-field appearance="outline" class="filter-select" *ngIf="isAdmin">
-      <mat-label>Warehouse</mat-label>
-      <mat-select [value]="selectedWarehouseId" (selectionChange)="onWarehouseChange($event.value)">
-        <mat-option [value]="null">All Warehouses</mat-option>
-        <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
-          {{ warehouse.name || (warehouse.company + ' - ' + warehouse.city) }}
+    <!-- WAREHOUSE FILTER -->
+    <mat-form-field
+      appearance="outline"
+      class="filter-select"
+      *ngIf="isAdmin">
+
+      <mat-label>
+        Warehouse
+      </mat-label>
+
+      <mat-select
+        [value]="selectedWarehouseId"
+        (selectionChange)="onWarehouseChange($event.value)">
+
+        <mat-option [value]="null">
+          All Warehouses
         </mat-option>
-      </mat-select>
-    </mat-form-field>
 
-    <mat-form-field appearance="outline" class="filter-select">
-      <mat-label>Status</mat-label>
-      <mat-select [value]="selectedStatus" (selectionChange)="onStatusFilterChange($event.value)">
-        <mat-option [value]="null">All Status</mat-option>
-        <mat-option *ngFor="let o of statusOptions" [value]="o.value">
-          {{ o.label }}
+        <mat-option
+          *ngFor="let warehouse of warehouses"
+          [value]="warehouse.id">
+
+          {{
+            warehouse.name ||
+            (warehouse.company + ' - ' + warehouse.city)
+          }}
+
         </mat-option>
+
       </mat-select>
+
     </mat-form-field>
-    <mat-form-field appearance="outline" class="filter-select">
-      <mat-label>Vehicle Type</mat-label>
 
-      <mat-select [value]="selectedVehicleType" (selectionChange)="onVehicleTypeChange($event.value)">
+    <!-- STATUS FILTER -->
+    <mat-form-field
+      appearance="outline"
+      class="filter-select">
 
-        <mat-option [value]="null">All Vehicle Types</mat-option>
+      <mat-label>
+        Status
+      </mat-label>
 
-        <mat-option *ngFor="let type of vehicleTypeOptions" [value]="type">
+      <mat-select
+        [value]="selectedStatus"
+        (selectionChange)="onStatusFilterChange($event.value)">
+
+        <mat-option [value]="null">
+          All Status
+        </mat-option>
+
+        <mat-option
+          *ngFor="let option of statusOptions"
+          [value]="option.value">
+
+          {{ option.label }}
+
+        </mat-option>
+
+      </mat-select>
+
+    </mat-form-field>
+
+    <!-- VEHICLE TYPE FILTER -->
+    <mat-form-field
+      appearance="outline"
+      class="filter-select">
+
+      <mat-label>
+        Vehicle Type
+      </mat-label>
+
+      <mat-select
+        [value]="selectedVehicleType"
+        (selectionChange)="onVehicleTypeChange($event.value)">
+
+        <mat-option [value]="null">
+          All Vehicle Types
+        </mat-option>
+
+        <mat-option
+          *ngFor="let type of vehicleTypeOptions"
+          [value]="type">
+
           {{ type }}
+
         </mat-option>
 
       </mat-select>
+
     </mat-form-field>
 
-    <button mat-stroked-button class="export-btn" (click)="exportApplicantsToExcel()">
-      <mat-icon>download</mat-icon>
+    <!-- EXPORT -->
+    <button
+      mat-stroked-button
+      class="export-btn"
+      (click)="exportApplicantsToExcel()">
+
+      <mat-icon>
+        download
+      </mat-icon>
+
       Export
+
     </button>
 
-    <!-- <button mat-flat-button color="primary" class="add-btn" (click)="openDialog('Add', {})">
-      <mat-icon>add</mat-icon>
+    <!-- ADD APPLICANT -->
+    <!--
+    <button
+      mat-flat-button
+      color="primary"
+      class="add-btn"
+      (click)="openDialog('Add', {})">
+
+      <mat-icon>
+        add
+      </mat-icon>
+
       Add applicant
-    </button>-->
+
+    </button>
+    -->
+
   </div>
 
-  <!-- BULK ACTIONS -->
-  <div class="bulk-actions" *ngIf="selectedIds.size > 0">
+  <!-- =====================================================
+       BULK ACTIONS
+  ====================================================== -->
+  <div
+    class="bulk-actions"
+    *ngIf="selectedIds.size > 0">
 
     <div class="selected-info">
+
       <div class="selected-badge">
         {{ selectedIds.size }}
       </div>
 
       <div>
-        <h6 class="m-0 f-w-600">Selected Applicants</h6>
+
+        <h6 class="m-0 f-w-600">
+          Selected Applicants
+        </h6>
+
         <p class="m-0 text-muted f-s-13">
           Apply actions to selected applicants
         </p>
+
       </div>
+
     </div>
 
     <div class="bulk-controls">
 
-      <button mat-raised-button color="accent" (click)="bulkAction()">
-        <i-tabler name="message-circle" class="icon-18 m-r-6"></i-tabler>
+      <!-- SEND MESSAGE -->
+      <button
+        mat-raised-button
+        color="accent"
+        (click)="bulkAction()">
+
+        <i-tabler
+          name="message-circle"
+          class="icon-18 m-r-6">
+        </i-tabler>
+
         Send Message
+
       </button>
 
-      <mat-form-field appearance="outline" class="bulk-warehouse hide-hint">
-        <mat-label>Assign Warehouse</mat-label>
+      <!-- ASSIGN WAREHOUSE -->
+      <mat-form-field
+        appearance="outline"
+        class="bulk-warehouse hide-hint">
+
+        <mat-label>
+          Assign Warehouse
+        </mat-label>
 
         <mat-select [(ngModel)]="bulkWarehouseId">
-          <mat-option [value]="null">Select Warehouse</mat-option>
 
-          <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
-            {{ warehouse.name || (warehouse.company + ' - ' + warehouse.city) }}
+          <mat-option [value]="null">
+            Select Warehouse
           </mat-option>
+
+          <mat-option
+            *ngFor="let warehouse of warehouses"
+            [value]="warehouse.id">
+
+            {{
+              warehouse.name ||
+              (warehouse.company + ' - ' + warehouse.city)
+            }}
+
+          </mat-option>
+
         </mat-select>
+
       </mat-form-field>
 
-      <button mat-raised-button color="primary" [disabled]="!bulkWarehouseId" (click)="bulkUpdateWarehouse()">
+      <!-- CHANGE WAREHOUSE -->
+      <button
+        mat-raised-button
+        color="primary"
+        [disabled]="!bulkWarehouseId"
+        (click)="bulkUpdateWarehouse()">
 
-        <i-tabler name="building-warehouse" class="icon-18 m-r-6"></i-tabler>
+        <i-tabler
+          name="building-warehouse"
+          class="icon-18 m-r-6">
+        </i-tabler>
+
         Change Warehouse
+
       </button>
 
-      <button mat-button color="warn" (click)="clearSelection()">
+      <!-- CLEAR SELECTION -->
+      <button
+        mat-button
+        color="warn"
+        (click)="clearSelection()">
+
         Clear
+
       </button>
 
     </div>
 
   </div>
 
-  <!-- TABLE CARD -->
+  <!-- =====================================================
+       APPLICANTS TABLE
+  ====================================================== -->
   <mat-card class="applicant-table-card">
+
     <mat-card-content>
-      <div class="loading-overlay" *ngIf="loading">
+
+      <!-- LOADING -->
+      <div
+        class="loading-overlay"
+        *ngIf="loading">
+
         <mat-spinner></mat-spinner>
+
       </div>
+
       <div class="table-responsive">
 
-        <table mat-table [dataSource]="dataSource" class="w-100 applicants-table" matSort>
+        <table
+          mat-table
+          [dataSource]="dataSource"
+          class="w-100 applicants-table"
+          matSort>
 
-          <!-- SELECT -->
+          <!-- =================================================
+               SELECT COLUMN
+          ================================================== -->
           <ng-container matColumnDef="select">
-            <th mat-header-cell *matHeaderCellDef>
-              <mat-checkbox [checked]="isAllSelectedOnPage()" [indeterminate]="isIndeterminateOnPage()"
+
+            <th
+              mat-header-cell
+              *matHeaderCellDef>
+
+              <mat-checkbox
+                [checked]="isAllSelectedOnPage()"
+                [indeterminate]="isIndeterminateOnPage()"
                 (change)="toggleSelectAllOnPage($event.checked)">
               </mat-checkbox>
+
             </th>
 
-            <td mat-cell *matCellDef="let row">
-              <mat-checkbox [checked]="isSelected(row)" (change)="toggleRow(row, $event.checked)">
+            <td
+              mat-cell
+              *matCellDef="let row"
+              data-label="Select applicant">
+
+              <mat-checkbox
+                [checked]="isSelected(row)"
+                (change)="toggleRow(row, $event.checked)">
               </mat-checkbox>
+
             </td>
+
           </ng-container>
 
-          <!-- NAME -->
+          <!-- =================================================
+               NAME COLUMN
+          ================================================== -->
           <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>NAME</th>
 
-            <td mat-cell *matCellDef="let row">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header>
+
+              NAME
+
+            </th>
+
+            <td
+              mat-cell
+              *matCellDef="let row"
+              data-label="Applicant">
+
               <div class="user-cell">
+
                 <div class="avatar">
-                  {{ row.name?.charAt(0) }}{{ row.lastName?.charAt(0) }}
+                  {{ row.name?.charAt(0) }}
+                  {{ row.lastName?.charAt(0) }}
                 </div>
 
                 <div>
+
                   <div class="user-name">
                     {{ row.name }} {{ row.lastName }}
                   </div>
 
                   <div class="user-email">
-                    {{ row.email }}
+                    {{ row.email || 'No email' }}
                   </div>
+
                   <div class="user-email">
-                    {{ row.profile?.phoneNumber ? (row.profile?.phoneNumber | phoneFormat) : 'N/A' }}
+                    {{
+                      row.profile?.phoneNumber
+                        ? (row.profile?.phoneNumber | phoneFormat)
+                        : 'No phone'
+                    }}
                   </div>
+
                 </div>
+
               </div>
+
             </td>
+
           </ng-container>
 
-          <!-- EMAIL / PHONE -->
-          <!--   <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>PHONE</th>
-
-            <td mat-cell *matCellDef="let row">
-               {{ row.profile?.phoneNumber ? (row.profile?.phoneNumber | phoneFormat) : 'N/A' }}
-            </td>
-          </ng-container>
--->
-          <!-- VEHICLE -->
+          <!-- =================================================
+               VEHICLE COLUMN
+          ================================================== -->
           <ng-container matColumnDef="vehicle">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header>
+
               VEHICLE
+
             </th>
 
-            <td mat-cell *matCellDef="let row">
+            <td
+              mat-cell
+              *matCellDef="let row"
+              data-label="Vehicle">
 
               {{
-              ((row.vehicle?.make || '') + ' ' + (row.vehicle?.model || '')).length > 25
-              ? (((row.vehicle?.make || '') + ' ' + (row.vehicle?.model || '')) | slice:0:25) + '...'
-              : ((row.vehicle?.make || '') + ' ' + (row.vehicle?.model || ''))
+                (
+                  (row.vehicle?.make || '') +
+                  ' ' +
+                  (row.vehicle?.model || '')
+                ).trim() || '—'
               }}
 
             </td>
+
           </ng-container>
 
-          <!-- STATUS -->
+          <!-- =================================================
+               STATUS COLUMN
+          ================================================== -->
           <ng-container matColumnDef="isActive">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>
+
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header>
+
               STATUS
+
             </th>
 
-            <td mat-cell *matCellDef="let row">
+            <td
+              mat-cell
+              *matCellDef="let row"
+              data-label="Status">
 
-              <mat-form-field appearance="outline" class="status-select"
-                [class.status-offer]="row.status === 'AwaitingResponse'"
-                [class.status-onboarding]="row.status === 'PreOnboarding'"
-                [class.status-new]="row.status === 'Applicant'">
+              <mat-form-field
+                appearance="outline"
+                class="status-select"
+                [class.status-offer]="
+                  row.status === 'AwaitingResponse'
+                "
+                [class.status-onboarding]="
+                  row.status === 'PreOnboarding'
+                "
+                [class.status-new]="
+                  row.status === 'Applicant'
+                ">
 
-                <mat-select [(ngModel)]="row.status" (selectionChange)="onStatusChange(row)">
+                <mat-select
+                  [(ngModel)]="row.status"
+                  (selectionChange)="onStatusChange(row)">
 
-                  <mat-option *ngFor="let status of statusOptions" [value]="status.value"
-                    [disabled]="status.value === 'PreOnboarding' && !canMoveToOnboarding">
+                  <mat-option
+                    *ngFor="let status of statusOptions"
+                    [value]="status.value"
+                    [disabled]="
+                      status.value === 'PreOnboarding' &&
+                      !canMoveToOnboarding
+                    ">
+
                     {{ status.label }}
+
                   </mat-option>
 
                 </mat-select>
@@ -228,116 +478,323 @@
               </mat-form-field>
 
             </td>
+
           </ng-container>
 
-          <!-- STAGE -->
+          <!-- =================================================
+               STAGE COLUMN
+          ================================================== -->
           <ng-container matColumnDef="stage">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>STAGE</th>
 
-            <td mat-cell *matCellDef="let row">
-              {{ row.stage || '-' }}
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header>
+
+              STAGE
+
+            </th>
+
+            <td
+              mat-cell
+              *matCellDef="let row"
+              data-label="Stage">
+
+              {{ row.stage || '—' }}
+
             </td>
+
           </ng-container>
 
-          <!-- CITY -->
+          <!-- =================================================
+               CITY COLUMN
+          ================================================== -->
           <ng-container matColumnDef="metro">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>CITY</th>
 
-            <td mat-cell *matCellDef="let row">
-              {{ row.metro?.city || '-' }}
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header>
+
+              CITY
+
+            </th>
+
+            <td
+              mat-cell
+              *matCellDef="let row"
+              data-label="City">
+
+              {{ row.metro?.city || '—' }}
+
             </td>
+
           </ng-container>
 
-          <!-- WAREHOUSE -->
+          <!-- =================================================
+               WAREHOUSE COLUMN
+          ================================================== -->
           <ng-container matColumnDef="warehouseId">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>WAREHOUSE</th>
 
-            <td mat-cell *matCellDef="let row">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header>
+
+              WAREHOUSE
+
+            </th>
+
+            <td
+              mat-cell
+              *matCellDef="let row"
+              data-label="Warehouse">
+
               <strong>
-                {{ getWarehouseInfo(row.warehouseId) || '—' }}
+                {{
+                  getWarehouseInfo(row.warehouseId) ||
+                  'Not assigned'
+                }}
               </strong>
+
             </td>
+
           </ng-container>
 
-          <!-- RECRUITER -->
+          <!-- =================================================
+               RECRUITER COLUMN
+          ================================================== -->
           <ng-container matColumnDef="recruiterId">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>RECRUITER</th>
 
-            <td mat-cell *matCellDef="let row">
-              {{ row.recruiter?.firstName }}
-              {{ row.recruiter?.lastName }}
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              mat-sort-header>
+
+              RECRUITER
+
+            </th>
+
+            <td
+              mat-cell
+              *matCellDef="let row"
+              data-label="Recruiter">
+
+              {{
+                (
+                  (row.recruiter?.firstName || '') +
+                  ' ' +
+                  (row.recruiter?.lastName || '')
+                ).trim() || 'Not assigned'
+              }}
+
             </td>
+
           </ng-container>
 
-          <!-- ACTION -->
+          <!-- =================================================
+               ACTION COLUMN
+          ================================================== -->
           <ng-container matColumnDef="action">
-            <th mat-header-cell *matHeaderCellDef>ACTION</th>
 
-            <td mat-cell *matCellDef="let row">
+            <th
+              mat-header-cell
+              *matHeaderCellDef>
+
+              ACTION
+
+            </th>
+
+            <td
+              mat-cell
+              *matCellDef="let row"
+              data-label="Actions">
+
               <div class="action-buttons">
 
-                <button *ngIf="row.isFirstLogin && row.warehouseId" mat-icon-button matTooltip="Contact Applicant"
-                  (click)="openDialog('contact', row); $event.stopPropagation()">
+                <!-- CONTACT APPLICANT -->
+                <button
+                  *ngIf="
+                    row.isFirstLogin &&
+                    row.warehouseId
+                  "
+                  mat-icon-button
+                  matTooltip="Contact Applicant"
+                  (click)="
+                    openDialog('contact', row);
+                    $event.stopPropagation()
+                  ">
 
-                  <i-tabler name="message-circle"></i-tabler>
+                  <i-tabler
+                    name="message-circle">
+                  </i-tabler>
+
                 </button>
 
-                <button mat-icon-button matTooltip="Edit Applicant"
-                  (click)="openDialog('Update', row); $event.stopPropagation()">
+                <!-- EDIT APPLICANT -->
+                <button
+                  mat-icon-button
+                  matTooltip="Edit Applicant"
+                  (click)="
+                    openDialog('Update', row);
+                    $event.stopPropagation()
+                  ">
 
-                  <i-tabler name="edit"></i-tabler>
+                  <i-tabler name="edit">
+                  </i-tabler>
+
                 </button>
 
-                <button mat-icon-button [matMenuTriggerFor]="actionsMenu" (click)="$event.stopPropagation()">
+                <!-- MORE ACTIONS -->
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="actionsMenu"
+                  (click)="$event.stopPropagation()">
 
-                  <mat-icon>more_vert</mat-icon>
+                  <mat-icon>
+                    more_vert
+                  </mat-icon>
+
                 </button>
 
                 <mat-menu #actionsMenu="matMenu">
 
-                  <button  mat-menu-item (click)="openDialog('View', row)">
+                  <!-- VIEW -->
+                  <button
+                    mat-menu-item
+                    (click)="openDialog('View', row)">
 
-                    <i-tabler name="eye-search" class="menu-icon"></i-tabler>
-                    <span>View Applicant</span>
+                    <i-tabler
+                      name="eye-search"
+                      class="menu-icon">
+                    </i-tabler>
+
+                    <span>
+                      View Applicant
+                    </span>
+
                   </button>
 
-                  <button *ngIf="row.isActive" mat-menu-item (click)="resendPasswordSetup(row)">
+                  <!-- RESEND PASSWORD -->
+                  <button
+                    *ngIf="row.isActive"
+                    mat-menu-item
+                    (click)="resendPasswordSetup(row)">
 
-                    <i-tabler name="mail-forward" class="menu-icon"></i-tabler>
-                    <span>Resend Password</span>
+                    <i-tabler
+                      name="mail-forward"
+                      class="menu-icon">
+                    </i-tabler>
+
+                    <span>
+                      Resend Password
+                    </span>
+
                   </button>
 
-                  <button mat-menu-item (click)="openDialog('Hiring', row)">
-                    <i-tabler name="recharging" class="menu-icon"></i-tabler>
-                    <span>Hiring Process</span>
+                  <!-- HIRING PROCESS -->
+                  <button
+                    mat-menu-item
+                    (click)="openDialog('Hiring', row)">
+
+                    <i-tabler
+                      name="recharging"
+                      class="menu-icon">
+                    </i-tabler>
+
+                    <span>
+                      Hiring Process
+                    </span>
+
                   </button>
 
-                  <button *ngIf="role == 'Admin'" mat-menu-item class="delete-option"
+                  <!-- DELETE -->
+                  <button
+                    *ngIf="role === 'Admin'"
+                    mat-menu-item
+                    class="delete-option"
                     (click)="openDialog('Delete', row)">
 
-                    <i-tabler name="trash" class="menu-icon"></i-tabler>
-                    <span>Delete Applicant</span>
+                    <i-tabler
+                      name="trash"
+                      class="menu-icon">
+                    </i-tabler>
+
+                    <span>
+                      Delete Applicant
+                    </span>
+
                   </button>
 
                 </mat-menu>
 
               </div>
+
             </td>
+
           </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <!-- =================================================
+               TABLE ROWS
+          ================================================== -->
+          <tr
+            mat-header-row
+            *matHeaderRowDef="displayedColumns">
+          </tr>
 
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="applicant-row">
+          <tr
+            mat-row
+            *matRowDef="
+              let row;
+              columns: displayedColumns
+            "
+            class="applicant-row">
+          </tr>
+
+          <!-- NO RESULTS -->
+          <tr
+            class="mat-row no-results-row"
+            *matNoDataRow>
+
+            <td
+              class="mat-cell"
+              [attr.colspan]="displayedColumns.length">
+
+              <div class="no-results-content">
+
+                <mat-icon>
+                  person_search
+                </mat-icon>
+
+                <strong>
+                  No applicants found
+                </strong>
+
+                <span>
+                  Try changing the search or selected filters.
+                </span>
+
+              </div>
+
+            </td>
+
           </tr>
 
         </table>
 
-        <mat-paginator [pageSizeOptions]="[5,10,20,50]" [pageSize]="15" showFirstLastButtons>
+        <!-- =================================================
+             SINGLE PAGINATOR
+        ================================================== -->
+        <mat-paginator
+          [pageSizeOptions]="[5, 10, 15, 20, 50]"
+          [pageSize]="15"
+          showFirstLastButtons>
         </mat-paginator>
 
       </div>
 
     </mat-card-content>
+
   </mat-card>
 
 </div>

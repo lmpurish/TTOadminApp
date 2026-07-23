@@ -1,0 +1,130 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.branding-container {
+  position: relative;
+
+  width: 100%;
+  height: 90px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+
+  padding: 24px 0 0 28px;
+
+  overflow: visible;
+}
+
+.branding-link {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  width: auto;
+  height: auto;
+
+  text-decoration: none;
+}
+
+.branding-logo {
+
+  display: block;
+
+  width: auto !important;
+
+  height: 70px !important;
+  max-height: 70px !important;
+
+  max-width: 340px !important;
+
+  object-fit: contain;
+  object-position: left center;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  transition: .25s ease;
+}
+
+.logo-edit-button {
+
+  position: absolute;
+
+  left: 305px;
+  top: 60px;
+
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: white;
+
+  border: 1px solid #e5e7eb;
+
+  color: #2563eb;
+
+  cursor: pointer;
+
+  box-shadow: 0 8px 20px rgba(0,0,0,.08);
+
+  transition: .25s;
+}
+
+.logo-edit-button:hover{
+    background:#2563eb;
+    color:white;
+    transform:rotate(90deg);
+}
+
+/* Sidebar colapsado */
+
+:host-context(.sidebarNav-mini){
+
+    .branding-container{
+        justify-content:center;
+        padding:18px 0;
+    }
+
+    .branding-logo{
+
+        width:54px !important;
+        height:54px !important;
+
+        max-width:54px !important;
+        max-height:54px !important;
+    }
+
+    .logo-edit-button{
+        display:none;
+    }
+
+}
+
+/* Tablet */
+
+@media(max-width:991px){
+
+    .branding-container{
+
+        padding-left:18px;
+
+        height:78px;
+    }
+
+    .branding-logo{
+
+        height:58px !important;
+        max-height:58px !important;
+
+        max-width:280px !important;
+    }
+
+}

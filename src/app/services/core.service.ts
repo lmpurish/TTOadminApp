@@ -379,6 +379,25 @@ export class CoreService {
     );
   }
 
+  importUniUniDailyRoutes(
+  file: File,
+  warehouseId: number
+) {
+  const formData = new FormData();
+
+  formData.append('File', file);          // Debe coincidir con la propiedad del Request
+  formData.append('WarehouseId', warehouseId.toString());
+
+  return this.http.post(
+    `${environment.apiUrl}/Routes/import-UniUni-DailyRoutes`,
+    formData,
+    {
+      observe: 'events',
+      reportProgress: true
+    }
+  );
+}
+
   uploadXmlFileOther(formData: FormData, warehouseId: number): Observable<HttpEvent<ImportResultDto>> {
     formData.append('warehouseId', warehouseId.toString());
 

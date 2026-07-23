@@ -1,4 +1,8 @@
-/* LOADING */
+
+/* =========================================================
+   LOADING
+========================================================= */
+
 .loading-overlay {
     position: fixed;
     inset: 0;
@@ -10,25 +14,35 @@
     justify-content: center;
 }
 
+
+/* =========================================================
+   PAGE
+========================================================= */
+
 .applicants-page {
+    min-height: 100vh;
     padding: 24px;
     background: #f6f8fb;
-    min-height: 100vh;
 }
 
-/* KPI CARDS */
+
+/* =========================================================
+   KPI CARDS
+========================================================= */
+
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 18px;
     margin-bottom: 20px;
 }
 
 .stat-card {
+    min-width: 0;
+    padding: 18px 20px;
     background: #ffffff;
     border: 1px solid #e4e9f2;
     border-radius: 16px;
-    padding: 18px 20px;
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
 }
 
@@ -39,9 +53,10 @@
 
 .stat-card h2 {
     margin: 8px 0;
+    color: #020b24;
     font-size: 28px;
     font-weight: 800;
-    color: #020b24;
+    line-height: 1.1;
 }
 
 .stat-card p {
@@ -55,7 +70,11 @@
     color: #16a34a;
 }
 
-/* FILTERS */
+
+/* =========================================================
+   FILTERS
+========================================================= */
+
 .filter-bar {
     display: flex;
     align-items: center;
@@ -70,6 +89,7 @@
 
 .filter-select {
     width: 180px;
+    flex-shrink: 0;
 }
 
 .export-btn,
@@ -77,34 +97,41 @@
     height: 42px;
     border-radius: 10px;
     font-weight: 700;
+    white-space: nowrap;
 }
 
-/* BULK ACTIONS */
+
+/* =========================================================
+   BULK ACTIONS
+========================================================= */
+
 .bulk-actions {
     position: sticky;
     top: 76px;
     z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
     margin-bottom: 16px;
     padding: 14px 16px;
     background: #ffffff;
     border: 1px solid #dbe4f0;
     border-radius: 16px;
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
 }
 
 .selected-info {
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
 }
 
 .selected-badge {
     width: 38px;
     height: 38px;
+    flex-shrink: 0;
     border-radius: 50%;
     background: #2563eb;
     color: #ffffff;
@@ -124,37 +151,49 @@
     width: 240px;
 }
 
-/* TABLE CARD */
+
+/* =========================================================
+   TABLE CARD
+========================================================= */
+
 .applicant-table-card {
-    border-radius: 16px;
+    position: relative;
     overflow: hidden;
-    border: 1px solid #e4e9f2;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
     background: #ffffff;
+    border: 1px solid #e4e9f2;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
 }
 
 .table-responsive {
     width: 100%;
     overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
 }
 
 .applicants-table {
     width: 100%;
+    min-width: 1050px;
     background: #ffffff;
 }
 
 .applicants-table th {
+    height: 48px;
+    padding-left: 16px;
+    padding-right: 16px;
     background: #f8fafc;
     color: #91a0b8;
     font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.04em;
-    height: 48px;
     white-space: nowrap;
 }
 
 .applicants-table td {
     height: 68px;
+    padding-left: 16px;
+    padding-right: 16px;
     color: #061334;
     font-size: 14px;
     border-bottom: 1px solid #e5eaf2;
@@ -169,42 +208,50 @@
     background: #f8fafc;
 }
 
-/* USER CELL */
+
+/* =========================================================
+   USER CELL
+========================================================= */
+
 .user-cell {
     display: flex;
     align-items: center;
     gap: 12px;
-    min-width: 220px;
+    min-width: 0;
 }
 
 .avatar {
     width: 38px;
     height: 38px;
+    flex-shrink: 0;
     border-radius: 50%;
     background: linear-gradient(135deg, #2563eb, #60a5fa);
     color: #ffffff;
-    font-weight: 800;
     font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
     display: flex;
     align-items: center;
     justify-content: center;
-    text-transform: uppercase;
-    flex-shrink: 0;
 }
 
 .user-name {
-    font-weight: 700;
     color: #0f172a;
+    font-weight: 700;
     line-height: 1.2;
 }
 
 .user-email {
+    margin-top: 3px;
     color: #64748b;
     font-size: 13px;
-    margin-top: 3px;
 }
 
-/* STATUS */
+
+/* =========================================================
+   STATUS
+========================================================= */
+
 .status-pill {
     display: inline-flex;
     align-items: center;
@@ -226,8 +273,8 @@
 }
 
 .status-onboarding {
-    background: #fff0d9;
-    color: #f97316;
+    background: #ecfdf5;
+    color: #16a34a;
 }
 
 .status-hired {
@@ -235,10 +282,20 @@
     color: #16a34a;
 }
 
-/* ACTIONS */
+.status-select {
+    width: 170px;
+    margin: 0;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
 .action-buttons {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 8px;
 }
 
@@ -264,40 +321,190 @@
     color: #dc2626;
 }
 
-/* MATERIAL OVERRIDES */
-::ng-deep .mat-mdc-form-field-subscript-wrapper {
+
+/* =========================================================
+   NO RESULTS
+========================================================= */
+
+.no-results-row {
+    height: auto !important;
+}
+
+.no-results-row td {
+    width: 100%;
+    padding: 0 !important;
+    border-bottom: 0;
+}
+
+.no-results-content {
+    min-height: 220px;
+    width: 100%;
+    padding: 28px;
+    color: #64748b;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+}
+
+.no-results-content mat-icon {
+    width: 42px;
+    height: 42px;
+    color: #94a3b8;
+    font-size: 42px;
+}
+
+.no-results-content strong {
+    color: #1e293b;
+    font-size: 16px;
+}
+
+.no-results-content span {
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   PAGINATOR
+========================================================= */
+
+mat-paginator {
+    border-top: 1px solid #e5e7eb;
+    background: #ffffff;
+}
+
+
+/* =========================================================
+   MATERIAL OVERRIDES
+========================================================= */
+
+:host ::ng-deep .mat-mdc-form-field-subscript-wrapper {
     display: none;
 }
 
-::ng-deep .mat-mdc-text-field-wrapper {
+:host ::ng-deep .mat-mdc-text-field-wrapper {
     border-radius: 10px !important;
     background: #ffffff;
 }
 
-::ng-deep .mat-mdc-header-row {
+:host ::ng-deep .mat-mdc-header-row {
     background: #f8fafc;
 }
 
-::ng-deep .mat-mdc-header-cell {
+:host ::ng-deep .mat-mdc-header-cell {
     color: #91a0b8;
     font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.04em;
 }
 
-::ng-deep .mat-mdc-row {
+:host ::ng-deep .mat-mdc-row {
     height: 68px;
 }
 
-mat-paginator {
-    border-top: 1px solid #e5e7eb;
+:host ::ng-deep .mat-mdc-checkbox {
+    flex-shrink: 0;
 }
 
 
-/* RESPONSIVE */
+/* =========================================================
+   STATUS SELECT COLORS
+========================================================= */
+
+.status-select.status-offer
+:host ::ng-deep .mat-mdc-select-value-text {
+    color: #f97316 !important;
+}
+
+.status-select.status-onboarding
+:host ::ng-deep .mat-mdc-select-value-text {
+    color: #16a34a !important;
+}
+
+.status-select.status-new
+:host ::ng-deep .mat-mdc-select-value-text {
+    color: #2563eb !important;
+}
+
+.status-select.status-offer
+:host ::ng-deep .mat-mdc-select-arrow {
+    color: #f97316 !important;
+}
+
+.status-select.status-onboarding
+:host ::ng-deep .mat-mdc-select-arrow {
+    color: #16a34a !important;
+}
+
+.status-select.status-new
+:host ::ng-deep .mat-mdc-select-arrow {
+    color: #2563eb !important;
+}
+
+
+/* Versión compatible en componentes Angular */
+
+:host ::ng-deep
+.status-select.status-offer
+.mat-mdc-select-value-text {
+    color: #f97316 !important;
+}
+
+:host ::ng-deep
+.status-select.status-onboarding
+.mat-mdc-select-value-text {
+    color: #16a34a !important;
+}
+
+:host ::ng-deep
+.status-select.status-new
+.mat-mdc-select-value-text {
+    color: #2563eb !important;
+}
+
+:host ::ng-deep
+.status-select.status-offer
+.mat-mdc-select-arrow {
+    color: #f97316 !important;
+}
+
+:host ::ng-deep
+.status-select.status-onboarding
+.mat-mdc-select-arrow {
+    color: #16a34a !important;
+}
+
+:host ::ng-deep
+.status-select.status-new
+.mat-mdc-select-arrow {
+    color: #2563eb !important;
+}
+
+
+/* =========================================================
+   MAT DIALOG
+========================================================= */
+
+:host ::ng-deep .mat-mdc-dialog-container {
+    --mdc-dialog-container-shape: 18px;
+}
+
+:host ::ng-deep .mat-mdc-dialog-surface {
+    overflow: visible !important;
+    border-radius: 18px !important;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
 @media (max-width: 1100px) {
+
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .filter-bar {
@@ -305,75 +512,610 @@ mat-paginator {
     }
 
     .search-box {
+        flex: 1 1 100%;
         min-width: 100%;
+    }
+
+    .filter-select {
+        flex: 1;
+        min-width: 180px;
     }
 }
 
+
+/* =========================================================
+   SMALL TABLET
+========================================================= */
+
 @media (max-width: 900px) {
+
     .bulk-actions {
+        position: relative;
+        top: auto;
         flex-direction: column;
         align-items: stretch;
     }
 
+    .selected-info {
+        width: 100%;
+    }
+
     .bulk-controls {
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
     }
 
     .bulk-warehouse {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .bulk-controls button {
         width: 100%;
     }
 }
 
-@media (max-width: 600px) {
+
+/* =========================================================
+   MOBILE — TABLE ROWS AS CARDS
+========================================================= */
+
+@media (max-width: 767px) {
+
     .applicants-page {
-        padding: 14px;
+        padding: 10px;
     }
+
+    /* KPI */
+
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .stat-card {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .stat-card h2 {
+        margin: 5px 0;
+        font-size: 22px;
+    }
+
+    /* Filters */
+
+    .filter-bar {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .search-box,
+    .filter-select,
+    .export-btn,
+    .add-btn {
+        width: 100%;
+        min-width: 0;
+    }
+
+    /* Bulk actions */
+
+    .bulk-actions {
+        position: relative;
+        top: auto;
+        padding: 12px;
+        border-radius: 14px;
+    }
+
+    .bulk-controls {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .bulk-warehouse {
+        width: 100%;
+        grid-column: auto;
+    }
+
+    /* Outer card */
+
+    .applicant-table-card {
+        width: 100%;
+        margin: 0;
+        overflow: visible;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+    }
+
+    /*
+     * El tema de Angular Material aplica padding: 24px !important.
+     * Por eso debemos sobrescribirlo con mayor especificidad.
+     */
+
+    :host ::ng-deep
+    .applicant-table-card.mat-mdc-card
+    > .mat-mdc-card-content {
+        padding: 0 !important;
+    }
+
+    :host ::ng-deep
+    .applicant-table-card
+    .mat-mdc-card-content:first-child {
+        padding-top: 0 !important;
+    }
+
+    :host ::ng-deep
+    .applicant-table-card
+    .mat-mdc-card-content:last-child {
+        padding-bottom: 0 !important;
+    }
+
+    .table-responsive {
+        width: 100%;
+        overflow: visible;
+    }
+
+    /* Table */
+
+    .applicants-table {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        background: transparent;
+    }
+
+    .applicants-table thead,
+    .applicants-table .mat-mdc-header-row {
+        display: none;
+    }
+
+    .applicants-table tbody {
+        display: block;
+        width: 100%;
+    }
+
+    /* Row = card */
+
+    .applicants-table .mat-mdc-row,
+    .applicants-table tr.mat-mdc-row {
+        display: block;
+        width: 100%;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 0 12px;
+        padding: 12px;
+        box-sizing: border-box;
+        overflow: hidden;
+        background: #ffffff;
+        border: 1px solid #e1e8f0;
+        border-radius: 16px;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+    }
+
+    /* Cell */
+
+    .applicants-table .mat-mdc-cell,
+    .applicants-table td.mat-mdc-cell {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr);
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 9px 0;
+        box-sizing: border-box;
+        border: 0;
+        border-bottom: 1px solid #edf1f6;
+        white-space: normal;
+        text-align: right;
+        overflow: visible;
+    }
+
+    .applicants-table .mat-mdc-cell::before {
+        content: attr(data-label);
+        display: block;
+        min-width: 0;
+        color: #8da0ba;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        line-height: 1.2;
+        text-align: left;
+        text-transform: uppercase;
+    }
+
+    /* Select row */
+
+    .applicants-table .mat-column-select {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 34px !important;
+        padding-top: 2px;
+        padding-bottom: 10px;
+    }
+
+    .applicants-table .mat-column-select::before {
+        content: "Select applicant";
+        flex: 1;
+    }
+
+    /* Applicant */
+
+    .applicants-table .mat-column-name {
+        display: block;
+        padding: 10px 0 12px;
+    }
+
+    .applicants-table .mat-column-name::before {
+        display: none;
+    }
+
+    .applicants-table .mat-column-name .user-cell {
+        width: 100%;
+        min-width: 0;
+        gap: 10px;
+        text-align: left;
+    }
+
+    .applicants-table
+    .mat-column-name
+    .user-cell > div:last-child {
+        min-width: 0;
+    }
+
+    .applicants-table .mat-column-name .user-name {
+        font-size: 14px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .applicants-table .mat-column-name .user-email {
+        font-size: 12px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    /* Status */
+
+    .applicants-table .mat-column-isActive {
+        align-items: center;
+    }
+
+    .applicants-table
+    .mat-column-isActive
+    .status-select {
+        width: 100%;
+        max-width: 190px;
+        margin: 0;
+        justify-self: end;
+    }
+
+    :host ::ng-deep
+    .applicants-table
+    .mat-column-isActive
+    .mat-mdc-form-field {
+        width: 100%;
+    }
+
+    :host ::ng-deep
+    .applicants-table
+    .mat-column-isActive
+    .mat-mdc-text-field-wrapper {
+        min-height: 38px !important;
+        height: 38px;
+    }
+
+    :host ::ng-deep
+    .applicants-table
+    .mat-column-isActive
+    .mat-mdc-form-field-flex {
+        height: 38px;
+        align-items: center;
+    }
+
+    :host ::ng-deep
+    .applicants-table
+    .mat-column-isActive
+    .mat-mdc-form-field-infix {
+        min-height: 38px !important;
+        height: 38px;
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+    }
+
+    :host ::ng-deep
+    .applicants-table
+    .mat-column-isActive
+    .mat-mdc-select-trigger {
+        height: 22px;
+        align-items: center;
+    }
+
+    /*
+     * En tu captura STATUS aparece vacío y muy alto.
+     * Esto evita que la celda se expanda aunque el select no tenga texto.
+     */
+
+    .applicants-table .mat-column-isActive:empty {
+        display: none;
+    }
+
+    /* Text values */
+
+    .applicants-table .mat-column-vehicle,
+    .applicants-table .mat-column-stage,
+    .applicants-table .mat-column-metro,
+    .applicants-table .mat-column-warehouseId,
+    .applicants-table .mat-column-recruiterId {
+        font-size: 13px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    /* Actions */
+
+    .applicants-table .mat-column-action {
+        padding-top: 10px;
+        padding-bottom: 0;
+        border-bottom: 0;
+    }
+
+    .applicants-table
+    .mat-column-action
+    .action-buttons {
+        justify-content: flex-end;
+        gap: 6px;
+    }
+
+    .applicants-table
+    .mat-column-action
+    .action-buttons button {
+        width: 34px;
+        height: 34px;
+        background: #f1f5f9;
+        color: #475569;
+        border-radius: 10px;
+    }
+
+    /* Paginator */
+
+    mat-paginator {
+        margin-top: 8px;
+        overflow: hidden;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+    }
+
+    :host ::ng-deep
+    mat-paginator
+    .mat-mdc-paginator-container {
+        min-height: 52px;
+        justify-content: center;
+        padding: 6px 4px;
+    }
+
+    :host ::ng-deep
+    mat-paginator
+    .mat-mdc-paginator-page-size {
+        display: none;
+    }
+
+    :host ::ng-deep
+    mat-paginator
+    .mat-mdc-paginator-range-label {
+        margin: 0 6px;
+        font-size: 11px;
+    }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
 
     .stats-grid {
         grid-template-columns: 1fr;
     }
 
-    .filter-select,
-    .export-btn,
-    .add-btn {
-        width: 100%;
+    .applicants-table .mat-mdc-row,
+    .applicants-table tr.mat-mdc-row {
+        padding: 11px;
+    }
+
+    .applicants-table .mat-mdc-cell,
+    .applicants-table td.mat-mdc-cell {
+        grid-template-columns: 82px minmax(0, 1fr);
+        gap: 8px;
+        padding: 8px 0;
+    }
+
+    .applicants-table .mat-mdc-cell::before {
+        font-size: 8px;
+    }
+
+    .avatar {
+        width: 34px;
+        height: 34px;
+        font-size: 11px;
     }
 }
+/* =========================================================
+   FINAL MOBILE CARD FIX
+========================================================= */
 
-.status-select.status-offer ::ng-deep .mat-mdc-select-value-text {
-    color: #f97316 !important;
+@media (max-width: 767px) {
+
+    /* La fila debe usar todo el ancho disponible */
+    .applicants-table .mat-mdc-row,
+    .applicants-table tr.mat-mdc-row {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Todas las celdas deben respetar el ancho de la card */
+    .applicants-table .mat-mdc-cell,
+    .applicants-table td.mat-mdc-cell {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    /* =====================================================
+       APPLICANT / NAME CELL
+    ====================================================== */
+
+    .applicants-table .mat-column-name {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        padding: 12px 0 14px !important;
+        text-align: left !important;
+    }
+
+    .applicants-table .mat-column-name::before {
+        display: none !important;
+    }
+
+    .applicants-table .mat-column-name .user-cell {
+        display: grid !important;
+        grid-template-columns: 42px minmax(0, 1fr) !important;
+        align-items: center !important;
+        gap: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .applicants-table
+    .mat-column-name
+    .user-cell > div:last-child {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    .applicants-table .mat-column-name .user-name {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        color: #0f172a !important;
+        font-size: 14px !important;
+        font-weight: 800 !important;
+        line-height: 1.3 !important;
+
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+        hyphens: none !important;
+    }
+
+    .applicants-table .mat-column-name .user-email {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 3px !important;
+        color: #64748b !important;
+        font-size: 12px !important;
+        line-height: 1.35 !important;
+
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: anywhere !important;
+        hyphens: none !important;
+    }
+
+    .applicants-table .mat-column-name .avatar {
+        width: 38px !important;
+        height: 38px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* =====================================================
+       SELECT ROW
+    ====================================================== */
+
+    .applicants-table .mat-column-select {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        align-items: center !important;
+        width: 100% !important;
+        min-height: 38px !important;
+    }
+
+    .applicants-table .mat-column-select::before {
+        display: block !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* =====================================================
+       NORMAL DETAIL ROWS
+    ====================================================== */
+
+    .applicants-table .mat-column-vehicle,
+    .applicants-table .mat-column-stage,
+    .applicants-table .mat-column-metro,
+    .applicants-table .mat-column-warehouseId,
+    .applicants-table .mat-column-recruiterId,
+    .applicants-table .mat-column-action {
+        display: grid !important;
+        grid-template-columns: 95px minmax(0, 1fr) !important;
+        align-items: center !important;
+        gap: 10px !important;
+    }
+
+    .applicants-table .mat-column-vehicle,
+    .applicants-table .mat-column-stage,
+    .applicants-table .mat-column-metro,
+    .applicants-table .mat-column-warehouseId,
+    .applicants-table .mat-column-recruiterId {
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+    }
+
+    /* =====================================================
+       STATUS
+    ====================================================== */
+
+    .applicants-table .mat-column-isActive {
+        display: grid !important;
+        grid-template-columns: 95px minmax(0, 1fr) !important;
+        align-items: center !important;
+        gap: 10px !important;
+    }
+
+    .applicants-table
+    .mat-column-isActive
+    .status-select {
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        justify-self: stretch !important;
+    }
+
+    /* =====================================================
+       ACTIONS
+    ====================================================== */
+
+    .applicants-table
+    .mat-column-action
+    .action-buttons {
+        width: 100% !important;
+        justify-content: flex-end !important;
+    }
 }
-
-.status-select.status-onboarding ::ng-deep .mat-mdc-select-value-text {
-    color: #16a34a !important;
-}
-
-.status-select.status-new ::ng-deep .mat-mdc-select-value-text {
-    color: #2563eb !important;
-}
-
-.status-select.status-offer ::ng-deep .mat-mdc-select-arrow {
-    color: #f97316 !important;
-}
-
-.status-select.status-onboarding ::ng-deep .mat-mdc-select-arrow {
-    color: #16a34a !important;
-}
-
-.status-select.status-new ::ng-deep .mat-mdc-select-arrow {
-    color: #2563eb !important;
-}
-
-/* =========================
-   FORCE MAT DIALOG SIZE
-========================= */
-
-:host ::ng-deep .mat-mdc-dialog-container {
-  --mdc-dialog-container-shape: 18px;
-}
-
-:host ::ng-deep .mat-mdc-dialog-surface {
-  border-radius: 18px !important;
-  overflow: visible !important;
-}
-

@@ -1,12 +1,26 @@
-<div style="position: relative; display: inline-block;">
-    <!-- Logo -->
-    <img [src]="companyLogo" class="align-middle m-2" alt="logo"
-        style="width: 150px; height: 150px; object-fit: contain;" />
+<div class="branding-container">
 
-    <!-- Ícono flotante en la esquina -->
-    <label *ngIf="user?.role === 'CompanyOwner'" style="position: absolute; bottom: 5px; right: 5px; cursor: pointer;">
-        <i-tabler name="refresh" class="icon-18"></i-tabler>
-        <input type="file" (change)="onLogoSelected($event)" hidden />
-    </label>
+  <a routerLink="/" class="branding-link">
+    <img
+      [src]="companyLogo"
+      class="branding-logo"
+      alt="TTO Logistics"
+    />
+  </a>
+
+  <label
+    *ngIf="user?.role === 'CompanyOwner'"
+    class="logo-edit-button"
+    matTooltip="Update company logo"
+  >
+    <i-tabler name="refresh" class="icon-18"></i-tabler>
+
+    <input
+      type="file"
+      accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+      hidden
+      (change)="onLogoSelected($event)"
+    />
+  </label>
+
 </div>
-

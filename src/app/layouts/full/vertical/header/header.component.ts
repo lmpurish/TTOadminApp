@@ -442,7 +442,10 @@ export class AppSearchDialogComponent {
         request$ = this.core.uploadSwiftXDspSummary(formData, warehouseId);
       } else if (company === 'cargo van') {
         request$ = this.core.uploadRouteManifestPdf(this.selectedFiles, warehouseId);
-      } else {
+      } else if (company === 'uniuni'){
+        request$ = this.core.importUniUniDailyRoutes(this.selectedFile!,warehouseId)      }
+        
+      else {
         this.isLoading = false;
         this.snackBar.open(
           `Unsupported company parser: ${wh?.company || 'Unknown'}`,
@@ -462,8 +465,6 @@ export class AppSearchDialogComponent {
 
           this.selectedFile = null;
           this.selectedFiles = [];
-
-          console.log('RES:', res);
 
           if (this.fileType === 'claims') {
             this.snackBar.open(

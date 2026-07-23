@@ -68,7 +68,7 @@ export class EmployeeService {
       id: Number(e.id),
       warehouseId: e.warehouseId != null ? Number(e.warehouseId) : null
     }));
-    console.log(employees)
+    
     return this.http.post(
       `${this.baseUrl}/User/sendMessageApplicant`,
       payload
@@ -90,5 +90,68 @@ export class EmployeeService {
     );
   }
 
+
+
+getUserWarehouses(
+  userId: number
+): Observable<UserWarehouseAssignment[]> {
+  return this.http.get<UserWarehouseAssignment[]>(
+    `${this.baseUrl}/users/${userId}/warehouses`
+  );
+}
+
+assignWarehouse(
+  userId: number,
+  request: AssignWarehouseRequest
+): Observable<any> {
+  return this.http.post(
+    `${this.baseUrl}/users/${userId}/warehouses`,
+    request
+  );
+}
+
+setPrimaryWarehouse(
+  userId: number,
+  warehouseId: number
+): Observable<any> {
+  return this.http.put(
+    `${this.baseUrl}/users/${userId}/warehouses/${warehouseId}/set-primary`,
+    {}
+  );
+}
+
+removeWarehouse(
+  userId: number,
+  warehouseId: number
+): Observable<any> {
+  return this.http.delete(
+    `${this.baseUrl}/users/${userId}/warehouses/${warehouseId}`
+  );
+}
   
+}
+export interface UserWarehouseAssignment {
+  id: number;
+  isPrimary: boolean;
+  isActive: boolean;
+  startDate?: string | null;
+  endDate?: string | null;
+  createdAt?: string | null;
+
+  warehouse: {
+    id: number;
+    name?: string;
+    company?: string;
+    city?: string;
+    state?: string;
+    address?: string;
+    facilityCode?: string;
+  };
+}
+
+export interface AssignWarehouseRequest {
+  warehouseId: number;
+  isPrimary: boolean;
+  startDate?: string | null;
+  createdBy?: number | null;
 }

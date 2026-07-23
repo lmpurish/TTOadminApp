@@ -12,10 +12,11 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 @Component({
   selector: 'app-branding',
   templateUrl: 'branding.component.html',
-  imports: [CommonModule, TablerIconsModule, MaterialModule]
+  imports: [CommonModule, TablerIconsModule, MaterialModule],
+  styleUrls: ['./branding.component.scss']
 })
 export class BrandingComponent {
-  companyLogo: string = './assets/images/logos/logo150.png';
+  companyLogo: string = './assets/images/logos/logo.png';
   user: any;
   selectedLogo?: File;
 
@@ -31,8 +32,9 @@ export class BrandingComponent {
     this.companyLogo =
       this.user?.logoUrl && this.user.logoUrl.trim() !== ''
         ? environment.fileUrl + this.user.logoUrl
-        : './assets/images/logos/logo150.png';
+        : './assets/images/logos/logo.png';
   }
+
   onLogoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
 

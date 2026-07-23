@@ -1,28 +1,4 @@
-/* import {
-  Component,
-  EventEmitter,
-  Input,
-  OnInit,
-  Output,
-  ViewChild,
-} from '@angular/core';
-import { BrandingComponent } from './branding.component';
-import { TablerIconsModule } from 'angular-tabler-icons';
-import { MaterialModule } from 'src/app/material.module';
 
-@Component({
-    selector: 'app-sidebar',
-    imports: [BrandingComponent, TablerIconsModule, MaterialModule],
-    templateUrl: './sidebar.component.html'
-})
-export class SidebarComponent implements OnInit {
-  constructor() { }
-  @Input() showToggle = true;
-  @Output() toggleMobileNav = new EventEmitter<void>();
-  @Output() toggleCollapsed = new EventEmitter<void>();
-
-  ngOnInit(): void { }
-}*/
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { BrandingComponent } from './branding.component';
 import { TablerIconsModule } from 'angular-tabler-icons';
@@ -37,7 +13,8 @@ import { CommonModule } from '@angular/common';
     selector: 'app-sidebar',
     standalone: true,
     imports: [CommonModule,BrandingComponent, TablerIconsModule, MaterialModule],
-    templateUrl: './sidebar.component.html'
+    templateUrl: './sidebar.component.html',
+    styleUrls:['./sidebar.component.scss']
 })
 export class SidebarComponent implements OnInit {
   navItems: NavItem[] = [];

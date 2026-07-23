@@ -18,6 +18,11 @@ import { RedirectDialogComponent } from './app-redirect-dialog';
 })
 export class AppSideRegisterComponent {
   options = this.settings.getOptions();
+  
+
+  loading = false;
+  showPassword = false;
+  currentYear = new Date().getFullYear();
 
   constructor(
     private settings: CoreService,

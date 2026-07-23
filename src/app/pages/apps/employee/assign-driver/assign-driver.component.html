@@ -1,0 +1,559 @@
+<div class="assign-dialog">
+
+  <!-- HEADER -->
+  <div class="assign-dialog-header">
+
+    <div class="header-left">
+
+      <div class="header-icon">
+        <i-tabler
+          name="building-warehouse"
+          class="icon-24">
+        </i-tabler>
+      </div>
+
+      <div>
+        <h2>Warehouse Access</h2>
+
+        <p>
+          Manage the warehouses where an active driver can work.
+        </p>
+      </div>
+
+    </div>
+
+    <button
+      mat-icon-button
+      type="button"
+      aria-label="Close warehouse access dialog"
+      [disabled]="saving || loadingAssignments"
+      (click)="close()">
+
+      <i-tabler
+        name="x"
+        class="icon-20">
+      </i-tabler>
+
+    </button>
+
+  </div>
+
+
+  <!-- CONTENT -->
+  <mat-dialog-content class="assign-dialog-content">
+
+    <!-- DRIVER SEARCH -->
+    <section class="dialog-section">
+
+      <div class="section-header">
+
+        <div>
+          <h3>Select Driver</h3>
+
+          <p>
+            Search an active driver by name, email or driver number.
+          </p>
+        </div>
+
+      </div>
+
+      <mat-form-field
+        appearance="outline"
+        class="w-100 driver-search-field">
+
+        <mat-label>Search Driver</mat-label>
+
+        <mat-icon matPrefix>
+          person_search
+        </mat-icon>
+
+        <input
+          matInput
+          type="text"
+          placeholder="Type name, email or driver number..."
+          autocomplete="off"
+          [formControl]="driverSearchControl"
+          [matAutocomplete]="driverAuto"
+          [disabled]="saving || loadingAssignments" />
+
+        <button
+          *ngIf="driverSearchControl.value"
+          matSuffix
+          mat-icon-button
+          type="button"
+          aria-label="Clear driver search"
+          [disabled]="saving || loadingAssignments"
+          (click)="clearDriverSearch()">
+
+          <mat-icon>close</mat-icon>
+
+        </button>
+
+        <mat-autocomplete
+          #driverAuto="matAutocomplete"
+          [displayWith]="displayDriver"
+          (optionSelected)="onDriverSelected($event.option.value)">
+
+          <mat-option
+            *ngFor="let driver of filteredDrivers$ | async"
+            [value]="driver">
+
+            <div class="driver-autocomplete-option">
+
+              <img
+                class="driver-option-avatar"
+                src="/assets/images/profile/user-1.jpg"
+                [alt]="getDriverName(driver)" />
+
+              <div class="driver-option-info">
+
+                <strong>
+                  {{ getDriverName(driver) }}
+                </strong>
+
+                <span>
+                  Driver #{{ driver.identificationNumber || 'N/A' }}
+
+                  <ng-container *ngIf="driver.email">
+                    · {{ driver.email }}
+                  </ng-container>
+                </span>
+
+              </div>
+
+              <span class="driver-option-status active">
+                Active
+              </span>
+
+            </div>
+
+          </mat-option>
+
+          <mat-option
+            disabled
+            *ngIf="(filteredDrivers$ | async)?.length === 0">
+
+            No active drivers found
+
+          </mat-option>
+
+        </mat-autocomplete>
+
+        <mat-hint>
+          Only active drivers are available.
+        </mat-hint>
+
+      </mat-form-field>
+
+    </section>
+
+
+    <!-- INITIAL STATE -->
+    <div
+      class="initial-empty-state"
+      *ngIf="!selectedDriverId">
+
+      <i-tabler
+        name="user-search"
+        class="icon-40">
+      </i-tabler>
+
+      <h3>Select an active driver</h3>
+
+      <p>
+        Search and select a driver to manage warehouse access.
+      </p>
+
+    </div>
+
+
+    <!-- SELECTED DRIVER -->
+    <ng-container *ngIf="selectedDriverId">
+
+      <!-- DRIVER SUMMARY -->
+      <section
+        class="driver-summary"
+        *ngIf="selectedDriver">
+
+        <img
+          class="driver-avatar"
+          src="/assets/images/profile/user-1.jpg"
+          [alt]="getDriverName(selectedDriver)" />
+
+        <div class="driver-summary-info">
+
+          <strong>
+            {{ getDriverName(selectedDriver) }}
+          </strong>
+
+          <span>
+            Driver #{{ selectedDriver.identificationNumber || 'N/A' }}
+          </span>
+
+          <span *ngIf="selectedDriver.email">
+            {{ selectedDriver.email }}
+          </span>
+
+        </div>
+
+        <div class="driver-summary-stat">
+
+          <strong>
+            {{ selectedWarehouses.length }}
+          </strong>
+
+          <span>
+            Active warehouses
+          </span>
+
+        </div>
+
+      </section>
+
+
+      <!-- LOADING -->
+      <div
+        class="assignment-loading"
+        *ngIf="loadingAssignments">
+
+        <mat-spinner diameter="38"></mat-spinner>
+
+        <span>
+          Loading driver warehouse access...
+        </span>
+
+      </div>
+
+
+      <ng-container *ngIf="!loadingAssignments">
+
+        <!-- PRIMARY WAREHOUSE -->
+        <div
+          class="current-warehouse-notice"
+          *ngIf="primaryWarehouseId">
+
+          <div class="current-warehouse-icon">
+
+            <i-tabler
+              name="star-filled"
+              class="icon-20">
+            </i-tabler>
+
+          </div>
+
+          <div>
+
+            <span>
+              Current Primary Warehouse
+            </span>
+
+            <strong>
+              {{ primaryWarehouseName }}
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <!-- ASSIGNED WAREHOUSES -->
+        <section class="dialog-section">
+
+          <div class="section-header">
+
+            <div>
+              <h3>Assigned Warehouses</h3>
+
+              <p>
+                These are the warehouses where this driver is currently
+                authorized to work.
+              </p>
+            </div>
+
+            <span class="assigned-count">
+              {{ selectedWarehouses.length }}
+              assigned
+            </span>
+
+          </div>
+
+
+          <!-- WAREHOUSE LIST -->
+          <div
+            class="assigned-warehouse-list"
+            *ngIf="
+              selectedWarehouses.length > 0;
+              else noAssignedWarehouses
+            ">
+
+            <div
+  class="assigned-warehouse-card"
+  *ngFor="let warehouse of selectedWarehouses">
+
+  <div class="warehouse-card-left">
+
+    <div
+      class="warehouse-icon"
+      [class.primary]="isPrimaryWarehouse(warehouse.id)">
+
+      <i-tabler
+        [name]="
+          isPrimaryWarehouse(warehouse.id)
+            ? 'star-filled'
+            : 'building-warehouse'
+        "
+        class="icon-18">
+      </i-tabler>
+
+    </div>
+
+    <div class="warehouse-info">
+
+      <h4>
+
+        {{ warehouse.company }}
+
+      </h4>
+
+      <span>
+
+        {{ warehouse.city }}
+
+        <ng-container *ngIf="warehouse.state">
+          , {{ warehouse.state }}
+        </ng-container>
+
+      </span>
+
+      <small>
+
+        Facility #{{ warehouse.facilityCode }}
+
+      </small>
+
+    </div>
+
+  </div>
+
+  <div class="warehouse-actions">
+
+    <button
+      *ngIf="!isPrimaryWarehouse(warehouse.id)"
+      mat-stroked-button
+      color="primary"
+      class="primary-button"
+      (click)="setPrimary(warehouse.id)">
+
+      <i-tabler
+        name="star"
+        class="icon-14">
+      </i-tabler>
+
+      Make Primary
+
+    </button>
+
+    <span
+      *ngIf="isPrimaryWarehouse(warehouse.id)"
+      class="primary-chip">
+
+      <i-tabler
+        name="star-filled"
+        class="icon-12">
+      </i-tabler>
+
+      PRIMARY
+
+    </span>
+
+    <button
+      *ngIf="!isPrimaryWarehouse(warehouse.id)"
+      mat-icon-button
+      color="warn"
+      (click)="removeWarehouse(warehouse.id)">
+
+      <i-tabler
+        name="trash"
+        class="icon-18">
+      </i-tabler>
+
+    </button>
+
+  </div>
+
+</div>
+
+          </div>
+
+
+          <!-- NO ASSIGNMENTS -->
+          <ng-template #noAssignedWarehouses>
+
+            <div class="no-assigned-warehouses">
+
+              <i-tabler
+                name="building-off"
+                class="icon-34">
+              </i-tabler>
+
+              <h4>No warehouses assigned</h4>
+
+              <p>
+                Add the driver's current warehouse below.
+              </p>
+
+            </div>
+
+          </ng-template>
+
+        </section>
+
+
+        <!-- ADD WAREHOUSE -->
+        <section class="dialog-section add-warehouse-section">
+
+          <div class="section-header">
+
+            <div>
+              <h3>Add Warehouse</h3>
+
+              <p>
+                Select another warehouse where this driver can work.
+              </p>
+            </div>
+
+          </div>
+
+
+          <div class="add-warehouse-grid">
+
+            <!-- WAREHOUSE SELECT -->
+            <mat-form-field
+              appearance="outline"
+              class="warehouse-to-add-field">
+
+              <mat-label>Select Warehouse</mat-label>
+
+              <mat-icon matPrefix>
+                add_business
+              </mat-icon>
+
+              <mat-select
+                [(ngModel)]="warehouseToAdd"
+                [disabled]="saving">
+
+                <mat-option
+                  *ngFor="let warehouse of availableWarehouses"
+                  [value]="warehouse.id">
+
+                  <div class="warehouse-select-option">
+
+                    <div class="warehouse-select-info">
+
+                      <strong>
+                        {{ getWarehouseName(warehouse) }}
+                      </strong>
+
+                      <span *ngIf="warehouse.facilityCode">
+                        Facility #{{ warehouse.facilityCode }}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                </mat-option>
+
+              </mat-select>
+
+              <mat-hint>
+                Already assigned warehouses are not shown.
+              </mat-hint>
+
+            </mat-form-field>
+
+
+            <!-- PRIMARY CHECKBOX -->
+            <mat-checkbox
+              class="primary-checkbox"
+              [(ngModel)]="addAsPrimary"
+              [disabled]="saving || !warehouseToAdd">
+
+              Make this the primary warehouse
+
+            </mat-checkbox>
+
+
+            <!-- ADD BUTTON -->
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              class="add-warehouse-btn"
+              [disabled]="saving || !warehouseToAdd"
+              (click)="addWarehouse()">
+
+              <mat-spinner
+                *ngIf="saving"
+                diameter="18">
+              </mat-spinner>
+
+              <i-tabler
+                *ngIf="!saving"
+                name="building-plus"
+                class="icon-18">
+              </i-tabler>
+
+              <span>
+                Add Warehouse
+              </span>
+
+            </button>
+
+          </div>
+
+
+          <!-- ALL WAREHOUSES ALREADY ASSIGNED -->
+          <div
+            class="all-assigned-notice"
+            *ngIf="
+              availableWarehouses.length === 0 &&
+              selectedWarehouses.length > 0
+            ">
+
+            <i-tabler
+              name="circle-check"
+              class="icon-18">
+            </i-tabler>
+
+            This driver is already assigned to every available warehouse.
+
+          </div>
+
+        </section>
+
+      </ng-container>
+
+    </ng-container>
+
+  </mat-dialog-content>
+
+
+  <!-- FOOTER -->
+  <mat-dialog-actions
+    align="end"
+    class="assign-dialog-actions">
+
+    <button
+      mat-stroked-button
+      type="button"
+      [disabled]="saving || loadingAssignments"
+      (click)="close()">
+
+      Close
+
+    </button>
+
+  </mat-dialog-actions>
+
+</div>

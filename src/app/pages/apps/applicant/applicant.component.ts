@@ -30,9 +30,11 @@ import { MatSort } from '@angular/material/sort';
 import { HiredDialogContentComponent } from './hired-dialog-content/hired-dialog-content.component';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { RecruiterService } from 'src/app/services/recruiter.service';
-import { catchError, Observable, of, shareReplay } from 'rxjs';
+import { catchError, Observable, of, shareReplay,forkJoin } from 'rxjs';
 import * as XLSX from 'xlsx';
 export type StatusKey = 'Applicant' | 'PreOnboarding' | 'InitialContact' | 'AwaitingResponse';
+import { TtoSmsService } from 'src/app/services/apps/tto-sms.service';
+import {  finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-applicant',
@@ -104,7 +106,8 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
     private settings: CoreService,
     private rolePipe: RolePipe,
     private toastr: ToastrService,
-    private recruiterService: RecruiterService
+    private recruiterService: RecruiterService,
+    private readonly smsService: TtoSmsService,
   ) { }
   role: any;
   selectedIds = new Set<number>();
@@ -606,57 +609,310 @@ export class ApplicantComponent implements AfterViewInit, OnInit {
     this.applyCombinedFilter();
   }
 
-  bulkAction(): void {
-    // 1) obtener rows seleccionados
-    const selectedRows = (this.dataSource?.data ?? [])
-      .filter((r: any) => this.selectedIds.has(Number(r.id)));
+  
+    bulkAction(): void {
 
-    if (selectedRows.length === 0) return;
+  // 1. Obtener applicants seleccionados
+  const selectedRows = (this.dataSource?.data ?? [])
+    .filter((row: any) =>
+      this.selectedIds.has(Number(row.id))
+    );
 
-    // 2) separar los que NO tienen warehouse (skipped local)
-    const withWarehouse = selectedRows.filter(r => Number(r.warehouseId) > 0);
-    const missingWarehouse = selectedRows.filter(r => !(Number(r.warehouseId) > 0));
+  if (selectedRows.length === 0) {
+    this.toastr.info(
+      'Select at least one applicant.',
+      'Nothing selected'
+    );
 
-    if (withWarehouse.length === 0) {
-      this.toastr.info('No selected applicants have a warehouse assigned.', 'Nothing to send');
-      return;
+    return;
+  }
+
+  // 2. Separar applicants con y sin warehouse
+  const withWarehouse = selectedRows.filter(
+    (row: any) => Number(row.warehouseId) > 0
+  );
+
+  const missingWarehouse = selectedRows.filter(
+    (row: any) => !(Number(row.warehouseId) > 0)
+  );
+
+  if (withWarehouse.length === 0) {
+    this.toastr.info(
+      'No selected applicants have a warehouse assigned.',
+      'Nothing to send'
+    );
+
+    return;
+  }
+
+  this.loading = true;
+
+  const batchId = Date.now();
+
+  /*
+   * Envío original.
+   *
+   * Esto conserva exactamente el comportamiento anterior:
+   * email, WhatsApp, notificación o el proceso que ya realiza
+   * contactApplicant().
+   */
+  const originalContactRequest =
+    this.employeeService.contactApplicant(withWarehouse).pipe(
+      catchError(error => {
+        return of({
+          sent: 0,
+          skipped: 0,
+          failed: withWarehouse.length,
+          requestFailed: true,
+          error
+        });
+      })
+    );
+
+  /*
+   * Envío adicional por SMS Engine.
+   */
+  const smsRequests = withWarehouse.map((applicant: any) => {
+
+    const phone = this.normalizePhone(
+      applicant.phone ??
+      applicant.phoneNumber ??
+      applicant.mobile
+    );
+
+    if (!phone) {
+      return of({
+        applicantId: applicant.id,
+        status: 'failed',
+        reason: 'Invalid or missing phone number'
+      });
     }
 
-    // 3) llamar API batch
-    this.loading = true;
-    this.employeeService.contactApplicant(withWarehouse).subscribe({
-      next: (res) => {
-        const sent = res?.sent ?? 0;
-        const skippedApi = res?.skipped ?? 0;   // si backend también puede saltar por otra razón
-        const failed = res?.failed ?? 0;
+    const applicantName =
+      applicant.name ??
+      applicant.firstName ??
+      applicant.user?.name ??
+      'Applicant';
+
+    const warehouseName =
+      applicant.warehouseName ??
+      applicant.warehouse?.name ??
+      applicant.warehouse?.city ??
+      applicant.city ??
+      '';
+
+    return this.smsService.send({
+      kind: 'applicant_followup',
+      to: phone,
+      lang: this.resolveSmsLanguage(applicant),
+
+      /*
+       * Cada ejecución del botón produce un externalId nuevo.
+       * Así se evita duplicar accidentalmente dentro del mismo batch.
+       */
+      externalId:
+        `applicant-followup-${applicant.id}-${batchId}`,
+
+      vars: {
+        name: applicantName,
+        warehouse: warehouseName
+      }
+    }).pipe(
+      catchError(error => {
+        return of({
+          applicantId: applicant.id,
+          status: 'failed',
+          reason:
+            error?.error?.detail ??
+            error?.error?.message ??
+            error?.message ??
+            'SMS sending failed'
+        });
+      })
+    );
+  });
+
+  /*
+   * forkJoin espera:
+   * 1. El proceso original contactApplicant().
+   * 2. Todos los envíos por SMS.
+   */
+  forkJoin({
+    original: originalContactRequest,
+    sms: forkJoin(smsRequests)
+  })
+    .pipe(
+      finalize(() => {
+        this.loading = false;
+      })
+    )
+    .subscribe({
+      next: result => {
+
+        /*
+         * Resultado del envío original
+         */
+        const originalSent =
+          Number(result.original?.sent ?? 0);
+
+        const originalSkippedApi =
+          Number(result.original?.skipped ?? 0);
+
+        const originalFailed =
+          Number(result.original?.failed ?? 0);
 
         const skippedLocal = missingWarehouse.length;
-        const totalSkipped = skippedLocal + skippedApi;
 
-        if (sent > 0) {
+        const originalTotalSkipped =
+          skippedLocal + originalSkippedApi;
+
+        /*
+         * Resultado del SMS Engine
+         */
+        const smsSent = result.sms.filter(
+          (response: any) =>
+            response.status === 'sent'
+        ).length;
+
+        const smsDryRun = result.sms.filter(
+          (response: any) =>
+            response.status === 'dry_run'
+        ).length;
+
+        const smsQueued = result.sms.filter(
+          (response: any) =>
+            response.status === 'queued'
+        ).length;
+
+        const smsSkipped = result.sms.filter(
+          (response: any) =>
+            response.status === 'skipped'
+        ).length;
+
+        const smsFailed = result.sms.filter(
+          (response: any) =>
+            response.status === 'failed'
+        ).length;
+
+        /*
+         * Mostrar resultado combinado
+         */
+        const originalSummary = [
+          `Original sent: ${originalSent}`,
+          originalTotalSkipped > 0
+            ? `Original skipped: ${originalTotalSkipped}`
+            : '',
+          originalFailed > 0
+            ? `Original failed: ${originalFailed}`
+            : ''
+        ]
+          .filter(Boolean)
+          .join(' | ');
+
+        const smsSummary = [
+          `SMS sent: ${smsSent}`,
+          smsDryRun > 0
+            ? `SMS dry run: ${smsDryRun}`
+            : '',
+          smsQueued > 0
+            ? `SMS queued: ${smsQueued}`
+            : '',
+          smsSkipped > 0
+            ? `SMS skipped: ${smsSkipped}`
+            : '',
+          smsFailed > 0
+            ? `SMS failed: ${smsFailed}`
+            : ''
+        ]
+          .filter(Boolean)
+          .join(' | ');
+
+        if (
+          originalSent > 0 ||
+          smsSent > 0 ||
+          smsDryRun > 0 ||
+          smsQueued > 0
+        ) {
           this.toastr.success(
-            `Sent: ${sent}${totalSkipped ? ` | Skipped: ${totalSkipped}` : ''}${failed ? ` | Failed: ${failed}` : ''}`,
-            'Done'
+            `${originalSummary}\n${smsSummary}`,
+            'Messages completed',
+            {
+              enableHtml: false,
+              timeOut: 8000
+            }
           );
         } else {
           this.toastr.info(
-            `No messages sent.${totalSkipped ? ` Skipped: ${totalSkipped}` : ''}${failed ? ` Failed: ${failed}` : ''}`,
-            'Done'
+            `${originalSummary}\n${smsSummary}`,
+            'No messages sent',
+            {
+              enableHtml: false,
+              timeOut: 8000
+            }
           );
         }
 
-        // opcional: limpiar selección
         this.selectedIds.clear();
-
-        this.loading = false;
         this.loadApplicants();
       },
-      error: (err) => {
-        this.loading = false;
-        this.toastr.error(err?.error?.message || 'Error sending messages', 'Error');
+
+      error: error => {
+        this.toastr.error(
+          error?.error?.message ??
+          'Unexpected error sending messages.',
+          'Error'
+        );
       }
     });
+}
+private normalizePhone(phone: unknown): string | null {
+
+  if (!phone) {
+    return null;
   }
+
+  const rawPhone = String(phone).trim();
+  const digits = rawPhone.replace(/\D/g, '');
+
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+
+  if (
+    digits.length === 11 &&
+    digits.startsWith('1')
+  ) {
+    return `+${digits}`;
+  }
+
+  if (
+    rawPhone.startsWith('+') &&
+    digits.length >= 10
+  ) {
+    return `+${digits}`;
+  }
+
+  return null;
+}
+
+private resolveSmsLanguage(
+  applicant: any
+): 'en' | 'es' {
+
+  const language = String(
+    applicant.preferredLanguage ??
+    applicant.language ??
+    applicant.lang ??
+    'en'
+  )
+    .trim()
+    .toLowerCase();
+
+  return language === 'es'
+    ? 'es'
+    : 'en';
+}
+
   resendPasswordSetup(row: any): void {
     if (!row?.id) {
       this.toastr.error('Invalid applicant id', 'Error');

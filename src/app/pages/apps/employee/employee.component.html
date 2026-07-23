@@ -2,125 +2,914 @@
   <mat-spinner diameter="42"></mat-spinner>
 </div>
 
+
 <div class="employees-page">
+
+  <!-- DRIVER METRICS -->
+  <div class="driver-metrics-grid">
+
+    <!-- ACTIVE DRIVERS -->
+    <mat-card class="driver-metric-card">
+      <mat-card-content>
+
+        <div class="metric-card-top">
+
+          <div class="metric-icon active">
+            <i-tabler
+              name="user-check"
+              class="icon-24">
+            </i-tabler>
+          </div>
+
+          <span class="metric-status active">
+            Active
+          </span>
+
+        </div>
+
+        <div class="metric-card-content">
+
+          <span class="metric-label">
+            Active Drivers
+          </span>
+
+          <strong class="metric-value">
+            {{ activeDriversCount }}
+          </strong>
+
+          <span class="metric-caption">
+            {{ activeDriversPercent | number:'1.0-1' }}%
+            of all drivers
+          </span>
+
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+
+
+    <!-- INACTIVE CANDIDATES -->
+    <mat-card
+      class="driver-metric-card"
+      [class.requires-attention]="
+        inactiveCandidateCount > 0
+      ">
+
+      <mat-card-content>
+
+        <div class="metric-card-top">
+
+          <div class="metric-icon warning">
+            <i-tabler
+              name="user-pause"
+              class="icon-24">
+            </i-tabler>
+          </div>
+
+          <span
+            class="metric-status warning"
+            *ngIf="inactiveCandidateCount > 0">
+
+            Review
+
+          </span>
+
+          <span
+            class="metric-status normal"
+            *ngIf="inactiveCandidateCount === 0">
+
+            Clear
+
+          </span>
+
+        </div>
+
+        <div class="metric-card-content">
+
+          <span class="metric-label">
+            Inactive Candidates
+          </span>
+
+          <strong class="metric-value">
+            {{ inactiveCandidateCount }}
+          </strong>
+
+          <span
+            class="metric-caption"
+            *ngIf="inactiveCandidateCount > 0">
+
+            No routes in the last
+            {{ inactivityDaysThreshold }}
+            days
+
+          </span>
+
+          <span
+            class="metric-caption"
+            *ngIf="inactiveCandidateCount === 0">
+
+            No drivers require review
+
+          </span>
+
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+
+
+    <!-- VETERAN DRIVERS -->
+    <mat-card class="driver-metric-card">
+      <mat-card-content>
+
+        <div class="metric-card-top">
+
+          <div class="metric-icon veteran">
+            <i-tabler
+              name="award"
+              class="icon-24">
+            </i-tabler>
+          </div>
+
+          <span class="metric-status veteran">
+            Veteran
+          </span>
+
+        </div>
+
+        <div class="metric-card-content">
+
+          <span class="metric-label">
+            Veteran Drivers
+          </span>
+
+          <strong class="metric-value">
+            {{ veteranDriversCount }}
+          </strong>
+
+          <span class="metric-caption">
+            At least
+            {{ veteranMonthsThreshold }}
+            months with the company
+          </span>
+
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+
+
+    <!-- HIGH PERFORMANCE -->
+    <mat-card class="driver-metric-card">
+      <mat-card-content>
+
+        <div class="metric-card-top">
+
+          <div class="metric-icon performance">
+            <i-tabler
+              name="trophy"
+              class="icon-24">
+            </i-tabler>
+          </div>
+
+          <span class="metric-status performance">
+            Top
+          </span>
+
+        </div>
+
+        <div class="metric-card-content">
+
+          <span class="metric-label">
+            High Performers
+          </span>
+
+          <strong class="metric-value">
+            {{ highPerformanceDriversCount }}
+          </strong>
+
+          <span class="metric-caption">
+            Meeting productivity and quality targets
+          </span>
+
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+
+
+  <!-- DRIVER INSIGHTS -->
+  <div class="driver-insights-grid">
+
+    <!-- MOST VETERAN DRIVERS -->
+    <mat-card class="driver-insight-card">
+
+      <mat-card-header>
+
+        <div
+          mat-card-avatar
+          class="insight-header-icon">
+
+          <i-tabler
+            name="calendar-time"
+            class="icon-22">
+          </i-tabler>
+
+        </div>
+
+        <mat-card-title>
+          Most Veteran Drivers
+        </mat-card-title>
+
+        <mat-card-subtitle>
+          Drivers with the longest tenure
+        </mat-card-subtitle>
+
+      </mat-card-header>
+
+      <mat-card-content>
+
+        <div
+          class="driver-ranking-item"
+          *ngFor="
+            let driver of mostVeteranDrivers;
+            let index = index
+          ">
+
+          <div
+            class="ranking-number"
+            [class.first]="index === 0">
+
+            {{ index + 1 }}
+
+          </div>
+
+          <img
+            class="ranking-avatar"
+            [src]="avatarSrc$(driver) | async"
+            [alt]="driver.name" />
+
+          <div class="ranking-driver-info">
+
+            <strong>
+              {{ driver.name }}
+              {{ driver.lastName }}
+            </strong>
+
+            <span>
+              Driver #
+              {{ driver.identificationNumber || 'N/A' }}
+            </span>
+
+          </div>
+
+          <div class="ranking-result">
+
+            <strong>
+              {{ driver.tenureMonths }}
+            </strong>
+
+            <span>months</span>
+
+          </div>
+
+        </div>
+
+        <div
+          class="insight-empty-state"
+          *ngIf="mostVeteranDrivers.length === 0">
+
+          <i-tabler
+            name="calendar-off"
+            class="icon-26">
+          </i-tabler>
+
+          <span>
+            No tenure information available
+          </span>
+
+        </div>
+
+      </mat-card-content>
+
+    </mat-card>
+
+
+    <!-- BEST PERFORMING DRIVERS -->
+    <mat-card class="driver-insight-card">
+
+      <mat-card-header>
+
+        <div
+          mat-card-avatar
+          class="insight-header-icon performance">
+
+          <i-tabler
+            name="chart-bar"
+            class="icon-22">
+          </i-tabler>
+
+        </div>
+
+        <mat-card-title>
+          Best Performing Drivers
+        </mat-card-title>
+
+        <mat-card-subtitle>
+          Based on production and route quality
+        </mat-card-subtitle>
+
+      </mat-card-header>
+
+      <mat-card-content>
+
+        <div
+          class="driver-ranking-item performance-item"
+          *ngFor="
+            let driver of topPerformanceDrivers;
+            let index = index
+          ">
+
+          <div
+            class="ranking-number"
+            [class.first]="index === 0">
+
+            {{ index + 1 }}
+
+          </div>
+
+          <img
+            class="ranking-avatar"
+            [src]="avatarSrc$(driver) | async"
+            [alt]="driver.name" />
+
+          <div class="ranking-driver-info">
+
+            <strong>
+              {{ driver.name }}
+              {{ driver.lastName }}
+            </strong>
+
+            <span>
+              {{ driver.packages | number }}
+              packages
+              ·
+              {{ driver.routes | number }}
+              routes
+            </span>
+
+          </div>
+
+          <div class="performance-badges">
+
+            <span
+              class="quality-pill"
+              [ngClass]="{
+                good: driver.losPercent >= 98,
+                warning:
+                  driver.losPercent >= 95 &&
+                  driver.losPercent < 98,
+                danger:
+                  driver.losPercent < 95
+              }">
+
+              LOS
+              {{
+                driver.losPercent
+                  | number:'1.1-1'
+              }}%
+
+            </span>
+
+            <span
+              class="quality-pill"
+              [ngClass]="{
+                good: driver.cnl === 0,
+                warning:
+                  driver.cnl > 0 &&
+                  driver.cnl <= 2,
+                danger:
+                  driver.cnl > 2
+              }">
+
+              CNL {{ driver.cnl }}
+
+            </span>
+
+          </div>
+
+        </div>
+
+        <div
+          class="insight-empty-state"
+          *ngIf="topPerformanceDrivers.length === 0">
+
+          <i-tabler
+            name="chart-bar-off"
+            class="icon-26">
+          </i-tabler>
+
+          <span>
+            No performance information available
+          </span>
+
+        </div>
+
+      </mat-card-content>
+
+    </mat-card>
+
+
+    <!-- DRIVERS REQUIRING REVIEW -->
+    <mat-card class="driver-insight-card review-card">
+
+      <mat-card-header>
+
+        <div
+          mat-card-avatar
+          class="insight-header-icon warning">
+
+          <i-tabler
+            name="alert-triangle"
+            class="icon-22">
+          </i-tabler>
+
+        </div>
+
+        <mat-card-title>
+          Drivers Requiring Review
+        </mat-card-title>
+
+        <mat-card-subtitle>
+          Inactivity or low operational metrics
+        </mat-card-subtitle>
+
+      </mat-card-header>
+
+      <mat-card-content>
+
+        <div
+          class="driver-ranking-item review-item"
+          *ngFor="
+            let driver of driversRequiringReview
+          ">
+
+          <img
+            class="ranking-avatar"
+            [src]="avatarSrc$(driver) | async"
+            [alt]="driver.name" />
+
+          <div class="ranking-driver-info">
+
+            <strong>
+              {{ driver.name }}
+              {{ driver.lastName }}
+            </strong>
+
+            <span class="review-reason">
+              {{ driver.reason }}
+            </span>
+
+          </div>
+
+          <div class="ranking-result danger">
+
+            <strong>
+              {{ driver.daysWithoutRoutes }}
+            </strong>
+
+            <span>days</span>
+
+          </div>
+
+          <button
+            mat-icon-button
+            type="button"
+            class="review-action"
+            matTooltip="Review driver"
+            (click)="openDialog('Update', driver)">
+
+            <i-tabler
+              name="chevron-right"
+              class="icon-20">
+            </i-tabler>
+
+          </button>
+
+        </div>
+
+        <div
+          class="insight-empty-state success"
+          *ngIf="
+            driversRequiringReview.length === 0
+          ">
+
+          <i-tabler
+            name="circle-check"
+            class="icon-26">
+          </i-tabler>
+
+          <span>
+            All drivers are operating normally
+          </span>
+
+        </div>
+
+      </mat-card-content>
+
+    </mat-card>
+
+  </div>
 
 
   <!-- FILTERS -->
   <div class="employees-filter-bar">
-    <mat-form-field appearance="outline" class="search-field">
-      <mat-icon matPrefix>
-        <i-tabler name="search" class="icon-20"></i-tabler>
-      </mat-icon>
-      <input matInput placeholder="Search employee..." (keyup)="applyFilter($any($event.target).value)" />
-    </mat-form-field>
 
-    <mat-form-field *ngIf="isAdmin" appearance="outline" class="filter-field">
-      <mat-label>Warehouse</mat-label>
-      <mat-select [value]="selectedWarehouseId" (selectionChange)="onWarehouseChange($event.value)">
-        <mat-option [value]="null">All Warehouses</mat-option>
-        <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
-          {{ warehouse.name || (warehouse.company + ' - ' + warehouse.city) }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-icon matPrefix>
+      <i-tabler name="search" class="icon-20"></i-tabler>
+    </mat-icon>
 
-    <mat-form-field appearance="outline" class="filter-field">
-      <mat-label>Status</mat-label>
-      <mat-select [(value)]="driverStatus" (selectionChange)="onDriverStatusChange($event.value)">
-        <mat-option value="active">Actives</mat-option>
-        <mat-option value="inactive">Inactives</mat-option>
-        <mat-option value="all">All</mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
+    <input
+      matInput
+      placeholder="Search employee..."
+      (keyup)="applyFilter($any($event.target).value)" />
+  </mat-form-field>
+
+  <mat-form-field
+    *ngIf="isAdmin"
+    appearance="outline"
+    class="filter-field">
+
+    <mat-label>Warehouse</mat-label>
+
+    <mat-select
+      [value]="selectedWarehouseId"
+      (selectionChange)="onWarehouseChange($event.value)">
+
+      <mat-option [value]="null">
+        All Warehouses
+      </mat-option>
+
+      <mat-option
+        *ngFor="let warehouse of warehouses"
+        [value]="warehouse.id">
+
+        {{
+          warehouse.name ||
+          (warehouse.company + ' - ' + warehouse.city)
+        }}
+
+      </mat-option>
+
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="filter-field">
+    <mat-label>Status</mat-label>
+
+    <mat-select
+      [(value)]="driverStatus"
+      (selectionChange)="onDriverStatusChange($event.value)">
+
+      <mat-option value="active">
+        Actives
+      </mat-option>
+
+      <mat-option value="inactive">
+        Inactives
+      </mat-option>
+
+      <mat-option value="all">
+        All
+      </mat-option>
+
+    </mat-select>
+  </mat-form-field>
+
+  <button
+    *ngIf="canManageWarehouseAccess"
+    mat-flat-button
+    color="primary"
+    type="button"
+    class="assign-driver-btn"
+    (click)="openAssignDriverDialog()">
+
+    <i-tabler
+      name="building-warehouse"
+      class="icon-18">
+    </i-tabler>
+
+    Warehouse Access
+
+  </button>
+
+</div>
+
 
   <!-- TABLE -->
   <mat-card class="employees-table-card">
+
     <mat-card-content>
-      <div class="table-responsive">
-        <table mat-table [dataSource]="dataSource" class="employees-table" matSort>
 
-          <ng-container matColumnDef="identificationNumber">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>#</th>
-            <td mat-cell *matCellDef="let element">
-              <span class="driver-badge">{{ element.identificationNumber || 'N/A' }}</span>
-            </td>
-          </ng-container>
+ 
+<div class="table-responsive">
 
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-            <td mat-cell *matCellDef="let element">
-              <div class="employee-info">
-                <img class="employee-avatar" [src]="avatarSrc$(element) | async" />
-                <div>
-                  <h6>{{ element.name }} {{ element.lastName }}</h6>
-                  <span>{{ element.userRole | rolePipe }}</span>
-                </div>
-              </div>
-            </td>
-          </ng-container>
+  <table
+    mat-table
+    [dataSource]="dataSource"
+    class="employees-table"
+    matSort>
 
-          <ng-container matColumnDef="phoneNumber">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Mobile</th>
-            <td mat-cell *matCellDef="let element">
-              {{ element.profile?.phoneNumber ? (element.profile?.phoneNumber | phoneFormat) : 'N/A' }}
-            </td>
-          </ng-container>
+    <!-- DRIVER NUMBER -->
+    <ng-container matColumnDef="identificationNumber">
 
-          <ng-container matColumnDef="email">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
-            <td mat-cell *matCellDef="let element">
-              {{ element.email || 'N/A' }}
-            </td>
-          </ng-container>
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        mat-sort-header>
+        #
+      </th>
 
-          <ng-container matColumnDef="isActive">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Active</th>
-            <td mat-cell *matCellDef="let element">
-              <span class="status-pill" [ngClass]="element.isActive ? 'active' : 'inactive'">
-                <mat-icon>{{ element.isActive ? 'check_circle' : 'cancel' }}</mat-icon>
-                {{ element.isActive ? 'Active' : 'Inactive' }}
-              </span>
-            </td>
-          </ng-container>
+      <td
+        mat-cell
+        *matCellDef="let element"
+        data-label="Driver #">
 
-          <ng-container matColumnDef="warehouseId">
-            <th mat-header-cell *matHeaderCellDef mat-sort-header>Warehouse</th>
-            <td mat-cell *matCellDef="let element">
-              <div class="warehouse-cell">
-                <strong>{{ element.warehouse?.company || 'N/A' }}</strong>
-                <span>{{ element.warehouse?.city || 'Unknown' }}</span>
-              </div>
-            </td>
-          </ng-container>
+        <span class="driver-badge">
+          {{ element.identificationNumber || 'N/A' }}
+        </span>
 
-          <ng-container matColumnDef="action">
-            <th mat-header-cell *matHeaderCellDef>Action</th>
-            <td mat-cell *matCellDef="let element">
-              <div class="action-buttons">
-                <button mat-icon-button class="view-btn" matTooltip="View" (click)="openDialog('View', element)">
-                  <i-tabler name="eye-search" class="icon-18"></i-tabler>
-                </button>
+      </td>
 
-                <button mat-icon-button class="edit-btn" matTooltip="Edit" (click)="openDialog('Update', element)">
-                  <i-tabler name="edit" class="icon-18"></i-tabler>
-                </button>
+    </ng-container>
 
-                <button mat-icon-button class="delete-btn" matTooltip="Delete" (click)="openDialog('Delete', element)">
-                  <i-tabler name="trash" class="icon-18"></i-tabler>
-                </button>
-              </div>
-            </td>
-          </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row class="employee-row" *matRowDef="let row; columns: displayedColumns"></tr>
-        </table>
+    <!-- NAME -->
+    <ng-container matColumnDef="name">
 
-        <mat-paginator [pageSize]="20" [pageSizeOptions]="[5, 10, 20, 50]" showFirstLastButtons>
-        </mat-paginator>
-      </div>
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        mat-sort-header>
+        Name
+      </th>
+
+      <td
+        mat-cell
+        *matCellDef="let element"
+        data-label="Driver">
+
+        <div class="employee-info">
+
+          <img
+            class="employee-avatar"
+            [src]="avatarSrc$(element) | async"
+            [alt]="element.name" />
+
+          <div>
+            <h6>
+              {{ element.name }}
+              {{ element.lastName }}
+            </h6>
+
+            <span>
+              {{ element.userRole | rolePipe }}
+            </span>
+          </div>
+
+        </div>
+
+      </td>
+
+    </ng-container>
+
+
+    <!-- PHONE -->
+    <ng-container matColumnDef="phoneNumber">
+
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        mat-sort-header>
+        Mobile
+      </th>
+
+      <td
+        mat-cell
+        *matCellDef="let element"
+        data-label="Mobile">
+
+        {{
+          element.profile?.phoneNumber
+            ? (
+                element.profile.phoneNumber
+                  | phoneFormat
+              )
+            : 'N/A'
+        }}
+
+      </td>
+
+    </ng-container>
+
+
+    <!-- EMAIL -->
+    <ng-container matColumnDef="email">
+
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        mat-sort-header>
+        Email
+      </th>
+
+      <td
+        mat-cell
+        *matCellDef="let element"
+        data-label="Email">
+
+        <span class="mobile-email">
+          {{ element.email || 'N/A' }}
+        </span>
+
+      </td>
+
+    </ng-container>
+
+
+    <!-- STATUS -->
+    <ng-container matColumnDef="isActive">
+
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        mat-sort-header>
+        Active
+      </th>
+
+      <td
+        mat-cell
+        *matCellDef="let element"
+        data-label="Status">
+
+        <span
+          class="status-pill"
+          [ngClass]="
+            element.isActive
+              ? 'active'
+              : 'inactive'
+          ">
+
+          <mat-icon>
+            {{
+              element.isActive
+                ? 'check_circle'
+                : 'cancel'
+            }}
+          </mat-icon>
+
+          {{
+            element.isActive
+              ? 'Active'
+              : 'Inactive'
+          }}
+
+        </span>
+
+      </td>
+
+    </ng-container>
+
+
+    <!-- WAREHOUSE -->
+    <ng-container matColumnDef="warehouseId">
+
+      <th
+        mat-header-cell
+        *matHeaderCellDef
+        mat-sort-header>
+        Warehouse
+      </th>
+
+      <td
+        mat-cell
+        *matCellDef="let element"
+        data-label="Warehouse">
+
+        <div class="warehouse-cell">
+
+          <strong>
+            {{ element.warehouse?.company || 'N/A' }}
+          </strong>
+
+          <span>
+            {{ element.warehouse?.city || 'Unknown' }}
+          </span>
+
+        </div>
+
+      </td>
+
+    </ng-container>
+
+
+    <!-- ACTIONS -->
+    <ng-container matColumnDef="action">
+
+      <th
+        mat-header-cell
+        *matHeaderCellDef>
+        Action
+      </th>
+
+      <td
+        mat-cell
+        *matCellDef="let element"
+        data-label="Actions">
+
+        <div class="action-buttons">
+
+          <button
+            mat-icon-button
+            class="view-btn"
+            matTooltip="View"
+            type="button"
+            (click)="openDialog('View', element)">
+
+            <i-tabler
+              name="eye-search"
+              class="icon-18">
+            </i-tabler>
+
+          </button>
+
+          <button
+            mat-icon-button
+            class="edit-btn"
+            matTooltip="Edit"
+            type="button"
+            (click)="openDialog('Update', element)">
+
+            <i-tabler
+              name="edit"
+              class="icon-18">
+            </i-tabler>
+
+          </button>
+
+          <button
+            mat-icon-button
+            class="delete-btn"
+            matTooltip="Delete"
+            type="button"
+            (click)="openDialog('Delete', element)">
+
+            <i-tabler
+              name="trash"
+              class="icon-18">
+            </i-tabler>
+
+          </button>
+
+        </div>
+
+      </td>
+
+    </ng-container>
+
+
+    <tr
+      mat-header-row
+      *matHeaderRowDef="displayedColumns">
+    </tr>
+
+    <tr
+      mat-row
+      class="employee-row"
+      *matRowDef="
+        let row;
+        columns: displayedColumns
+      ">
+    </tr>
+
+  </table>
+
+  <mat-paginator
+    [pageSize]="20"
+    [pageSizeOptions]="[5, 10, 20, 50]"
+    showFirstLastButtons>
+  </mat-paginator>
+
+</div>
+
+
     </mat-card-content>
+
   </mat-card>
 
 </div>
+
+

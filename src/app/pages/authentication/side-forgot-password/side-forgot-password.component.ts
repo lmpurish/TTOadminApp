@@ -25,11 +25,12 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     BrandingComponent,
   ],
   templateUrl: './side-forgot-password.component.html',
+  styleUrls:['./side-forgot-pwd.component.scss']
 })
 export class AppSideForgotPasswordComponent {
   options = this.settings.getOptions();
   loading = false;
-
+currentYear = new Date().getFullYear();
   constructor(
     private settings: CoreService,
     private snackBar: MatSnackBar

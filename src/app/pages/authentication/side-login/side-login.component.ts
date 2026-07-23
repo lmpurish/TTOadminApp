@@ -16,12 +16,15 @@ import { environment } from 'src/environments/environment';
   selector: 'app-side-login',
   imports: [RouterModule, MaterialModule, FormsModule, ReactiveFormsModule, BrandingComponent],
   templateUrl: './side-login.component.html',
+  styleUrls: ['./side-login.component.scss']
 
 })
 export class AppSideLoginComponent {
   options = this.settings.getOptions();
   loginForm!: FormGroup;
-
+loading = false;
+showPassword = false;
+currentYear = new Date().getFullYear();
   constructor(private settings: CoreService, private router: Router, private fb: FormBuilder, private toastr: ToastrService, private dialog: MatDialog) { }
 
   ngOnInit(): void {

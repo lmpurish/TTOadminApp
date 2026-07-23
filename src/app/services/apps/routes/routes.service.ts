@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Route, Router } from '@angular/router';
-import { ToastrService } from 'ngx-toastr';
-import { Warehouse } from 'src/app/pages/apps/warehouse/warehouse';
-import { Zone } from 'src/app/pages/apps/warehouse/zone/zone';
+import {
+  HttpClient,
+  HttpParams
+} from '@angular/common/http';
+
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
+
 import { environment } from 'src/environments/environment';
 import { Routes } from 'src/app/pages/apps/routes/Routes';
 
@@ -13,67 +16,303 @@ import { Routes } from 'src/app/pages/apps/routes/Routes';
 })
 export class RoutesService {
 
-  constructor(private http: HttpClient, private toastr: ToastrService, private router: Router) { }
-  private baseUrl = environment.apiUrl;
+  private readonly baseUrl = environment.apiUrl;
 
-  getRoutes() {
-    return this.http.get<any>(`${this.baseUrl}/Routes`);
-  }
-  assignDriverToRoute(routeId: number, userId: number | null) {
-    return this.http.put(`${this.baseUrl}/Routes/${routeId}/assign-driver`, { userId });
+  constructor(
+    private http: HttpClient,
+    private toastr: ToastrService,
+    private router: Router
+  ) {}
+
+  /**
+   * Obtiene todas las rutas disponibles.
+   */
+  getRoutes(): Observable<Routes[]> {
+    return this.http.get<Routes[]>(
+      `${this.baseUrl}/Routes`
+    );
   }
 
-  bulkAssignDrivers(items: { routeId: number; userId: number | null }[]) {
-    return this.http.post(`${this.baseUrl}/Routes/assign-drivers`, items);
-  }
+  /**
+   * Obtiene rutas de un día.
+   *
+   * Para Admin y CompanyOwner se puede enviar warehouseId.
+   * Para Manager puede omitirse y el backend debe resolver su almacén.
+   */
+  getRoutesByDate(
+    date: string,
+    warehouseId?: number | null
+  ): Observable<any[]> {
 
-  addRoute(routes: Routes) {
-    return this.http.post<Routes>(`${this.baseUrl}/Routes`, routes)
-  }
+    let params = new HttpParams()
+      .set('date', date);
 
-  getZonesByWarehouse(warehouseId: number | null | undefined) {
-    if (warehouseId == null) {
-      throw new Error('warehouseId no puede ser null ni undefined');
+    if (
+      warehouseId !== undefined &&
+      warehouseId !== null
+    ) {
+      params = params.set(
+        'warehouseId',
+        warehouseId.toString()
+      );
     }
 
-    const params = new HttpParams().set('warehouseId', warehouseId.toString());
-    return this.http.get<any>(`${this.baseUrl}/Zones/GetZonesByManager`, { params });
+    return this.http.get<any[]>(
+      `${this.baseUrl}/Routes/by-date`,
+      { params }
+    );
   }
 
-  assignRoutes(payload: any[]): Observable<any> {
-    console.log(payload)
-    return this.http.put(`${this.baseUrl}/Routes/assign-routes`, payload);
-  }
+  /**
+   * Obtiene las rutas de un rango de fechas.
+   *
+   * Se utiliza para cargar la semana operacional
+   * sábado-viernes en el calendario.
+   */
+  getRoutesByRange(
+    startDate: string,
+    endDate: string,
+    warehouseId?: number
+) {
+    return this.http.get<any[]>(
+        `${environment.apiUrl}/Routes/by-range`,
+        {
+            params: {
+                startDate,
+                endDate,
+                warehouseId: warehouseId?.toString() ?? ''
+            }
+        }
+    );
+}
 
-  getRoutesByDate(date: string, warehouseId?: number): Observable<any[]> {
-    let url = `${this.baseUrl}/Routes/by-date?date=${date}`;
+  /**
+   * Obtiene rutas de un día y almacén específicos.
+   */
+  getRoutesByDateAndWarehouse(
+    date: string,
+    warehouseId: number
+  ): Observable<Routes[]> {
 
-    // Solo agregar warehouseId si está definido (usuario es admin)
-    if (warehouseId !== undefined && warehouseId !== null) {
-      url += `&warehouseId=${warehouseId}`;
-    }
-
-    return this.http.get<any[]>(url);
-  }
-
-  getRoutesByDateAndWarehouse(date: string, warehouseId: number): Observable<Route[]> {
     const params = new HttpParams()
       .set('date', date)
-      .set('warehouseId', warehouseId.toString());
+      .set(
+        'warehouseId',
+        warehouseId.toString()
+      );
 
-    return this.http.get<Route[]>(`${this.baseUrl}/Routes/routes-by-date-and-warehouse`, { params });
+    return this.http.get<Routes[]>(
+      `${this.baseUrl}/Routes/routes-by-date-and-warehouse`,
+      { params }
+    );
   }
 
-  addRouteBonus(routeId: number, payload: { type: string; amount: number; note?: string | null }) {
-    return this.http.post<any>(`${this.baseUrl}/Routes/routes/${routeId}/bonus`, payload);
-  }
-  getRoutesByUser(userId: number, startDate?: string, endDate?: string): Observable<any[]> {
+  /**
+   * Obtiene rutas de un conductor dentro de un rango opcional.
+   */
+  getRoutesByUser(
+    userId: number,
+    startDate?: string,
+    endDate?: string
+  ): Observable<any[]> {
+
     let params = new HttpParams();
 
-    if (startDate) params = params.set('startDate', startDate);
-    if (endDate) params = params.set('endDate', endDate);
+    if (startDate) {
+      params = params.set(
+        'startDate',
+        startDate
+      );
+    }
 
-    return this.http.get<any[]>(`${this.baseUrl}/Routes/user/${userId}`, { params });
+    if (endDate) {
+      params = params.set(
+        'endDate',
+        endDate
+      );
+    }
+
+    return this.http.get<any[]>(
+      `${this.baseUrl}/Routes/user/${userId}`,
+      { params }
+    );
+  }
+
+  /**
+   * Crea una ruta.
+   */
+  addRoute(route: Routes): Observable<Routes> {
+    return this.http.post<Routes>(
+      `${this.baseUrl}/Routes`,
+      route
+    );
+  }
+
+  /**
+   * Asigna o remueve un driver de una ruta.
+   */
+  assignDriverToRoute(
+    routeId: number,
+    userId: number | null
+  ): Observable<any> {
+
+    return this.http.put<any>(
+      `${this.baseUrl}/Routes/${routeId}/assign-driver`,
+      { userId }
+    );
+  }
+
+  /**
+   * Asigna conductores a varias rutas.
+   */
+  bulkAssignDrivers(
+    items: {
+      routeId: number;
+      userId: number | null;
+    }[]
+  ): Observable<any> {
+
+    return this.http.post<any>(
+      `${this.baseUrl}/Routes/assign-drivers`,
+      items
+    );
+  }
+
+  /**
+   * Guarda cambios masivos de rutas:
+   * driver, zona, estado, CNL y tipo de pago.
+   */
+  assignRoutes(
+    payload: RouteAssignmentPayload[]
+  ): Observable<any> {
+
+    return this.http.put<any>(
+      `${this.baseUrl}/Routes/assign-routes`,
+      payload
+    );
+  }
+
+  /**
+   * Obtiene las zonas pertenecientes a un almacén.
+   */
+  getZonesByWarehouse(
+    warehouseId: number | null | undefined
+  ): Observable<any[]> {
+
+    if (
+      warehouseId === null ||
+      warehouseId === undefined
+    ) {
+      throw new Error(
+        'warehouseId no puede ser null ni undefined'
+      );
+    }
+
+    const params = new HttpParams()
+      .set(
+        'warehouseId',
+        warehouseId.toString()
+      );
+
+    return this.http.get<any[]>(
+      `${this.baseUrl}/Zones/GetZonesByManager`,
+      { params }
+    );
+  }
+
+  /**
+   * Agrega un bonus a una ruta.
+   */
+  addRouteBonus(
+    routeId: number,
+    payload: RouteBonusPayload
+  ): Observable<any> {
+
+    return this.http.post<any>(
+      `${this.baseUrl}/Routes/routes/${routeId}/bonus`,
+      payload
+    );
+  }
+
+  /**
+   * Consulta si una semana está lista para payroll.
+   *
+   * Este método requiere crear el endpoint:
+   * GET /Routes/payroll-readiness
+   */
+  getPayrollReadiness(
+    startDate: string,
+    endDate: string,
+    warehouseId?: number | null
+  ): Observable<PayrollReadinessResponse> {
+
+    let params = new HttpParams()
+      .set('startDate', startDate)
+      .set('endDate', endDate);
+
+    if (
+      warehouseId !== undefined &&
+      warehouseId !== null
+    ) {
+      params = params.set(
+        'warehouseId',
+        warehouseId.toString()
+      );
+    }
+
+    return this.http.get<PayrollReadinessResponse>(
+      `${this.baseUrl}/Routes/payroll-readiness`,
+      { params }
+    );
   }
 }
 
+/**
+ * Payload para guardar asignaciones y cambios de rutas.
+ */
+export interface RouteAssignmentPayload {
+  id: number;
+
+  zoneId: number | null;
+  userId: number | null;
+
+  cnl?: number | null;
+
+  routeStatus: string;
+
+  paymentType?: string;
+  priceRoute?: number;
+}
+
+/**
+ * Payload para agregar un bonus.
+ */
+export interface RouteBonusPayload {
+  type: string;
+  amount: number;
+  note?: string | null;
+}
+
+/**
+ * Respuesta del endpoint de validación de payroll.
+ */
+export interface PayrollReadinessResponse {
+  ready: boolean;
+
+  startDate: string;
+  endDate: string;
+
+  totalRoutes: number;
+  completedRoutes: number;
+
+  missingDriverRoutes: number;
+  missingZoneRoutes: number;
+  pendingRoutes: number;
+  emptyRoutes: number;
+
+  missingDriverRateCount: number;
+  missingRevenueCount: number;
+
+  progress: number;
+  issues: string[];
+}

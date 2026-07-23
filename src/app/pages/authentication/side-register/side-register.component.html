@@ -1,124 +1,399 @@
-<div class="blank-layout-container justify-content-center">
+<div class="company-signup-page">
 
-  <div class="position-relative row w-100 h-100">
-    <div class="col-lg-7 col-xl-8 bg-gredient p-0">
-      <div class="p-24 h-100">
-        <app-branding></app-branding>
-        <div
-          class="align-items-center justify-content-center img-height d-none d-lg-flex owner-hero owner-hero--center owner-hero--lift">
-          <div class="owner-chip pulse">
-            <mat-icon>apartment</mat-icon>
-            <span>Company Owners Only</span>
+  <!-- PANEL IZQUIERDO -->
+<!-- PANEL IZQUIERDO -->
+<section class="signup-visual">
+
+  <div class="visual-decoration"></div>
+
+  <div class="visual-content">
+
+    <!-- Logo -->
+    <div class="brand-container">
+      <app-branding></app-branding>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="signup-visual-main">
+
+      <!-- Texto -->
+      <div class="owner-hero">
+
+        <div class="owner-chip">
+          <mat-icon>apartment</mat-icon>
+          <span>Company owners only</span>
+        </div>
+
+        <h1>
+          Build and manage your delivery company.
+        </h1>
+
+        <p class="hero-description">
+          Create your administrator account and access the TTO Logistics
+          management platform.
+        </p>
+
+        <div class="hero-features">
+
+          <div class="hero-feature" style="--i: 0">
+            <div class="feature-icon">
+              <mat-icon>verified_user</mat-icon>
+            </div>
+
+            <div>
+              <strong>Owner-level administration</strong>
+              <span>Manage your complete logistics operation.</span>
+            </div>
           </div>
 
-          <h1 class="hero-title xl">Register your delivery company</h1>
+          <div class="hero-feature" style="--i: 1">
+            <div class="feature-icon">
+              <mat-icon>warehouse</mat-icon>
+            </div>
 
-          <p class="hero-sub">
-            Administrator access to the TTO Logistics dashboard.
-          </p>
+            <div>
+              <strong>Warehouses and routes</strong>
+              <span>Control locations, routes, and delivery activity.</span>
+            </div>
+          </div>
 
-          <ul class="hero-list">
-            <li style="--i:0"><mat-icon>verified_user</mat-icon> Owner/Administrator Level</li>
-            <li style="--i:1"><mat-icon>map</mat-icon>Manage warehouses and routes</li>
-            <li style="--i:2"><mat-icon>group_add</mat-icon>Invite managers and drivers</li>
-            <li style="--i:3"><mat-icon>payments</mat-icon> Payments and Billing (Stripe)</li>
-            <li style="--i:3"><mat-icon>hub</mat-icon>Integration with OnTrac, SpeedX and UniUni</li>
-          </ul>
+          <div class="hero-feature" style="--i: 2">
+            <div class="feature-icon">
+              <mat-icon>group_add</mat-icon>
+            </div>
 
-         
+            <div>
+              <strong>Managers and drivers</strong>
+              <span>Invite your team and assign responsibilities.</span>
+            </div>
+          </div>
+
+          <div class="hero-feature" style="--i: 3">
+            <div class="feature-icon">
+              <mat-icon>payments</mat-icon>
+            </div>
+
+            <div>
+              <strong>Payments and billing</strong>
+              <span>Secure subscription management powered by Stripe.</span>
+            </div>
+          </div>
+
+          <div class="hero-feature" style="--i: 4">
+            <div class="feature-icon">
+              <mat-icon>hub</mat-icon>
+            </div>
+
+            <div>
+              <strong>Carrier integrations</strong>
+              <span>Connect operations with OnTrac, SpeedX, and UniUni.</span>
+            </div>
+          </div>
+
         </div>
 
       </div>
-    </div>
 
+      <!-- Ilustración logística -->
+      <div class="signup-logistics-illustration">
 
-    <!-- Aviso clave -->
+        <div class="signup-illustration-glow"></div>
 
-    <div class="col-lg-5 col-xl-4 p-0">
+        <img
+          src="/assets/images/backgrounds/tto-logistics-hero.png"
+          alt="TTO Logistics warehouse and delivery operation"
+          class="signup-logistics-image"
+        />
 
-      <div class="p-32 d-flex align-items-start align-items-lg-center justify-content-center h-100">
-        <div class="row justify-content-center w-100">
-          <div class="col-lg-9 max-width-form">
-            <h4 class="f-w-700 f-s-24 m-0">Welcome to TTO Logistics</h4>
-            <span class="f-s-14 d-block f-s-14 m-t-8"> Create your delivery company account. Not for drivers.
-            </span>
+        <!-- Tarjeta flotante -->
+        <div class="signup-floating-card signup-floating-warehouses">
+          <div class="signup-floating-icon">
+            <mat-icon>warehouse</mat-icon>
+          </div>
 
-
-
-
-            <div class="or-border m-t-30">Create Company Account</div>
-
-            <form class="m-t-30" [formGroup]="form" (ngSubmit)="onSingup()">
-              <mat-label class="f-s-14 f-w-600 m-b-12 d-block">Name</mat-label>
-              <mat-form-field appearance="outline" class="w-100" color="primary">
-                <input matInput formControlName="name" />
-                @if(f['name'].touched && f['name'].invalid) {
-                <mat-hint class="m-b-16 error-msg">
-                  @if(f['name'].errors && f['name'].errors['required']) {
-                  <div class="text-error">Name is required.</div>
-                  } @if(f['name'].errors && f['name'].errors['minlength']) {
-                  <div class="text-error">Name should be 3 character.</div>
-                  }
-                </mat-hint>
-                }
-              </mat-form-field>
-              <!-- Last Name-->
-              <mat-label class="f-s-14 f-w-600 m-b-12 d-block">Last Name</mat-label>
-              <mat-form-field appearance="outline" class="w-100" color="primary">
-                <input matInput formControlName="lastName" />
-                @if(f['lastName'].touched && f['lastName'].invalid) {
-                <mat-hint class="m-b-16 error-msg">
-                  @if(f['lastName'].errors && f['lastName'].errors['required']) {
-                  <div class="text-error">Last Name is required.</div>
-                  } @if(f['lastName'].errors && f['lastName'].errors['minlength']) {
-                  <div class="text-error">Last Name should be 3 characters.</div>
-                  }
-                </mat-hint>
-                }
-              </mat-form-field>
-              <!-- email -->
-              <mat-label class="f-s-14 f-w-600 m-b-12 d-block">Email Address</mat-label>
-              <mat-form-field appearance="outline" class="w-100" color="primary">
-                <input matInput type="email" formControlName="email" />
-                @if(f['email'].touched && f['email'].invalid) {
-                <mat-hint class="m-b-16 error-msg">
-                  @if(f['email'].errors && f['email'].errors['required']) {
-                  <div class="text-error">Email is required.</div>
-                  }
-                </mat-hint>
-                }
-              </mat-form-field>
-              <!-- password -->
-              <mat-label class="f-s-14 f-w-600 m-b-12 d-block">Password</mat-label>
-              <mat-form-field appearance="outline" class="w-100" color="primary">
-                <input matInput type="password" formControlName="password" />
-                @if(f['password'].touched && f['password'].invalid) {
-                <mat-hint class="m-b-16 error-msg">
-                  @if( f['password'].errors && f['password'].errors['required'])
-                  {
-                  <div class="text-error">Password is required.</div>
-                  }
-                </mat-hint>
-                }
-              </mat-form-field>
-              <mat-label class="f-s-14 f-w-600 m-b-12 d-block">Referral Code (Only for drivers)</mat-label>
-              <mat-form-field appearance="outline" class="w-100" color="primary">
-                <input matInput formControlName="referralCode" />
-              </mat-form-field>
-
-              <button mat-flat-button color="primary" class="w-100" [disabled]="!form.valid">
-                Sign Up
-              </button>
-              <!-- input -->
-            </form>
-            <span class="d-block f-w-500 d-block m-t-24">Already have an Account?
-
-              <a [routerLink]="['/authentication/login']" class="text-decoration-none text-primary f-w-500 f-s-14">
-                Sign In</a>
-            </span>
+          <div>
+            <strong>Multiple warehouses</strong>
+            <span>Manage all your locations</span>
           </div>
         </div>
+
+        <!-- Tarjeta flotante -->
+        <div class="signup-floating-card signup-floating-drivers">
+          <div class="signup-floating-icon">
+            <mat-icon>local_shipping</mat-icon>
+          </div>
+
+          <div>
+            <strong>Driver operations</strong>
+            <span>Routes and performance</span>
+          </div>
+        </div>
+
       </div>
+
     </div>
+
+    <div class="visual-footer">
+      <span>© {{ currentYear }} TTO Logistics</span>
+      <span>Logistics management platform</span>
+    </div>
+
   </div>
+
+</section>  
+
+  <!-- PANEL DERECHO -->
+  <section class="signup-form-section">
+
+    <div class="mobile-brand">
+      <app-branding></app-branding>
+    </div>
+
+    <div class="signup-card">
+
+      <div class="signup-header">
+
+        <span class="signup-eyebrow">
+          Company registration
+        </span>
+
+        <h2>Create your account</h2>
+
+        <p>
+          Register as a company owner to begin configuring your logistics
+          operation.
+        </p>
+
+      </div>
+
+      <div class="owner-warning">
+        <mat-icon>info</mat-icon>
+
+        <div>
+          <strong>This form is not for drivers</strong>
+          <span>
+            Drivers must register through a company hiring page.
+          </span>
+        </div>
+      </div>
+
+      <form
+        class="signup-form"
+        [formGroup]="form"
+        (ngSubmit)="onSingup()"
+        novalidate
+      >
+
+        <div class="name-grid">
+
+          <!-- Name -->
+          <div class="form-control-group">
+            <mat-label>First name</mat-label>
+
+            <mat-form-field
+              appearance="outline"
+              class="professional-field"
+            >
+              <mat-icon matPrefix>person_outline</mat-icon>
+
+              <input
+                matInput
+                formControlName="name"
+                placeholder="First name"
+                autocomplete="given-name"
+              />
+
+              @if (f['name'].touched && f['name'].invalid) {
+                <mat-error>
+                  @if (f['name'].errors?.['required']) {
+                    First name is required.
+                  }
+
+                  @if (f['name'].errors?.['minlength']) {
+                    First name must contain at least 3 characters.
+                  }
+                </mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <!-- Last Name -->
+          <div class="form-control-group">
+            <mat-label>Last name</mat-label>
+
+            <mat-form-field
+              appearance="outline"
+              class="professional-field"
+            >
+              <mat-icon matPrefix>person_outline</mat-icon>
+
+              <input
+                matInput
+                formControlName="lastName"
+                placeholder="Last name"
+                autocomplete="family-name"
+              />
+
+              @if (f['lastName'].touched && f['lastName'].invalid) {
+                <mat-error>
+                  @if (f['lastName'].errors?.['required']) {
+                    Last name is required.
+                  }
+
+                  @if (f['lastName'].errors?.['minlength']) {
+                    Last name must contain at least 3 characters.
+                  }
+                </mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+        </div>
+
+        <!-- Email -->
+        <div class="form-control-group">
+          <mat-label>Email address</mat-label>
+
+          <mat-form-field
+            appearance="outline"
+            class="professional-field"
+          >
+            <mat-icon matPrefix>mail_outline</mat-icon>
+
+            <input
+              matInput
+              type="email"
+              formControlName="email"
+              placeholder="owner@company.com"
+              autocomplete="email"
+            />
+
+            @if (f['email'].touched && f['email'].invalid) {
+              <mat-error>
+                @if (f['email'].errors?.['required']) {
+                  Email address is required.
+                }
+
+                @if (f['email'].errors?.['email']) {
+                  Enter a valid email address.
+                }
+              </mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <!-- Password -->
+        <div class="form-control-group">
+          <mat-label>Password</mat-label>
+
+          <mat-form-field
+            appearance="outline"
+            class="professional-field"
+          >
+            <mat-icon matPrefix>lock_outline</mat-icon>
+
+            <input
+              matInput
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="Create a secure password"
+              autocomplete="new-password"
+            />
+
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              class="password-toggle"
+              (click)="showPassword = !showPassword"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+            >
+              <mat-icon>
+                {{ showPassword ? 'visibility_off' : 'visibility' }}
+              </mat-icon>
+            </button>
+
+            @if (f['password'].touched && f['password'].invalid) {
+              <mat-error>
+                @if (f['password'].errors?.['required']) {
+                  Password is required.
+                }
+
+                @if (f['password'].errors?.['minlength']) {
+                  Password must contain at least 6 characters.
+                }
+              </mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <!-- Referral Code -->
+        <div class="form-control-group referral-group">
+          <div class="label-row">
+            <mat-label>Referral code</mat-label>
+            <span>Optional</span>
+          </div>
+
+          <mat-form-field
+            appearance="outline"
+            class="professional-field"
+          >
+            <mat-icon matPrefix>confirmation_number</mat-icon>
+
+            <input
+              matInput
+              formControlName="referralCode"
+              placeholder="Enter referral code"
+            />
+          </mat-form-field>
+
+          <small class="field-description">
+            Leave this field empty unless you received a registration code.
+          </small>
+        </div>
+
+        <!-- Terms -->
+        <div class="terms-notice">
+          <mat-icon>shield</mat-icon>
+
+          <p>
+            By creating an account, you confirm that you are authorized to
+            register and manage this company.
+          </p>
+        </div>
+
+        <!-- Submit -->
+        <button
+          mat-flat-button
+          type="submit"
+          class="signup-button"
+          [disabled]="form.invalid || loading"
+        >
+          @if (loading) {
+            <mat-spinner diameter="21"></mat-spinner>
+            <span>Creating account...</span>
+          } @else {
+            <span>Create company account</span>
+            <mat-icon>arrow_forward</mat-icon>
+          }
+        </button>
+
+      </form>
+
+      <div class="signin-row">
+        <span>Already have an account?</span>
+
+        <a [routerLink]="['/authentication/login']">
+          Sign in
+        </a>
+      </div>
+
+      <div class="mobile-footer">
+        © {{ currentYear }} TTO Logistics. All rights reserved.
+      </div>
+
+    </div>
+
+  </section>
+
 </div>

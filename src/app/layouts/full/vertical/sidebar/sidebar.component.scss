@@ -1,0 +1,21 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+app-branding {
+  display: block;
+  width: 100%;
+  min-height: 92px;
+  overflow: visible;
+}
+.branding {
+  width: 100%;
+  min-height: 92px;
+  padding: 0;
+  overflow: visible;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

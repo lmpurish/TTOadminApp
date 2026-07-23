@@ -24,37 +24,12 @@
 
   <span class="flex-1-auto"></span>
 
-  <!-- Mobile Menu -->
-  <button mat-icon-button (click)="toggleMobileFilterNav.emit()" class="d-flex d-lg-none justify-content-center">
-    <i-tabler name="grid-dots" class="icon-20 d-flex"></i-tabler>
-  </button>
+  
 
   <!-- --------------------------------------------------------------- -->
   <!-- langugage Dropdown -->
   <!-- --------------------------------------------------------------- -->
-  <button [matMenuTriggerFor]="flags" mat-icon-button class="m-r-5">
-    <img [src]="selectedLanguage.icon" class="rounded-circle object-cover icon-20" />
-  </button>
-  <mat-menu #flags="matMenu" class="cardWithShadow">
-    @for(lang of languages; track lang.icon) {
-    <button mat-menu-item (click)="changeLanguage(lang)">
-      <div class="d-flex align-items-center">
-        <img [src]="lang.icon" class="rounded-circle object-cover m-r-8 icon-20" />
-        <span class=" f-s-14">{{ lang.language }}</span>
-      </div>
-    </button>
-    }
-  </mat-menu>
 
-  @if(options.theme=='light'){
-  <button mat-icon-button aria-label="lightdark" class="d-flex justify-content-center" (click)="setlightDark('dark')">
-    <i-tabler class="d-flex icon-22" [name]="'moon'"></i-tabler>
-  </button>
-  }@else{
-  <button mat-icon-button aria-label="lightdark" class="d-flex justify-content-center" (click)="setlightDark('light')">
-    <i-tabler class="d-flex icon-22" [name]="'sun'"></i-tabler>
-  </button>
-  }
 
   <!-- --------------------------------------------------------------- -->
   <!-- Notification Dropdown -->

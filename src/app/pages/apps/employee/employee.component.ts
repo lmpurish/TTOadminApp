@@ -27,6 +27,8 @@ import { WarehouseService } from 'src/app/services/apps/warehouse/warehouse.serv
 import { ViewUserinfoComponent } from '../view-userinfo/view-userinfo.component';
 import { environment } from 'src/environments/environment';
 import { catchError, Observable, of, shareReplay } from 'rxjs';
+import { AssignDriverComponent } from './assign-driver/assign-driver.component';
+
 
 @Component({
   selector: 'app-employee',
@@ -74,64 +76,134 @@ export class EmployeeComponent implements AfterViewInit, OnInit {
     private settings: CoreService,
     private rolePipe: RolePipe
   ) { }
+activeDriversCount = 0;
+activeDriversPercent = 0;
 
+inactiveCandidateCount = 0;
+inactivityDaysThreshold = 14;
+
+veteranDriversCount = 0;
+veteranMonthsThreshold = 12;
+
+highPerformanceDriversCount = 0;
+
+mostVeteranDrivers: any[] = [];
+topPerformanceDrivers: any[] = [];
+driversRequiringReview: any[] = [];
+isCompanyOwner = false;
+canManageWarehouseAccess = false;
   ngOnInit(): void {
+  const role = String(
+    this.settings.getRole() ?? ''
+  ).trim();
 
-    this.loadEmployees();
-    this.loadWarehouses();
+  this.isAdmin =
+    role === 'Admin';
 
-    if (this.settings.getRole() == 'Admin' || this.settings.getRole() == 'CompanyOwner' || this.settings.getRole() == 'Assistant') {
-      this.isAdmin = true;
-    }
+  this.isCompanyOwner =
+    role === 'CompanyOwner';
 
-    // 🔹 Un solo predicado de filtro: texto + warehouse + estado
-    this.dataSource.filterPredicate = (row: any, filter: string) => {
-      const f = JSON.parse(filter || '{}') as {
-        text?: string;
-        warehouseId?: number | null;
-        status?: 'active' | 'inactive' | 'all';
-      };
+  this.canManageWarehouseAccess =
+    this.isAdmin ||
+    this.isCompanyOwner;
 
-      // Texto
-      const t = (f.text || '').toLowerCase();
-      const matchesText =
-        !t ||
-        (row?.identificationNumber?.toString()?.toLowerCase()?.includes(t)) ||
-        (row?.name?.toLowerCase()?.includes(t)) ||
-        (row?.lastName?.toLowerCase()?.includes(t)) ||
-        (row?.email?.toLowerCase()?.includes(t)) ||
-        (this.getWarehouseInfo(row?.warehouseId)?.toLowerCase()?.includes(t) ?? false);
+  this.loadEmployees();
+  this.loadWarehouses();
 
-      // Warehouse
-      const matchesWarehouse =
-        f.warehouseId == null || row?.warehouseId === f.warehouseId || row?.warehouse?.id === f.warehouseId;
-
-      // 🔹 Normaliza isActive desde boolean/number/string y variantes
-      const normalizeBool = (v: any): boolean => {
-        if (typeof v === 'boolean') return v;
-        if (typeof v === 'number') return v === 1;
-        if (typeof v === 'string') {
-          const s = v.trim().toLowerCase();
-          return s === 'true' || s === '1' || s === 'yes';
-        }
-        return false;
-      };
-
-      // Algunos payloads traen isActivate; cubrimos ambos
-      const isActive = normalizeBool(row?.isActive ?? row?.isActivate);
-
-      const matchesStatus =
-        (f.status === 'all') ||
-        (f.status === 'active' && isActive) ||
-        (f.status === 'inactive' && !isActive);
-
-      return matchesText && matchesWarehouse && matchesStatus;
+  this.dataSource.filterPredicate = (
+    row: any,
+    filter: string
+  ) => {
+    const f = JSON.parse(filter || '{}') as {
+      text?: string;
+      warehouseId?: number | null;
+      status?: 'active' | 'inactive' | 'all';
     };
 
+    const text =
+      (f.text || '').toLowerCase();
 
-    // Filtro inicial: Activos por defecto
-    this.applyCompositeFilter();
-  }
+    const matchesText =
+      !text ||
+      row?.identificationNumber
+        ?.toString()
+        ?.toLowerCase()
+        ?.includes(text) ||
+      row?.name
+        ?.toLowerCase()
+        ?.includes(text) ||
+      row?.lastName
+        ?.toLowerCase()
+        ?.includes(text) ||
+      row?.email
+        ?.toLowerCase()
+        ?.includes(text) ||
+      (
+        this.getWarehouseInfo(
+          row?.warehouseId
+        )
+          ?.toLowerCase()
+          ?.includes(text) ?? false
+      );
+
+    const matchesWarehouse =
+      f.warehouseId == null ||
+      Number(row?.warehouseId) ===
+        Number(f.warehouseId) ||
+      Number(row?.warehouse?.id) ===
+        Number(f.warehouseId);
+
+    const normalizeBoolean = (
+      value: any
+    ): boolean => {
+      if (typeof value === 'boolean') {
+        return value;
+      }
+
+      if (typeof value === 'number') {
+        return value === 1;
+      }
+
+      if (typeof value === 'string') {
+        const normalized =
+          value.trim().toLowerCase();
+
+        return (
+          normalized === 'true' ||
+          normalized === '1' ||
+          normalized === 'yes'
+        );
+      }
+
+      return false;
+    };
+
+    const active =
+      normalizeBoolean(
+        row?.isActive ??
+        row?.isActivate
+      );
+
+    const matchesStatus =
+      f.status === 'all' ||
+      (
+        f.status === 'active' &&
+        active
+      ) ||
+      (
+        f.status === 'inactive' &&
+        !active
+      );
+
+    return (
+      matchesText &&
+      matchesWarehouse &&
+      matchesStatus
+    );
+  };
+
+  this.applyCompositeFilter();
+}
   avatarUrl: string;
 
   private avatarCache = new Map<string, Observable<string>>();
@@ -193,8 +265,46 @@ export class EmployeeComponent implements AfterViewInit, OnInit {
       },
     });
   }
+openAssignDriverDialog(): void {
+  const userInfo =
+    this.settings.getUserInfoFromToken();
 
+  const dialogRef =
+    this.dialog.open(
+      AssignDriverComponent,
+      {
+        width: '760px',
+        maxWidth: '96vw',
+        maxHeight: '92vh',
+        autoFocus: false,
+        disableClose: true,
 
+        data: {
+          /*
+           * Aquí puedes pasar todos los empleados,
+           * no solamente los drivers.
+           */
+          drivers:
+            this.dataSource.data,
+
+          warehouses:
+            this.warehouses,
+
+          companyId:
+            userInfo?.companyId ??
+            null
+        }
+      }
+    );
+
+  dialogRef
+    .afterClosed()
+    .subscribe(result => {
+      if (result?.updated) {
+        this.loadEmployees();
+      }
+    });
+}
 
   loadWarehouses(): void {
     this.warehouseService.getWarehouses().subscribe({

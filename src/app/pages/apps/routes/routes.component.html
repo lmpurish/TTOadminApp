@@ -1,299 +1,1116 @@
-<div class="loading-overlay" *ngIf="loading">
-  <mat-spinner></mat-spinner>
-</div>
+<div class="routes-page">
 
-<div class="row">
-  <div class="col-lg-6">
-    <form [formGroup]="form" class="d-flex flex-wrap align-items-center gap-3">
-
-      <mat-form-field class="theme-select" appearance="outline" style="min-width: 200px; margin-bottom: 16px;">
-        <mat-label>Select Date</mat-label>
-        <input matInput [matDatepicker]="picker" formControlName="selectedDate">
-        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-datepicker #picker></mat-datepicker>
-      </mat-form-field>
-
-      <ng-container *ngIf="isAdmin">
-        <mat-form-field appearance="outline" class="theme-select"
-          style="min-width: 300px; margin-left: 16px; margin-bottom: 16px;">
-          <mat-label>Warehouse</mat-label>
-          <mat-select formControlName="selectedWarehouse">
-            <mat-option *ngFor="let warehouse of warehouses" [value]="warehouse.id">
-              {{ warehouse.name || (warehouse.company + ' - ' + warehouse.city) }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </ng-container>
-
-    </form>
+  <!-- Loading overlay -->
+  <div class="loading-overlay" *ngIf="loading || weekLoading">
+    <mat-spinner diameter="46"></mat-spinner>
   </div>
 
-  <div class="col-lg-3">
-    <div class="d-flex justify-content-end gap-3 mt-3">
-      <button mat-flat-button color="accent" (click)="assignRoutes()" [disabled]="isRoutesEmpty"
-        class="btn btn-primary">
-        Assign Selected Routes
-      </button>
+  <!-- =====================================================
+       HEADER
+  ====================================================== -->
+  <section class="page-header">
+
+    <div class="page-header__content">
+      <span class="page-eyebrow">Operations Center</span>
+
+     
+
+      <p>
+        Review weekly production, assign drivers and zones,
+        and confirm when the operational week is ready for payroll.
+      </p>
     </div>
-  </div>
 
-  <div class="col-lg-3">
-    <button mat-flat-button color="accent" (click)="createRoute('Add', {})" class="btn btn-secondary mt-3">
-      Create Routes
-    </button>
-  </div>
-</div>
+    <div class="view-switcher">
 
-<!-- Package Distribution Summary -->
-<div class="row m-b-16" *ngIf="dataSource.data.length > 0">
-  <div class="col-lg-3 col-md-6">
-    <mat-card class="summary-card">
-      <mat-card-content>
-        <div class="summary-label">Total Packages</div>
-        <div class="summary-value">{{ totalPackages }}</div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+      <button
+        mat-stroked-button
+        type="button"
+        [class.active]="viewMode === 'calendar'"
+        (click)="showCalendar()">
 
-  <div class="col-lg-3 col-md-6">
-    <mat-card class="summary-card">
-      <mat-card-content>
-        <div class="summary-label">Total Stops</div>
-        <div class="summary-value">{{ totalStops }}</div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+        <i-tabler name="calendar" class="icon-18"></i-tabler>
+        Calendar
+      </button>
 
-  <div class="col-lg-3 col-md-6">
-    <mat-card class="summary-card">
-      <mat-card-content>
-        <div class="summary-label">Active Drivers</div>
-        <div class="summary-value">{{ activeDrivers }}</div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+      <button
+        mat-stroked-button
+        type="button"
+        [class.active]="viewMode === 'routes'"
+        (click)="viewMode = 'routes'">
 
-  <div class="col-lg-3 col-md-6">
-    <mat-card class="summary-card">
-      <mat-card-content>
-        <div class="summary-label">Avg Packages / Driver</div>
-        <div class="summary-value">{{ avgPackagesPerDriver | number:'1.0-2' }}</div>
-      </mat-card-content>
-    </mat-card>
-  </div>
-</div>
+        <i-tabler name="list-details" class="icon-18"></i-tabler>
+        Routes
+      </button>
 
-<div class="table-wrapper" style="overflow-y: auto;">
-  <table mat-table [dataSource]="dataSource" class="w-100 mat-elevation-z8" *ngIf="dataSource.data.length > 0">
+    </div>
 
-    <!-- Selection -->
-    <ng-container matColumnDef="select">
-      <th mat-header-cell *matHeaderCellDef sticky>
-        <mat-checkbox (change)="toggleAllSelection()"
-          [checked]="getEditableRows().length > 0 && selectedRoutes.length === getEditableRows().length"
-          [indeterminate]="selectedRoutes.length > 0 && selectedRoutes.length < getEditableRows().length">
-        </mat-checkbox>
-      </th>
+  </section>
 
-      <td mat-cell *matCellDef="let element">
-        <mat-checkbox (change)="toggleSelection(element)" [checked]="isSelected(element)"
-          [disabled]="!isRowEditable(element)" matTooltip="Completed routes cannot be edited"
-          *ngIf="element.routeStatus === 'Completed'; else editableRow">
-        </mat-checkbox>
+  <!-- =====================================================
+       FILTERS / WEEK NAVIGATION
+  ====================================================== -->
+  <mat-card class="filter-card">
+    <mat-card-content>
 
-        <ng-template #editableRow>
-          <mat-checkbox (change)="toggleSelection(element)" [checked]="isSelected(element)">
-          </mat-checkbox>
-        </ng-template>
-      </td>
-    </ng-container>
+      <form
+        class="filter-toolbar"
+        [formGroup]="form">
 
-    <!-- Date -->
-    <ng-container matColumnDef="date">
-      <th mat-header-cell *matHeaderCellDef sticky>Date</th>
-      <td mat-cell *matCellDef="let element">
-        {{ element.date | date:'MMM d, y' }}
-      </td>
-    </ng-container>
+        <mat-form-field
+          appearance="outline"
+          class="filter-control date-control">
 
-    <!-- Status -->
-    <ng-container matColumnDef="routeStatus">
-      <th mat-header-cell *matHeaderCellDef sticky>Status</th>
-      <td mat-cell *matCellDef="let element" class="status-cell">
+          <mat-label>Select date</mat-label>
 
-        <ng-container *ngIf="isRowEditable(element); else readOnlyStatus">
-          <mat-form-field appearance="outline" class="status-field w-100">
-            <mat-select [(ngModel)]="element.routeStatus" (ngModelChange)="handleStatusChange(element, $event)"
-              [ngModelOptions]="{ standalone: true }" [panelClass]="'status-panel'" placeholder="Select Status">
+          <input
+            matInput
+            [matDatepicker]="picker"
+            formControlName="selectedDate">
 
-              <mat-select-trigger>
-                <span class="status-dot" [ngClass]="statusClass(element.routeStatus)"></span>
-                <span>{{ element.routeStatus }}</span>
-              </mat-select-trigger>
+          <mat-datepicker-toggle
+            matIconSuffix
+            [for]="picker">
+          </mat-datepicker-toggle>
 
-              <mat-option *ngFor="let s of routeStatuses" [value]="s">
-                <span class="status-dot" [ngClass]="statusClass(s)"></span>
-                <span>{{ s }}</span>
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </ng-container>
+          <mat-datepicker #picker></mat-datepicker>
 
-        <ng-template #readOnlyStatus>
-          <span class="status-badge" [ngClass]="getStatusClass(element.routeStatus)">
-            <span class="status-dot" [ngClass]="statusClass(element.routeStatus)"></span>
-            {{ element.routeStatus }}
-          </span>
-        </ng-template>
-
-      </td>
-    </ng-container>
-
-    <!-- Driver -->
-    <ng-container matColumnDef="userId">
-      <th mat-header-cell *matHeaderCellDef class="f-s-16 f-w-600" sticky>
-        Driver
-      </th>
-
-      <td mat-cell *matCellDef="let element">
-        <mat-form-field appearance="outline" class="m-0 w-100">
-          <input matInput [matAutocomplete]="driverAuto" [ngModel]="getDriverDisplay(element.userId)"
-            (focus)="filterDrivers(''); autocomplete.openPanel()" (ngModelChange)="filterDrivers($event)">
-
-          <mat-autocomplete #driverAuto="matAutocomplete"
-            (optionSelected)="handleDriverChange(element, $event.option.value)">
-
-            <mat-option [value]="null">
-              — Unassigned —
-            </mat-option>
-
-            <mat-option *ngFor="let d of filteredDrivers" [value]="d.id">
-              {{ d.name }} {{ d.lastName }}
-              — #{{ d.identificationNumber || 'N/A' }}
-            </mat-option>
-
-          </mat-autocomplete>
         </mat-form-field>
-      </td>
 
-      <!-- CNL -->
-      <ng-container matColumnDef="cnl">
-        <th mat-header-cell *matHeaderCellDef sticky>CNL</th>
-        <td mat-cell *matCellDef="let element">
-          <ng-container *ngIf="isSelected(element) && isRowEditable(element); else readOnlyCnl">
-            <mat-form-field appearance="outline" class="m-0 w-100">
-              <input matInput [(ngModel)]="element.cnl" placeholder="Enter CNL" />
-            </mat-form-field>
-          </ng-container>
+        <mat-form-field
+          *ngIf="isAdmin"
+          appearance="outline"
+          class="filter-control warehouse-control">
 
-          <ng-template #readOnlyCnl>
-            {{ element?.cnl }}
-          </ng-template>
-        </td>
-      </ng-container>
+          <mat-label>Warehouse</mat-label>
 
-      <!-- Packages / Volume -->
-      <ng-container matColumnDef="volumen">
-        <th mat-header-cell *matHeaderCellDef sticky>Packages</th>
-        <td mat-cell *matCellDef="let element">
-          {{ element?.volumen || 0 }}
-        </td>
-      </ng-container>
+          <mat-select formControlName="selectedWarehouse">
 
-      <!-- Stops -->
-      <ng-container matColumnDef="deliveryStops">
-        <th mat-header-cell *matHeaderCellDef sticky>Stops</th>
-        <td mat-cell *matCellDef="let element">
-          {{ element?.deliveryStops || 0 }}
-        </td>
-      </ng-container>
+            <mat-option
+  *ngFor="let warehouse of warehouses"
+  [value]="warehouse.id">
 
-      <!-- Package Percent -->
-      <ng-container matColumnDef="packagePercent">
-        <th mat-header-cell *matHeaderCellDef sticky>% Packages</th>
-        <td mat-cell *matCellDef="let element">
-          <div class="package-percent-cell">
-            <span>{{ getPackagePercent(element) | number:'1.0-2' }}%</span>
+  {{ warehouse.company || 'No Company' }}
+  -
+  {{ warehouse.city || 'No City' }}
 
-            <mat-progress-bar mode="determinate" [value]="getPackagePercent(element)">
-            </mat-progress-bar>
-          </div>
-        </td>
-      </ng-container>
+  <ng-container *ngIf="warehouse.state">
+    · {{ warehouse.state }}
+  </ng-container>
 
-      <!-- Zone -->
-      <ng-container matColumnDef="zoneId">
-        <th mat-header-cell *matHeaderCellDef sticky>Zone</th>
-        <td mat-cell *matCellDef="let element">
-          <mat-form-field appearance="outline">
-            <mat-select [(ngModel)]="element.zoneId" placeholder="Select Zone"
-              (ngModelChange)="handleZoneChange(element, $event)">
+</mat-option>
 
-              <mat-option *ngIf="!element.zoneId" [value]="null" disabled>
-                Select Zone
-              </mat-option>
+          </mat-select>
 
-              <mat-option [value]="null">Unassign Zone</mat-option>
+        </mat-form-field>
 
-              <mat-option *ngFor="let z of getAvailableZones(element.zoneId)" [value]="z.id">
-                {{ z.zoneCode }}{{ z.area ? '-' + z.area : '' }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </td>
-      </ng-container>
+        <div class="week-navigation">
 
-      <!-- Payment Type -->
-   <!--   <ng-container matColumnDef="paymentType">
-        <th mat-header-cell *matHeaderCellDef sticky>Payment Type</th>
-        <td mat-cell *matCellDef="let element">
-          <mat-form-field appearance="outline" class="m-0 w-100">
-            <mat-select [(ngModel)]="element.paymentType" (ngModelChange)="handlePaymentTypeChange(element, $event)"
-              [ngModelOptions]="{ standalone: true }" [disabled]="!isRowEditable(element)">
+          <button
+            mat-icon-button
+            type="button"
+            matTooltip="Previous week"
+            (click)="previousWeek()">
 
-              <mat-option value="PerStop">Per Stop</mat-option>
-              <mat-option value="PerRoute">Per Route</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </td>
-      </ng-container>
+            <i-tabler name="chevron-left" class="icon-20"></i-tabler>
 
-      <ng-container matColumnDef="priceRoute">
-        <th mat-header-cell *matHeaderCellDef sticky>Price Route</th>
-        <td mat-cell *matCellDef="let element">
-          <mat-form-field appearance="outline" class="m-0 w-100">
-            <input matInput type="number" min="0" [(ngModel)]="element.priceRoute"
-              (ngModelChange)="handlePriceRouteChange(element)" [ngModelOptions]="{ standalone: true }"
-              [disabled]="!isRowEditable(element) || element.paymentType !== 'PerRoute'" placeholder="0.00" />
-          </mat-form-field>
-        </td>
-      </ng-container>-->
-
-      <!-- Action -->
-      <ng-container matColumnDef="action">
-        <th mat-header-cell *matHeaderCellDef sticky>Action</th>
-        <td mat-cell *matCellDef="let row">
-          <button mat-icon-button color="primary" (click)="editRoute(row)" matTooltip="Add Route Bonus">
-            <i-tabler name="cash" class="icon-18"></i-tabler>
           </button>
-        </td>
-      </ng-container>
 
-      <!-- Rows -->
-      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+          <div class="week-navigation__label">
+            <span>Operational week</span>
 
-      <tr mat-row *matRowDef="let row; columns: displayedColumns" [ngClass]="{
-        'high-package-row': getPackagePercent(row) >= 20,
-        'empty-route-row': !row.volumen || row.volumen === 0
-      }">
-      </tr>
-    </ng-container>
-  </table>
+            <strong>
+              {{ weekStart | date:'MMM d' }}
+              –
+              {{ weekEnd | date:'MMM d, y' }}
+            </strong>
+          </div>
 
-  <div *ngIf="dataSource.data.length === 0 && !loading" class="text-center p-4">
-    No data available.
-  </div>
+          <button
+            mat-icon-button
+            type="button"
+            matTooltip="Next week"
+            (click)="nextWeek()">
 
-  <mat-paginator [pageSizeOptions]="[5, 10, 20]" [pageSize]="20" showFirstLastButtons>
-  </mat-paginator>
+            <i-tabler name="chevron-right" class="icon-20"></i-tabler>
+
+          </button>
+
+          <button
+            mat-stroked-button
+            type="button"
+            class="this-week-button"
+            (click)="goToCurrentWeek()">
+
+            This week
+          </button>
+
+        </div>
+
+      </form>
+
+    </mat-card-content>
+  </mat-card>
+
+  <!-- =====================================================
+       WEEKLY KPI CARDS
+  ====================================================== -->
+  <section class="weekly-kpis">
+
+    <article class="kpi-card">
+
+      <div class="kpi-card__icon">
+        <i-tabler name="packages" class="icon-22"></i-tabler>
+      </div>
+
+      <div class="kpi-card__content">
+        <span>Weekly packages</span>
+        <strong>{{ getWeeklyPackages() | number }}</strong>
+      </div>
+
+    </article>
+
+    <article class="kpi-card">
+
+      <div class="kpi-card__icon">
+        <i-tabler name="map-pin" class="icon-22"></i-tabler>
+      </div>
+
+      <div class="kpi-card__content">
+        <span>Weekly stops</span>
+        <strong>{{ getWeeklyStops() | number }}</strong>
+      </div>
+
+    </article>
+
+    <article class="kpi-card">
+
+      <div class="kpi-card__icon">
+        <i-tabler name="route" class="icon-22"></i-tabler>
+      </div>
+
+      <div class="kpi-card__content">
+        <span>Total routes</span>
+        <strong>{{ payrollReadiness.totalRoutes | number }}</strong>
+      </div>
+
+    </article>
+
+    <article
+      class="kpi-card payroll-kpi"
+      [class.is-ready]="payrollReadiness.ready"
+      [class.needs-review]="!payrollReadiness.ready">
+
+      <div class="kpi-card__icon">
+
+        <i-tabler
+          [name]="payrollReadiness.ready ? 'circle-check' : 'alert-triangle'"
+          class="icon-22">
+        </i-tabler>
+
+      </div>
+
+      <div class="kpi-card__content">
+        <span>Payroll status</span>
+
+        <strong>
+          {{ payrollReadiness.ready ? 'Ready' : 'Needs review' }}
+        </strong>
+      </div>
+
+    </article>
+
+  </section>
+
+  <!-- =====================================================
+       CALENDAR VIEW
+  ====================================================== -->
+  <ng-container *ngIf="viewMode === 'calendar'">
+
+    <section class="calendar-layout">
+
+      <!-- WEEK DAYS -->
+      <div class="calendar-panel">
+
+        <div class="section-heading">
+
+          <div>
+            <span class="section-eyebrow">Daily Operations</span>
+            <h2>Weekly Overview</h2>
+          </div>
+
+          <span class="section-meta">
+            Saturday through Friday
+          </span>
+
+        </div>
+
+        <div class="week-grid">
+
+          <button
+            type="button"
+            class="day-card"
+            *ngFor="let day of weekDays"
+            [class.is-ready]="day.payrollReady"
+            [class.needs-review]="!day.payrollReady && day.totalRoutes > 0"
+            [class.is-empty]="day.totalRoutes === 0"
+            (click)="openDay(day)">
+
+            <div class="day-card__header">
+
+              <div class="day-card__date">
+                <span>{{ day.date | date:'EEEE' }}</span>
+                <strong>{{ day.date | date:'MMM d' }}</strong>
+              </div>
+
+              <span
+                class="day-status"
+                [class.ready]="day.payrollReady"
+                [class.review]="!day.payrollReady && day.totalRoutes > 0"
+                [class.empty]="day.totalRoutes === 0">
+
+                {{
+                  day.totalRoutes === 0
+                    ? 'No routes'
+                    : day.payrollReady
+                      ? 'Ready'
+                      : 'Review'
+                }}
+
+              </span>
+
+            </div>
+
+            <div class="day-card__production">
+
+              <strong>{{ day.totalPackages | number }}</strong>
+              <span>packages</span>
+
+            </div>
+
+            <div class="day-card__metrics">
+
+              <div class="day-metric">
+                <span>Stops</span>
+                <strong>{{ day.totalStops | number }}</strong>
+              </div>
+
+              <div class="day-metric">
+                <span>Routes</span>
+                <strong>{{ day.totalRoutes }}</strong>
+              </div>
+
+              <div class="day-metric">
+                <span>Assigned</span>
+                <strong>
+                  {{ day.assignedRoutes }}/{{ day.totalRoutes }}
+                </strong>
+              </div>
+
+              <div class="day-metric">
+                <span>Completed</span>
+                <strong>
+                  {{ day.completedRoutes }}/{{ day.totalRoutes }}
+                </strong>
+              </div>
+
+            </div>
+
+            <div class="day-card__progress">
+
+              <div class="progress-label">
+                <span>Completion</span>
+                <strong>{{ day.completionPercent }}%</strong>
+              </div>
+
+              <mat-progress-bar
+                mode="determinate"
+                [value]="day.completionPercent">
+              </mat-progress-bar>
+
+            </div>
+
+            <div
+              class="day-card__issues"
+              *ngIf="
+                day.missingDriverRoutes > 0 ||
+                day.missingZoneRoutes > 0 ||
+                day.pendingRoutes > 0
+              ">
+
+              <span *ngIf="day.missingDriverRoutes > 0">
+                {{ day.missingDriverRoutes }} without driver
+              </span>
+
+              <span *ngIf="day.missingZoneRoutes > 0">
+                {{ day.missingZoneRoutes }} without zone
+              </span>
+
+              <span *ngIf="day.pendingRoutes > 0">
+                {{ day.pendingRoutes }} pending
+              </span>
+
+            </div>
+
+            <div class="day-card__footer">
+
+              <span>Open routes</span>
+              <i-tabler name="arrow-right" class="icon-18"></i-tabler>
+
+            </div>
+
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- PAYROLL READINESS -->
+      <aside
+        class="readiness-panel"
+        [class.is-ready]="payrollReadiness.ready">
+
+        <div class="readiness-panel__header">
+
+          <div class="readiness-icon">
+
+            <i-tabler
+              [name]="payrollReadiness.ready ? 'circle-check' : 'clipboard-check'"
+              class="icon-24">
+            </i-tabler>
+
+          </div>
+
+          <div>
+            <span>Payroll Readiness</span>
+
+            <h3>
+              {{
+                payrollReadiness.ready
+                  ? 'Week ready'
+                  : 'Week not ready'
+              }}
+            </h3>
+          </div>
+
+        </div>
+
+        <div class="readiness-progress">
+
+          <div class="readiness-progress__label">
+            <span>Preparation progress</span>
+            <strong>{{ payrollReadiness.progress }}%</strong>
+          </div>
+
+          <mat-progress-bar
+            mode="determinate"
+            [value]="payrollReadiness.progress">
+          </mat-progress-bar>
+
+        </div>
+
+        <div class="readiness-checklist">
+
+          <div
+            class="check-item"
+            [class.completed]="payrollReadiness.pendingRoutes === 0">
+
+            <i-tabler
+              [name]="
+                payrollReadiness.pendingRoutes === 0
+                  ? 'circle-check'
+                  : 'circle-x'
+              "
+              class="icon-18">
+            </i-tabler>
+
+            <span>All routes completed</span>
+
+            <strong>
+              {{ payrollReadiness.completedRoutes }}
+              /
+              {{ payrollReadiness.totalRoutes }}
+            </strong>
+
+          </div>
+
+          <div
+            class="check-item"
+            [class.completed]="payrollReadiness.missingDriverRoutes === 0">
+
+            <i-tabler
+              [name]="
+                payrollReadiness.missingDriverRoutes === 0
+                  ? 'circle-check'
+                  : 'circle-x'
+              "
+              class="icon-18">
+            </i-tabler>
+
+            <span>Drivers assigned</span>
+
+            <strong>
+              {{ payrollReadiness.missingDriverRoutes }} missing
+            </strong>
+
+          </div>
+
+          <div
+            class="check-item"
+            [class.completed]="payrollReadiness.missingZoneRoutes === 0">
+
+            <i-tabler
+              [name]="
+                payrollReadiness.missingZoneRoutes === 0
+                  ? 'circle-check'
+                  : 'circle-x'
+              "
+              class="icon-18">
+            </i-tabler>
+
+            <span>Zones assigned</span>
+
+            <strong>
+              {{ payrollReadiness.missingZoneRoutes }} missing
+            </strong>
+
+          </div>
+
+          <div
+            class="check-item"
+            [class.completed]="payrollReadiness.emptyRoutes === 0">
+
+            <i-tabler
+              [name]="
+                payrollReadiness.emptyRoutes === 0
+                  ? 'circle-check'
+                  : 'circle-x'
+              "
+              class="icon-18">
+            </i-tabler>
+
+            <span>Production information</span>
+
+            <strong>
+              {{ payrollReadiness.emptyRoutes }} missing
+            </strong>
+
+          </div>
+
+          <div
+            class="check-item"
+            [class.completed]="payrollReadiness.missingDriverRateCount === 0">
+
+            <i-tabler
+              [name]="
+                payrollReadiness.missingDriverRateCount === 0
+                  ? 'circle-check'
+                  : 'circle-x'
+              "
+              class="icon-18">
+            </i-tabler>
+
+            <span>Driver rates</span>
+
+            <strong>
+              {{ payrollReadiness.missingDriverRateCount }} missing
+            </strong>
+
+          </div>
+
+          <div
+            class="check-item"
+            [class.completed]="payrollReadiness.missingRevenueCount === 0">
+
+            <i-tabler
+              [name]="
+                payrollReadiness.missingRevenueCount === 0
+                  ? 'circle-check'
+                  : 'circle-x'
+              "
+              class="icon-18">
+            </i-tabler>
+
+            <span>Weekly revenue</span>
+
+            <strong>
+              {{ payrollReadiness.missingRevenueCount }} missing
+            </strong>
+
+          </div>
+
+        </div>
+
+        <div
+          class="readiness-issues"
+          *ngIf="payrollReadiness.issues.length > 0">
+
+          <div class="readiness-issues__title">
+            <i-tabler name="alert-circle" class="icon-18"></i-tabler>
+            <span>Items requiring attention</span>
+          </div>
+
+          <ul>
+            <li *ngFor="let issue of payrollReadiness.issues">
+              {{ issue }}
+            </li>
+          </ul>
+
+        </div>
+
+   <!--     <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          class="run-payroll-button"
+          [disabled]="!payrollReadiness.ready"
+          (click)="runPayrollForWeek()">
+
+          <i-tabler name="cash" class="icon-18"></i-tabler>
+          Run payroll
+
+        </button>-->
+
+      </aside>
+
+    </section>
+
+  </ng-container>
+
+  <!-- =====================================================
+       ROUTES TABLE VIEW
+  ====================================================== -->
+  <ng-container *ngIf="viewMode === 'routes'">
+
+    <section class="routes-workspace">
+
+      <div class="routes-workspace__header">
+
+        <div class="routes-workspace__title">
+
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="showCalendar()">
+
+            <i-tabler name="arrow-left" class="icon-18"></i-tabler>
+            Back to calendar
+          </button>
+
+          <div>
+            <span>Selected operational day</span>
+
+            <h2>
+              {{
+                selectedOperationalDay
+                  ? (selectedOperationalDay | date:'EEEE, MMMM d, y')
+                  : 'Weekly routes'
+              }}
+            </h2>
+          </div>
+
+        </div>
+
+        <div class="routes-workspace__actions">
+
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="createRoute('Add', {})">
+
+            <i-tabler name="plus" class="icon-18"></i-tabler>
+            Create route
+          </button>
+
+          <button
+            mat-flat-button
+            color="primary"
+            type="button"
+            [disabled]="isRoutesEmpty"
+            (click)="assignRoutes()">
+
+            <i-tabler name="device-floppy" class="icon-18"></i-tabler>
+            Save selected routes
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- DAILY KPIs -->
+      <div class="daily-summary-grid">
+
+        <article class="daily-summary-card">
+          <span>Total packages</span>
+          <strong>{{ totalPackages | number }}</strong>
+          <small>Selected route view</small>
+        </article>
+
+        <article class="daily-summary-card">
+          <span>Total stops</span>
+          <strong>{{ totalStops | number }}</strong>
+          <small>Completed delivery stops</small>
+        </article>
+
+        <article class="daily-summary-card">
+          <span>Active drivers</span>
+          <strong>{{ activeDrivers | number }}</strong>
+          <small>Unique assigned drivers</small>
+        </article>
+
+        <article class="daily-summary-card">
+          <span>Average packages</span>
+          <strong>{{ avgPackagesPerDriver | number:'1.0-1' }}</strong>
+          <small>Packages per driver</small>
+        </article>
+
+      </div>
+
+      <!-- TABLE CARD -->
+      <mat-card class="routes-table-card">
+
+        <mat-card-content>
+
+          <div class="table-toolbar">
+
+            <div class="table-toolbar__title">
+              <span>Route assignment</span>
+              <strong>
+                {{ dataSource.data.length }} route(s)
+              </strong>
+            </div>
+
+            <div class="table-toolbar__selection">
+              <span>
+                {{ selectedRoutes.length }} selected
+              </span>
+            </div>
+
+          </div>
+
+          <div class="table-scroll">
+
+            <table
+              mat-table
+              [dataSource]="dataSource"
+              class="routes-table">
+
+              <!-- SELECT -->
+              <ng-container matColumnDef="select">
+
+                <th mat-header-cell *matHeaderCellDef>
+
+                  <mat-checkbox
+                    [checked]="isAllSelected()"
+                    [indeterminate]="
+                      selectedRoutes.length > 0 &&
+                      !isAllSelected()
+                    "
+                    (change)="toggleAllSelection()">
+                  </mat-checkbox>
+
+                </th>
+
+                <td mat-cell *matCellDef="let row">
+
+                  <mat-checkbox
+                    [checked]="isSelected(row)"
+                    (change)="toggleSelection(row)">
+                  </mat-checkbox>
+
+                </td>
+
+              </ng-container>
+
+              <!-- DATE -->
+              <ng-container matColumnDef="date">
+
+                <th mat-header-cell *matHeaderCellDef>
+                  Date
+                </th>
+
+                <td mat-cell *matCellDef="let row">
+
+                  <div class="date-cell">
+                    <strong>{{ row.date | date:'MMM d' }}</strong>
+                    <span>{{ row.date | date:'EEEE' }}</span>
+                  </div>
+
+                </td>
+
+              </ng-container>
+
+              <!-- STATUS -->
+              <ng-container matColumnDef="routeStatus">
+
+                <th mat-header-cell *matHeaderCellDef>
+                  Status
+                </th>
+
+                <td mat-cell *matCellDef="let row">
+
+                  <mat-form-field
+                    appearance="outline"
+                    class="table-field status-field">
+
+                    <mat-select
+                      [value]="row.routeStatus"
+                      (selectionChange)="
+                        handleStatusChange(
+                          row,
+                          $event.value
+                        )
+                      ">
+
+                      <mat-option
+                        *ngFor="let status of routeStatuses"
+                        [value]="status">
+
+                        {{ status }}
+
+                      </mat-option>
+
+                    </mat-select>
+
+                  </mat-form-field>
+
+                </td>
+
+              </ng-container>
+
+              <!-- DRIVER -->
+             <ng-container matColumnDef="userId">
+
+  <th mat-header-cell *matHeaderCellDef>
+    Driver
+  </th>
+
+  <td mat-cell *matCellDef="let row">
+
+    <div class="driver-autocomplete-wrapper">
+
+      <i-tabler
+        name="user"
+        class="driver-field-icon">
+      </i-tabler>
+
+      <input
+        #driverInput
+        matInput
+        type="text"
+        class="driver-autocomplete-input"
+        placeholder="Search driver..."
+        autocomplete="off"
+
+        [value]="getDriverDisplay(row.userId)"
+        [matAutocomplete]="driverAutocomplete"
+
+        (focus)="filterDrivers('')"
+        (input)="filterDrivers(driverInput.value)"
+        (keydown.enter)="$event.preventDefault()"
+        (blur)="restoreDriverInput(driverInput, row)"
+      />
+
+      <i-tabler
+        name="chevron-down"
+        class="driver-chevron">
+      </i-tabler>
+
+      <mat-autocomplete
+        #driverAutocomplete="matAutocomplete"
+        (optionSelected)="
+          handleDriverChange(
+            row,
+            $event.option.value
+          )
+        "
+      >
+
+        <mat-option
+          [value]="null"
+          class="driver-autocomplete-option"
+        >
+          <div class="driver-option-content unassigned-option">
+
+            <span class="driver-option-name">
+              Unassigned
+            </span>
+
+          </div>
+        </mat-option>
+
+        <mat-option
+          *ngFor="let driver of filteredDrivers"
+          [value]="driver.id"
+          class="driver-autocomplete-option"
+        >
+
+          <div class="driver-option-content">
+
+            <span class="driver-option-name">
+              {{ driver.name }}
+              {{ driver.lastName }}
+            </span>
+
+            <span
+              *ngIf="driver.identificationNumber"
+              class="driver-option-number"
+            >
+              {{ driver.identificationNumber }}
+            </span>
+
+          </div>
+
+        </mat-option>
+
+        <mat-option
+          *ngIf="filteredDrivers.length === 0"
+          disabled
+          class="driver-empty-option"
+        >
+          No drivers found
+        </mat-option>
+
+      </mat-autocomplete>
+
+    </div>
+
+  </td>
+
+</ng-container>
+
+              <!-- CNL -->
+              <ng-container matColumnDef="cnl">
+
+                <th mat-header-cell *matHeaderCellDef>
+                  CNL
+                </th>
+
+                <td mat-cell *matCellDef="let row">
+
+                  <mat-form-field
+                    appearance="outline"
+                    class="table-field numeric-field">
+
+                    <input
+                      matInput
+                      type="number"
+                      min="0"
+                      [(ngModel)]="row.cnl"
+                      [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="
+                        toggleSelection(row)
+                      ">
+
+                  </mat-form-field>
+
+                </td>
+
+              </ng-container>
+
+              <!-- VOLUME -->
+              <ng-container matColumnDef="volumen">
+
+                <th mat-header-cell *matHeaderCellDef>
+                  Packages
+                </th>
+
+                <td mat-cell *matCellDef="let row">
+
+                  <div class="metric-cell">
+                    <strong>{{ row.volumen | number }}</strong>
+                    <span>packages</span>
+                  </div>
+
+                </td>
+
+              </ng-container>
+
+              <!-- STOPS -->
+              <ng-container matColumnDef="deliveryStops">
+
+                <th mat-header-cell *matHeaderCellDef>
+                  Stops
+                </th>
+
+                <td mat-cell *matCellDef="let row">
+
+                  <div class="metric-cell">
+                    <strong>{{ row.deliveryStops | number }}</strong>
+                    <span>stops</span>
+                  </div>
+
+                </td>
+
+              </ng-container>
+
+              <!-- PACKAGE PERCENT -->
+              <ng-container matColumnDef="packagePercent">
+
+                <th mat-header-cell *matHeaderCellDef>
+                  Distribution
+                </th>
+
+                <td mat-cell *matCellDef="let row">
+
+                  <div class="distribution-cell">
+
+                    <div class="distribution-cell__label">
+                      <span>Share</span>
+
+                      <strong>
+                        {{ getPackagePercent(row) | number:'1.0-1' }}%
+                      </strong>
+                    </div>
+
+                    <mat-progress-bar
+                      mode="determinate"
+                      [value]="getPackagePercent(row)">
+                    </mat-progress-bar>
+
+                  </div>
+
+                </td>
+
+              </ng-container>
+
+              <!-- ZONE -->
+              <ng-container matColumnDef="zoneId">
+
+                <th mat-header-cell *matHeaderCellDef>
+                  Zone
+                </th>
+
+                <td mat-cell *matCellDef="let row">
+
+                  <mat-form-field
+                    appearance="outline"
+                    class="table-field zone-field">
+
+                    <mat-label>Select zone</mat-label>
+
+                    <mat-select
+                      [value]="row.zoneId"
+                      [compareWith]="compareIds"
+                      (selectionChange)="
+                        handleZoneChange(
+                          row,
+                          $event.value
+                        )
+                      ">
+
+                      <mat-option [value]="null">
+                        No zone
+                      </mat-option>
+
+                      <mat-option
+  *ngFor="let zone of getAvailableZones(row.zoneId); trackBy: trackByZoneId"
+  [value]="zone.id">
+
+  {{ zone.zoneCode }}
+
+</mat-option>
+
+                    </mat-select>
+
+                  </mat-form-field>
+
+                </td>
+
+              </ng-container>
+
+              <!-- ACTIONS -->
+              <ng-container matColumnDef="action">
+
+                <th mat-header-cell *matHeaderCellDef>
+                  Actions
+                </th>
+
+                <td mat-cell *matCellDef="let row">
+
+                  <div class="row-actions">
+
+                    <button
+                      mat-icon-button
+                      type="button"
+                      matTooltip="Add bonus"
+                      (click)="editRoute(row)">
+
+                      <i-tabler name="coin" class="icon-18"></i-tabler>
+
+                    </button>
+
+                  
+
+                  </div>
+
+                </td>
+
+              </ng-container>
+
+              <tr
+                mat-header-row
+                *matHeaderRowDef="displayedColumns">
+              </tr>
+
+              <tr
+                mat-row
+                *matRowDef="
+                  let row;
+                  columns: displayedColumns
+                "
+                [class.selected-row]="isSelected(row)">
+              </tr>
+
+              <tr
+                class="empty-row"
+                *matNoDataRow>
+
+                <td [attr.colspan]="displayedColumns.length">
+
+                  <div class="empty-state">
+
+                    <div class="empty-state__icon">
+                      <i-tabler name="route-off" class="icon-28"></i-tabler>
+                    </div>
+
+                    <h3>No routes found</h3>
+
+                    <p>
+                      There are no routes for the selected day
+                      and warehouse.
+                    </p>
+
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      (click)="createRoute('Add', {})">
+
+                      Create route
+                    </button>
+
+                  </div>
+
+                </td>
+
+              </tr>
+
+            </table>
+
+          </div>
+
+          <mat-paginator
+            [pageSize]="25"
+            [pageSizeOptions]="[10, 25, 50, 100]"
+            showFirstLastButtons>
+          </mat-paginator>
+
+        </mat-card-content>
+
+      </mat-card>
+
+    </section>
+
+  </ng-container>
+
 </div>
